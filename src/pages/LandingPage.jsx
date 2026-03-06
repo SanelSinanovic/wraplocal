@@ -1,0 +1,199 @@
+import { SHOPS } from "../data/data";
+
+export default function LandingPage({ nav, setBookingShop, setSelectedShop }) {
+  return (
+    <div style={{ fontFamily: "'Bebas Neue', cursive, sans-serif", background: "#0A0A0A", minHeight: "100vh", color: "#fff", overflow: "hidden" }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap');
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { margin: 0; }
+        .btn-main { background: #FF4D00; color: #fff; border: none; padding: 14px 32px; font-family: 'Bebas Neue', cursive; font-size: 18px; letter-spacing: 2px; cursor: pointer; clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%); transition: all 0.2s; }
+        .btn-main:hover { background: #FF6A20; transform: translateY(-1px); }
+        .btn-ghost { background: transparent; color: #fff; border: 1px solid rgba(255,255,255,0.3); padding: 12px 28px; font-family: 'Bebas Neue', cursive; font-size: 16px; letter-spacing: 2px; cursor: pointer; transition: all 0.2s; }
+        .btn-ghost:hover { border-color: #FF4D00; color: #FF4D00; }
+        .nav-link { color: rgba(255,255,255,0.6); text-decoration: none; font-family: 'DM Sans', sans-serif; font-size: 14px; cursor: pointer; transition: color 0.2s; }
+        .nav-link:hover { color: #fff; }
+        .card-hover { transition: transform 0.3s, box-shadow 0.3s; cursor: pointer; }
+        .card-hover:hover { transform: translateY(-6px); box-shadow: 0 20px 60px rgba(255,77,0,0.2); }
+      `}</style>
+
+      {/* NAV */}
+      <nav style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 60px", borderBottom: "1px solid rgba(255,255,255,0.06)", position: "sticky", top: 0, background: "rgba(10,10,10,0.95)", backdropFilter: "blur(20px)", zIndex: 100 }}>
+        <div style={{ fontSize: 28, letterSpacing: 4, color: "#FF4D00" }}>WRAP<span style={{ color: "#fff" }}>LOCAL</span></div>
+        <div style={{ display: "flex", gap: 32 }}>
+          <span className="nav-link" onClick={() => nav("search")}>Find Shops</span>
+          <span className="nav-link" onClick={() => nav("pricing")}>For Businesses</span>
+          <span className="nav-link" onClick={() => nav("customer-login")}>My Bookings</span>
+        </div>
+        <div style={{ display: "flex", gap: 12 }}>
+          <button className="btn-ghost" onClick={() => nav("company-login")}>Business Login</button>
+          <button className="btn-main" onClick={() => nav("search")}>Find a Shop</button>
+        </div>
+      </nav>
+
+      {/* HERO */}
+      <div style={{ position: "relative", padding: "100px 60px 80px", overflow: "hidden" }}>
+        <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at 60% 50%, rgba(255,77,0,0.15) 0%, transparent 70%)", pointerEvents: "none" }} />
+        <div style={{ position: "absolute", top: -200, right: -200, width: 600, height: 600, border: "1px solid rgba(255,77,0,0.1)", borderRadius: "50%", pointerEvents: "none" }} />
+        <div style={{ position: "absolute", top: -100, right: -100, width: 400, height: 400, border: "1px solid rgba(255,77,0,0.08)", borderRadius: "50%", pointerEvents: "none" }} />
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 60, alignItems: "center", position: "relative" }}>
+          <div>
+            <div style={{ display: "inline-block", background: "rgba(255,77,0,0.1)", border: "1px solid rgba(255,77,0,0.3)", padding: "6px 16px", marginBottom: 24, fontFamily: "'DM Sans', sans-serif", fontSize: 13, letterSpacing: 2, color: "#FF4D00" }}>
+              🔥 BOOK IN UNDER 2 MINUTES
+            </div>
+            <h1 style={{ fontSize: "clamp(56px, 6vw, 100px)", lineHeight: 0.95, letterSpacing: 3, marginBottom: 24 }}>
+              YOUR CAR.<br />
+              <span style={{ color: "#FF4D00", position: "relative" }}>
+                TRANSFORMED.
+                <div style={{ position: "absolute", bottom: -4, left: 0, right: 0, height: 3, background: "#FF4D00" }} />
+              </span>
+            </h1>
+            <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 17, color: "rgba(255,255,255,0.5)", maxWidth: 480, lineHeight: 1.6, marginTop: 16, marginBottom: 40, fontWeight: 300 }}>
+              Find and book top-rated local car wrapping studios. Compare portfolios, read reviews, and schedule your transformation — all in one place.
+            </p>
+            <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
+              <button className="btn-main" style={{ fontSize: 20, padding: "16px 40px" }} onClick={() => nav("search")}>Find Shops Near Me →</button>
+              <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.3)" }}>No account needed</span>
+            </div>
+            <div style={{ display: "flex", gap: 48, marginTop: 64 }}>
+              {[["500+", "Shops Listed"], ["12K+", "Bookings Made"], ["4.8★", "Avg Rating"]].map(([n, l]) => (
+                <div key={l}>
+                  <div style={{ fontSize: 40, color: "#FF4D00" }}>{n}</div>
+                  <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)", marginTop: 2 }}>{l}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ position: "relative", display: "flex", flexDirection: "column", gap: 16 }}>
+            <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: 340, height: 340, background: "radial-gradient(circle, rgba(255,77,0,0.12) 0%, transparent 70%)", pointerEvents: "none" }} />
+            <div style={{ background: "#111", border: "1px solid rgba(255,255,255,0.08)", overflow: "hidden", boxShadow: "0 32px 80px rgba(0,0,0,0.6)", position: "relative", zIndex: 1 }}>
+              <div style={{ position: "relative", height: 180, overflow: "hidden" }}>
+                <img src="https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=600&q=80" alt="shop" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.75), transparent)" }} />
+                <div style={{ position: "absolute", top: 12, left: 12, background: "rgba(10,10,10,0.7)", border: "1px solid rgba(255,255,255,0.1)", backdropFilter: "blur(8px)", padding: "4px 10px", fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.7)", display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#10B981", display: "inline-block" }} />Available Today
+                </div>
+                <div style={{ position: "absolute", top: 12, right: 12, background: "#FF4D00", padding: "3px 10px", fontFamily: "'DM Sans', sans-serif", fontSize: 11, fontWeight: 700 }}>FEATURED</div>
+              </div>
+              <div style={{ padding: 20 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
+                  <div style={{ fontSize: 22, letterSpacing: 1 }}>Chrome Kings Wraps</div>
+                  <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#FF4D00", fontWeight: 700 }}>★ 4.9</div>
+                </div>
+                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 14 }}>Atlanta, GA · 2.1 mi · 214 reviews</div>
+                <div style={{ display: "flex", gap: 6, marginBottom: 18 }}>
+                  {["Full Wraps", "PPF", "Color Change"].map(t => (
+                    <span key={t} style={{ padding: "3px 10px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.5)" }}>{t}</span>
+                  ))}
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div>
+                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)", marginBottom: 2 }}>Starting from</div>
+                    <div style={{ fontSize: 28, color: "#fff", letterSpacing: 1 }}>$1,200</div>
+                  </div>
+                  <button onClick={() => { setBookingShop(SHOPS[0]); nav("booking"); }} style={{ background: "#FF4D00", color: "#fff", border: "none", padding: "10px 22px", fontFamily: "'Bebas Neue', cursive", fontSize: 16, letterSpacing: 2, cursor: "pointer" }}>Book Now</button>
+                </div>
+              </div>
+              <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", padding: "14px 20px", display: "flex", gap: 8, alignItems: "center" }}>
+                <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)", marginRight: 4 }}>TODAY</span>
+                {["9:00 AM", "11:00 AM", "2:00 PM"].map((s, i) => (
+                  <span key={s} style={{ padding: "4px 12px", background: i === 1 ? "rgba(255,77,0,0.15)" : "rgba(255,255,255,0.04)", border: `1px solid ${i === 1 ? "#FF4D00" : "rgba(255,255,255,0.08)"}`, fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: i === 1 ? "#FF4D00" : "rgba(255,255,255,0.5)" }}>{s}</span>
+                ))}
+              </div>
+            </div>
+            <div style={{ background: "#0D0D0D", border: "1px solid rgba(255,255,255,0.07)", padding: "14px 18px", display: "flex", alignItems: "center", gap: 14, boxShadow: "0 8px 32px rgba(0,0,0,0.4)", zIndex: 1 }}>
+              <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#7C3AED", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 13, flexShrink: 0 }}>J</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#fff" }}><b>Jordan M.</b> just booked <span style={{ color: "#FF4D00" }}>Phantom Wraps Studio</span></div>
+                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 2 }}>Full Color Change · Alpharetta, GA · 2 min ago</div>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#10B981" }} />
+                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 10, color: "#10B981" }}>LIVE</div>
+              </div>
+            </div>
+            <div style={{ background: "#0D0D0D", border: "1px solid rgba(255,255,255,0.07)", padding: "12px 18px", display: "flex", alignItems: "center", gap: 14, boxShadow: "0 8px 32px rgba(0,0,0,0.4)", zIndex: 1 }}>
+              <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#059669", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 13, flexShrink: 0 }}>A</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#fff" }}><b>Aisha R.</b> left a <span style={{ color: "#FF4D00" }}>5-star review</span> for Chrome Kings</div>
+                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 2 }}>★★★★★ · "Absolutely perfect wrap!" · 8 min ago</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* FEATURED SHOPS */}
+      <div style={{ padding: "60px 60px 80px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 32 }}>
+          <div>
+            <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#FF4D00", letterSpacing: 3, marginBottom: 8 }}>FEATURED NEAR YOU</div>
+            <div style={{ fontSize: 42, letterSpacing: 2 }}>TOP RATED SHOPS</div>
+          </div>
+          <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.4)", cursor: "pointer" }} onClick={() => nav("search")}>View all →</span>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20 }}>
+          {SHOPS.map(shop => (
+            <div key={shop.id} className="card-hover" onClick={() => { setSelectedShop(shop); nav("shop"); }}
+              style={{ background: "#111", border: "1px solid rgba(255,255,255,0.06)", overflow: "hidden" }}>
+              <div style={{ position: "relative", height: 200, overflow: "hidden" }}>
+                <img src={shop.image} alt={shop.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.7), transparent)" }} />
+                <div style={{ position: "absolute", top: 12, right: 12, background: shop.color, padding: "3px 10px", fontFamily: "'DM Sans', sans-serif", fontSize: 12, fontWeight: 600 }}>{shop.availability}</div>
+              </div>
+              <div style={{ padding: 20 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
+                  <div style={{ fontSize: 22, letterSpacing: 1 }}>{shop.name}</div>
+                  <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#FF4D00", fontWeight: 600 }}>★ {shop.rating}</div>
+                </div>
+                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)", marginBottom: 12 }}>{shop.location} · {shop.distance} · {shop.reviews} reviews</div>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16 }}>
+                  {shop.tags.map(t => <span key={t} style={{ padding: "3px 10px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.5)" }}>{t}</span>)}
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.5)" }}>From <b style={{ color: "#fff" }}>${shop.price.toLocaleString()}</b></span>
+                  <button className="btn-main" style={{ fontSize: 13, padding: "8px 18px" }} onClick={(e) => { e.stopPropagation(); setBookingShop(shop); nav("booking"); }}>Book Now</button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* HOW IT WORKS */}
+      <div style={{ padding: "60px 60px 100px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+        <div style={{ textAlign: "center", marginBottom: 60 }}>
+          <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#FF4D00", letterSpacing: 3, marginBottom: 8 }}>SIMPLE PROCESS</div>
+          <div style={{ fontSize: 48, letterSpacing: 2 }}>HOW IT WORKS</div>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 40 }}>
+          {[
+            { n: "01", t: "Search & Compare", d: "Find local wrap shops, browse portfolios, compare prices and read real customer reviews." },
+            { n: "02", t: "Book Instantly", d: "Choose your service, pick a time slot, and confirm your appointment in under 2 minutes." },
+            { n: "03", t: "Get Wrapped", d: "Show up, get your car transformed, and pay securely through WrapLocal." },
+          ].map(s => (
+            <div key={s.n} style={{ padding: "40px", border: "1px solid rgba(255,255,255,0.06)", background: "#0D0D0D", position: "relative", overflow: "hidden" }}>
+              <div style={{ position: "absolute", top: -20, right: -10, fontSize: 120, color: "rgba(255,77,0,0.04)", fontFamily: "'Bebas Neue', cursive" }}>{s.n}</div>
+              <div style={{ fontSize: 56, color: "#FF4D00", marginBottom: 16 }}>{s.n}</div>
+              <div style={{ fontSize: 26, letterSpacing: 1, marginBottom: 12 }}>{s.t}</div>
+              <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 15, color: "rgba(255,255,255,0.4)", lineHeight: 1.7 }}>{s.d}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* FOR BUSINESSES CTA */}
+      <div style={{ margin: "0 60px 80px", background: "linear-gradient(135deg, #FF4D00 0%, #FF8C00 100%)", padding: "60px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div>
+          <div style={{ fontSize: 48, letterSpacing: 2, marginBottom: 12 }}>OWN A WRAP SHOP?</div>
+          <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 16, color: "rgba(255,255,255,0.8)" }}>List your business for $49.99/month and get discovered by thousands of local customers.</div>
+        </div>
+        <button onClick={() => nav("pricing")} style={{ background: "#fff", color: "#FF4D00", border: "none", padding: "16px 40px", fontFamily: "'Bebas Neue', cursive", fontSize: 20, letterSpacing: 2, cursor: "pointer", whiteSpace: "nowrap" }}>
+          Get Listed →
+        </button>
+      </div>
+    </div>
+  );
+}
