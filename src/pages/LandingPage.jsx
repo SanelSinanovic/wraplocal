@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { SHOPS } from "../data/data";
+import { SHOPS as STATIC_SHOPS } from "../data/data";
 
-export default function LandingPage({ nav, setBookingShop, setSelectedShop }) {
+export default function LandingPage({ nav, shops: liveShops, setBookingShop, setSelectedShop }) {
+  // Fall back to bundled static data until Supabase responds
+  const shops = liveShops && liveShops.length > 0 ? liveShops : STATIC_SHOPS;
   const [menuOpen, setMenuOpen] = useState(false);
   return (
     <div style={{ fontFamily: "'Bebas Neue', cursive, sans-serif", background: "#0A0A0A", minHeight: "100vh", color: "#fff", overflow: "hidden" }}>
@@ -132,7 +134,7 @@ export default function LandingPage({ nav, setBookingShop, setSelectedShop }) {
                     <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)", marginBottom: 2 }}>Starting from</div>
                     <div style={{ fontSize: 28, color: "#fff", letterSpacing: 1 }}>$1,200</div>
                   </div>
-                  <button onClick={() => { setBookingShop(SHOPS[0]); nav("booking"); }} style={{ background: "#FF4D00", color: "#fff", border: "none", padding: "10px 22px", fontFamily: "'Bebas Neue', cursive", fontSize: 16, letterSpacing: 2, cursor: "pointer" }}>Book Now</button>
+                  <button onClick={() => { setBookingShop(shops[0]); nav("booking"); }} style={{ background: "#FF4D00", color: "#fff", border: "none", padding: "10px 22px", fontFamily: "'Bebas Neue', cursive", fontSize: 16, letterSpacing: 2, cursor: "pointer" }}>Book Now</button>
                 </div>
               </div>
               <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", padding: "14px 20px", display: "flex", gap: 8, alignItems: "center" }}>
@@ -174,7 +176,7 @@ export default function LandingPage({ nav, setBookingShop, setSelectedShop }) {
           <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.4)", cursor: "pointer" }} onClick={() => nav("search")}>View all →</span>
         </div>
         <div className="shops-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20 }}>
-          {SHOPS.map(shop => (
+          {shops.map(shop => (
             <div key={shop.id} className="card-hover" onClick={() => { setSelectedShop(shop); nav("shop"); }}
               style={{ background: "#111", border: "1px solid rgba(255,255,255,0.06)", overflow: "hidden" }}>
               <div style={{ position: "relative", height: 200, overflow: "hidden" }}>

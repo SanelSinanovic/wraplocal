@@ -1,43 +1,86 @@
 import { useState, useRef, useEffect } from "react";
 import { BOOKINGS } from "../data/data";
+import { fetchCustomerBookings, fetchMessages, sendMessage as dbSendMessage, subscribeToMessages } from "../lib/queries";
 
-export default function CustomerDashboard({ nav }) {
+export default function CustomerDashboard({ nav, currentUser, currentProfile, onLogout }) {
+  const [bookings, setBookings] = useState([]);
+  const [bookingsLoaded, setBookingsLoaded] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState(null);
-  const [messagesMap, setMessagesMap] = useState(() =>
-    Object.fromEntries(BOOKINGS.map(b => [b.id, b.messages]))
-  );
+  const [messagesMap, setMessagesMap] = useState({});
   const [chatInput, setChatInput] = useState("");
   const chatEndRef = useRef(null);
+
+  // Load bookings: real data if logged in, static demo otherwise
+  useEffect(() => {
+    if (currentUser) {
+      fetchCustomerBookings(currentUser.id).then(data => {
+        if (data) {
+          setBookings(data);
+          // Init empty message arrays for each booking
+          setMessagesMap(Object.fromEntries(data.map(b => [b.id, []])));
+        }
+        setBookingsLoaded(true);
+      });
+    } else {
+      // Demo fallback — use static data
+      setBookings(BOOKINGS);
+      setMessagesMap(Object.fromEntries(BOOKINGS.map(b => [b.id, b.messages])));
+      setBookingsLoaded(true);
+    }
+  }, [currentUser]);
+
+  // When a booking is selected, load its messages and subscribe to realtime
+  useEffect(() => {
+    if (!selectedBooking || !currentUser) return;
+    let channel;
+    fetchMessages(selectedBooking.id).then(msgs => {
+      setMessagesMap(prev => ({ ...prev, [selectedBooking.id]: msgs }));
+    });
+    channel = subscribeToMessages(selectedBooking.id, newMsg => {
+      setMessagesMap(prev => ({
+        ...prev,
+        [selectedBooking.id]: [...(prev[selectedBooking.id] || []), newMsg],
+      }));
+    });
+    return () => { channel?.unsubscribe(); };
+  }, [selectedBooking, currentUser]);
 
   useEffect(() => {
     if (selectedBooking) chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messagesMap, selectedBooking]);
 
-  const sendMessage = () => {
+  const sendMessage = async () => {
     const text = chatInput.trim();
     if (!text || !selectedBooking) return;
     const now = new Date().toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+    const optimistic = { from: "me", text, time: now };
+    // Optimistic local update
     setMessagesMap(prev => ({
       ...prev,
-      [selectedBooking.id]: [...prev[selectedBooking.id], { from: "me", text, time: now }],
+      [selectedBooking.id]: [...(prev[selectedBooking.id] || []), optimistic],
     }));
     setChatInput("");
-    // Simulate shop reply after 1.5s for confirmed bookings
-    if (selectedBooking.status === "confirmed") {
-      setTimeout(() => {
-        const replies = [
-          "Got it, thanks for letting us know!",
-          "Sure thing — we'll see you then.",
-          "Great question! We'll make sure everything is ready.",
-          "Thanks for reaching out. We'll confirm shortly.",
-        ];
-        const reply = replies[Math.floor(Math.random() * replies.length)];
-        const replyTime = new Date().toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
-        setMessagesMap(prev => ({
-          ...prev,
-          [selectedBooking.id]: [...prev[selectedBooking.id], { from: "shop", text: reply, time: replyTime }],
-        }));
-      }, 1500);
+    // Persist to Supabase if logged in
+    if (currentUser) {
+      await dbSendMessage({ bookingId: selectedBooking.id, senderId: currentUser.id, senderRole: "customer", text });
+    } else {
+      // Demo: simulate shop reply
+      if (selectedBooking.status === "confirmed") {
+        setTimeout(() => {
+          const replies = [
+            "Got it, thanks for letting us know!",
+            "Sure thing — we'll see you then.",
+            "Great question! We'll make sure everything is ready.",
+            "Thanks for reaching out. We'll confirm shortly.",
+          ];
+          const reply = replies[Math.floor(Math.random() * replies.length)];
+          const replyTime = new Date().toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+          setMessagesMap(prev => ({
+            ...prev,
+            [selectedBooking.id]: [...(prev[selectedBooking.id] || []), { from: "shop", text: reply, time: replyTime }],
+          }));
+        }, 1500);
+      }
     }
   };
 
@@ -45,8 +88,13 @@ export default function CustomerDashboard({ nav }) {
     <nav style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 40px", background: "#0D0D0D", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
       <div style={{ fontSize: 24, letterSpacing: 4, color: "#FF4D00", cursor: "pointer" }} onClick={() => nav("landing")}>WRAP<span style={{ color: "#fff" }}>LOCAL</span></div>
       <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-        <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#FF4D00", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Sans', sans-serif", fontWeight: 700 }}>M</div>
-        <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14 }}>Marcus T.</span>
+        <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#FF4D00", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Sans', sans-serif", fontWeight: 700 }}>
+          {(currentProfile?.name || "M")[0].toUpperCase()}
+        </div>
+        <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14 }}>{currentProfile?.name || "My Account"}</span>
+        {currentUser && (
+          <button onClick={onLogout} style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", background: "none", border: "1px solid rgba(255,255,255,0.1)", padding: "6px 12px", cursor: "pointer", marginLeft: 8 }}>Log Out</button>
+        )}
       </div>
     </nav>
   );
@@ -175,8 +223,13 @@ export default function CustomerDashboard({ nav }) {
       <div className="dash-pad" style={{ padding: "40px" }}>
         <div style={{ fontSize: 48, letterSpacing: 2, marginBottom: 8 }}>MY BOOKINGS</div>
         <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.4)", marginBottom: 32 }}>Click a booking to view details and chat with the shop</div>
+        {!bookingsLoaded ? (
+          <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.4)" }}>Loading...</div>
+        ) : bookings.length === 0 ? (
+          <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.4)" }}>No bookings yet. <span style={{ color: "#FF4D00", cursor: "pointer" }} onClick={() => nav("search")}>Book your first appointment →</span></div>
+        ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          {BOOKINGS.map(b => (
+          {bookings.map(b => (
             <div key={b.id} className="booking-row" onClick={() => setSelectedBooking(b)}
               style={{ background: "#111", border: "1px solid rgba(255,255,255,0.06)", padding: "20px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", transition: "all 0.2s" }}>
               <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
@@ -201,6 +254,7 @@ export default function CustomerDashboard({ nav }) {
             </div>
           ))}
         </div>
+        )}
         <button className="btn-main" style={{ marginTop: 24, fontSize: 16 }} onClick={() => nav("search")}>Book Another Appointment →</button>
       </div>
     </div>

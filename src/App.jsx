@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import LandingPage from "./pages/LandingPage";
 import SearchPage from "./pages/SearchPage";
 import ShopProfile from "./pages/ShopProfile";
@@ -8,9 +8,8 @@ import PricingPage from "./pages/PricingPage";
 import CompanyDashboard from "./pages/CompanyDashboard";
 import CustomerLogin from "./pages/CustomerLogin";
 import CompanyLogin from "./pages/CompanyLogin";
-
-const CUSTOMER_CREDS = { email: "marcus@email.com", password: "customer123" };
-const COMPANY_CREDS = { email: "info@chromekings.com", password: "company123" };
+import { supabase } from "./lib/supabase";
+import { fetchShops, fetchProfile } from "./lib/queries";
 
 export default function App() {
   const [view, setView] = useState("landing");
@@ -25,6 +24,37 @@ export default function App() {
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
   const [loginError, setLoginError] = useState("");
 
+  // ── Supabase: shops + auth state ──────────────────────────
+  const [shops, setShops] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [currentProfile, setCurrentProfile] = useState(null);
+
+  useEffect(() => {
+    // Load shops on mount
+    fetchShops().then(data => { if (data) setShops(data); });
+
+    // Check existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setCurrentUser(session.user);
+        fetchProfile(session.user.id).then(p => setCurrentProfile(p));
+      }
+    });
+
+    // Listen for auth changes (login / logout)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setCurrentUser(session.user);
+        fetchProfile(session.user.id).then(p => setCurrentProfile(p));
+      } else {
+        setCurrentUser(null);
+        setCurrentProfile(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   const nav = (v) => {
     setView(v);
     setBookingConfirmed(false);
@@ -35,22 +65,43 @@ export default function App() {
     setLoginForm({ email: "", password: "" });
   };
 
-  const handleLogin = (type) => {
-    const creds = type === "customer" ? CUSTOMER_CREDS : COMPANY_CREDS;
-    if (loginForm.email === creds.email && loginForm.password === creds.password) {
+  const handleLogin = async (type) => {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: loginForm.email,
+        password: loginForm.password,
+      });
+      if (error) {
+        setLoginError("Invalid email or password. Please try again.");
+        return;
+      }
+      const profile = await fetchProfile(data.user.id);
+      // If the profile has a role, verify it matches the login page they used
+      if (profile && profile.role && profile.role !== type) {
+        setLoginError(`This account is registered as a ${profile.role}. Please use the correct login page.`);
+        await supabase.auth.signOut();
+        return;
+      }
+      setCurrentUser(data.user);
+      setCurrentProfile(profile);
       nav(type === "customer" ? "customer-dash" : "company-dash");
-    } else {
-      setLoginError("Invalid email or password. Please try again.");
+    } catch {
+      setLoginError("Something went wrong. Please try again.");
     }
   };
 
-  if (view === "landing") return <LandingPage nav={nav} setBookingShop={setBookingShop} setSelectedShop={setSelectedShop} />;
-  if (view === "search") return <SearchPage nav={nav} searchQuery={searchQuery} setSearchQuery={setSearchQuery} setSelectedShop={setSelectedShop} setBookingShop={setBookingShop} />;
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    nav("landing");
+  };
+
+  if (view === "landing") return <LandingPage nav={nav} shops={shops} setBookingShop={setBookingShop} setSelectedShop={setSelectedShop} />;
+  if (view === "search") return <SearchPage nav={nav} shops={shops} searchQuery={searchQuery} setSearchQuery={setSearchQuery} setSelectedShop={setSelectedShop} setBookingShop={setBookingShop} />;
   if (view === "shop") return <ShopProfile nav={nav} selectedShop={selectedShop} setBookingShop={setBookingShop} />;
-  if (view === "booking") return <BookingFlow nav={nav} bookingShop={bookingShop} bookingStep={bookingStep} setBookingStep={setBookingStep} selectedSlot={selectedSlot} setSelectedSlot={setSelectedSlot} selectedDate={selectedDate} setSelectedDate={setSelectedDate} bookingConfirmed={bookingConfirmed} setBookingConfirmed={setBookingConfirmed} />;
-  if (view === "customer-dash") return <CustomerDashboard nav={nav} />;
+  if (view === "booking") return <BookingFlow nav={nav} bookingShop={bookingShop} bookingStep={bookingStep} setBookingStep={setBookingStep} selectedSlot={selectedSlot} setSelectedSlot={setSelectedSlot} selectedDate={selectedDate} setSelectedDate={setSelectedDate} bookingConfirmed={bookingConfirmed} setBookingConfirmed={setBookingConfirmed} currentUser={currentUser} />;
+  if (view === "customer-dash") return <CustomerDashboard nav={nav} currentUser={currentUser} currentProfile={currentProfile} onLogout={handleLogout} />;
   if (view === "pricing") return <PricingPage nav={nav} />;
-  if (view === "company-dash") return <CompanyDashboard nav={nav} dashTab={dashTab} setDashTab={setDashTab} />;
+  if (view === "company-dash") return <CompanyDashboard nav={nav} dashTab={dashTab} setDashTab={setDashTab} currentUser={currentUser} currentProfile={currentProfile} onLogout={handleLogout} />;
   if (view === "customer-login") return <CustomerLogin nav={nav} loginForm={loginForm} setLoginForm={setLoginForm} loginError={loginError} setLoginError={setLoginError} handleLogin={handleLogin} />;
   if (view === "company-login") return <CompanyLogin nav={nav} loginForm={loginForm} setLoginForm={setLoginForm} loginError={loginError} setLoginError={setLoginError} handleLogin={handleLogin} />;
   return null;
