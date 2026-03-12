@@ -2,6 +2,22 @@ import { useState, useRef, useEffect } from "react";
 import { BOOKINGS } from "../data/data";
 import { fetchCustomerBookings, fetchMessages, sendMessage as dbSendMessage, subscribeToMessages } from "../lib/queries";
 
+function mergeMessages(existing = [], incoming = []) {
+  const list = Array.isArray(incoming) ? incoming : [incoming];
+  const merged = [...existing];
+
+  list.forEach(msg => {
+    if (!msg) return;
+    const hasMatch = merged.some(item => (
+      (msg.id && item.id === msg.id) ||
+      (item.from === msg.from && item.text === msg.text && item.time === msg.time)
+    ));
+    if (!hasMatch) merged.push(msg);
+  });
+
+  return merged;
+}
+
 export default function CustomerDashboard({ nav, currentUser, currentProfile, onLogout }) {
   const [bookings, setBookings] = useState([]);
   const [bookingsLoaded, setBookingsLoaded] = useState(false);
@@ -34,13 +50,15 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
     if (!selectedBooking || !currentUser) return;
     let channel;
     fetchMessages(selectedBooking.id).then(msgs => {
-      setMessagesMap(prev => ({ ...prev, [selectedBooking.id]: msgs }));
+      setMessagesMap(prev => ({
+        ...prev,
+        [selectedBooking.id]: mergeMessages(prev[selectedBooking.id] || [], msgs),
+      }));
     });
     channel = subscribeToMessages(selectedBooking.id, newMsg => {
       setMessagesMap(prev => {
         const existing = prev[selectedBooking.id] || [];
-        if (newMsg.id && existing.some(m => m.id === newMsg.id)) return prev;
-        return { ...prev, [selectedBooking.id]: [...existing, newMsg] };
+        return { ...prev, [selectedBooking.id]: mergeMessages(existing, newMsg) };
       });
     });
     return () => { channel?.unsubscribe(); };
@@ -56,11 +74,21 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
     setChatInput("");
     // Persist to Supabase if logged in
     if (currentUser) {
-      await dbSendMessage({ bookingId: selectedBooking.id, senderId: currentUser.id, senderRole: "customer", text });
+      const result = await dbSendMessage({ bookingId: selectedBooking.id, senderId: currentUser.id, senderRole: "customer", text });
+      if (result) {
+        const time = new Date(result.sent_at || Date.now()).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+        setMessagesMap(prev => ({
+          ...prev,
+          [selectedBooking.id]: mergeMessages(prev[selectedBooking.id] || [], { id: result.id, from: "me", text, time }),
+        }));
+      }
     } else {
       // Demo: simulate shop reply (optimistic for non-logged-in demo only)
       const now = new Date().toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
-      setMessagesMap(prev => ({ ...prev, [selectedBooking.id]: [...(prev[selectedBooking.id] || []), { from: "me", text, time: now }] }));
+      setMessagesMap(prev => ({
+        ...prev,
+        [selectedBooking.id]: mergeMessages(prev[selectedBooking.id] || [], { from: "me", text, time: now }),
+      }));
       // Demo: simulate shop reply
       if (selectedBooking.status === "confirmed") {
         setTimeout(() => {
@@ -74,7 +102,7 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
           const replyTime = new Date().toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
           setMessagesMap(prev => ({
             ...prev,
-            [selectedBooking.id]: [...(prev[selectedBooking.id] || []), { from: "shop", text: reply, time: replyTime }],
+            [selectedBooking.id]: mergeMessages(prev[selectedBooking.id] || [], { from: "shop", text: reply, time: replyTime }),
           }));
         }, 1500);
       }

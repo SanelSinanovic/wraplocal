@@ -192,13 +192,19 @@ export async function fetchMessages(bookingId) {
 }
 
 export async function sendMessage({ bookingId, senderId, senderRole, text }) {
-  const { data, error } = await supabase
+  const normalizedSenderRole = senderRole === 'company' ? 'shop' : senderRole
+  const { error } = await supabase
     .from('messages')
-    .insert({ booking_id: bookingId, sender_id: senderId, sender_role: senderRole, text })
-    .select()
-    .single()
+    .insert({ booking_id: bookingId, sender_id: senderId, sender_role: normalizedSenderRole, text })
   if (error) { console.error('sendMessage:', error); return null }
-  return data
+  return {
+    id: `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    booking_id: bookingId,
+    sender_id: senderId,
+    sender_role: normalizedSenderRole,
+    text,
+    sent_at: new Date().toISOString(),
+  }
 }
 
 export function subscribeToMessages(bookingId, callback) {

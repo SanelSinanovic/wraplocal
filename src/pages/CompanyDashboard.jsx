@@ -4,8 +4,54 @@ import { fetchUserShop, fetchCompanyBookings, createShop, updateShop, fetchMessa
 
 // Parse "Mon DD, YYYY" → { month (0-indexed), day, year }
 function parseDate(str) {
+  if (!str) return { month: NaN, day: NaN, year: NaN };
+
+  if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
+    const d = new Date(`${str}T12:00:00`);
+    return { month: d.getMonth(), day: d.getDate(), year: d.getFullYear() };
+  }
+
+  const monthMap = {
+    jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
+    jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11,
+  };
+  const shortMatch = String(str).trim().match(/^([A-Za-z]{3})\s+(\d{1,2})(?:,\s*(\d{4}))?$/);
+  if (shortMatch) {
+    const [, mon, day, year] = shortMatch;
+    return {
+      month: monthMap[mon.toLowerCase()],
+      day: Number(day),
+      year: year ? Number(year) : new Date().getFullYear(),
+    };
+  }
+
   const d = new Date(str);
   return { month: d.getMonth(), day: d.getDate(), year: d.getFullYear() };
+}
+
+function isValidCalendarDate(parts) {
+  return Number.isInteger(parts?.month)
+    && Number.isInteger(parts?.day)
+    && Number.isInteger(parts?.year)
+    && !Number.isNaN(parts.month)
+    && !Number.isNaN(parts.day)
+    && !Number.isNaN(parts.year);
+}
+
+function mergeMessages(existing = [], incoming = []) {
+  const list = Array.isArray(incoming) ? incoming : [incoming];
+  const merged = [...existing];
+
+  list.forEach(msg => {
+    if (!msg) return;
+    const hasMatch = merged.some(item => (
+      (msg.id && item.id === msg.id) ||
+      (item.from === msg.from && item.text === msg.text && item.time === msg.time)
+    ));
+    if (!hasMatch) merged.push(msg);
+  });
+
+  return merged;
 }
 
 // ── Booking detail + chat panel ─────────────────────────────────────────────
@@ -83,6 +129,7 @@ function BookingDetailPanel({ selectedBooking, messagesMap, chatInput, setChatIn
 
 export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser, currentProfile, onLogout }) {
   const [bookingsView, setBookingsView] = useState("list");
+  const [showArchived, setShowArchived] = useState(false);
   const [dashboardBookings, setDashboardBookings] = useState([]);
   const [userShop, setUserShop] = useState(null);
   const [isNewShop, setIsNewShop] = useState(false);
@@ -170,13 +217,15 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
     if (!selectedBooking || !currentUser) return;
     let channel;
     fetchMessages(selectedBooking.id).then(msgs => {
-      setMessagesMap(prev => ({ ...prev, [selectedBooking.id]: msgs }));
+      setMessagesMap(prev => ({
+        ...prev,
+        [selectedBooking.id]: mergeMessages(prev[selectedBooking.id] || [], msgs),
+      }));
     });
     channel = subscribeToMessages(selectedBooking.id, newMsg => {
       setMessagesMap(prev => {
         const existing = prev[selectedBooking.id] || [];
-        if (newMsg.id && existing.some(m => m.id === newMsg.id)) return prev;
-        return { ...prev, [selectedBooking.id]: [...existing, newMsg] };
+        return { ...prev, [selectedBooking.id]: mergeMessages(existing, newMsg) };
       });
     });
     return () => { channel?.unsubscribe(); };
@@ -193,10 +242,10 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
     const result = await dbSendMessage({ bookingId: selectedBooking.id, senderId: currentUser.id, senderRole: "company", text });
     // Supabase postgres_changes doesn't echo back to the sender, so add locally
     if (result) {
-      const now = new Date().toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+      const time = new Date(result.sent_at || Date.now()).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
       setMessagesMap(prev => ({
         ...prev,
-        [selectedBooking.id]: [...(prev[selectedBooking.id] || []), { id: result.id, from: "shop", text, time: now }],
+        [selectedBooking.id]: mergeMessages(prev[selectedBooking.id] || [], { id: result.id, from: "shop", text, time }),
       }));
     }
   };
@@ -204,8 +253,27 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
   const updateBookingStatus = async (bookingId, status) => {
     const { error } = await supabase.from("bookings").update({ status }).eq("id", bookingId);
     if (!error) {
-      setDashboardBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status } : b));
-      setSelectedBooking(prev => prev ? { ...prev, status } : prev);
+      let updatedBooking = null;
+      setDashboardBookings(prev => prev.map(b => {
+        if (b.id !== bookingId) return b;
+        updatedBooking = { ...b, status };
+        return updatedBooking;
+      }));
+      setSelectedBooking(prev => {
+        if (!prev || prev.id !== bookingId) return prev;
+        updatedBooking = { ...prev, status };
+        return updatedBooking;
+      });
+
+      if (status === "confirmed" && updatedBooking?.date) {
+        const dateParts = parseDate(updatedBooking.date);
+        if (isValidCalendarDate(dateParts)) {
+          setCalMonth(dateParts.month);
+          setCalYear(dateParts.year);
+          setSelectedDay(dateParts.day);
+          setBookingsView("calendar");
+        }
+      }
     }
   };
 
@@ -238,9 +306,13 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
   const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
   const firstDow = new Date(calYear, calMonth, 1).getDay(); // 0=Sun
 
+  const activeBookings = dashboardBookings.filter(b => !["completed", "cancelled"].includes(b.status));
+  const archivedBookings = dashboardBookings.filter(b => ["completed", "cancelled"].includes(b.status));
+  const calendarBookings = dashboardBookings.filter(b => b.status === "confirmed");
+
   // Map bookings to day numbers for the current calendar month
   const bookingsByDay = {};
-  dashboardBookings.forEach(b => {
+  calendarBookings.forEach(b => {
     const { month, day, year } = parseDate(b.date);
     if (month === calMonth && year === calYear) {
       if (!bookingsByDay[day]) bookingsByDay[day] = [];
@@ -449,32 +521,74 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
 
             {/* LIST VIEW */}
             {!selectedBooking && bookingsView === "list" && (
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                <thead>
-                  <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-                    {["Customer", "Service", "Date", "Vehicle", "Status", "Action"].map(h => (
-                      <th key={h} style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.3)", fontWeight: 400, textAlign: "left", padding: "8px 12px", letterSpacing: 1 }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {dashboardBookings.length === 0 && (
-                    <tr><td colSpan={6} style={{ padding: "24px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.3)" }}>No bookings yet — they will appear here when customers request appointments.</td></tr>
-                  )}
-                  {dashboardBookings.map(b => (
-                    <tr key={b.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)", cursor: "pointer" }} onClick={() => { setSelectedBooking(b); setChatInput(""); }}>
-                      <td style={{ padding: "14px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 500 }}>{b.customer}</td>
-                      <td style={{ padding: "14px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.6)" }}>{b.service}</td>
-                      <td style={{ padding: "14px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.6)" }}>{b.date}</td>
-                      <td style={{ padding: "14px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.5)" }}>{b.vehicle || "—"}</td>
-                      <td style={{ padding: "14px 12px" }}>
-                        <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: b.status === "confirmed" ? "#10B981" : b.status === "pending" ? "#F59E0B" : "rgba(255,255,255,0.4)" }}>● {b.status}</span>
-                      </td>
-                      <td style={{ padding: "14px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#FF4D00" }}>Open →</td>
+              <div>
+                <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 24 }}>
+                  <thead>
+                    <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                      {["Customer", "Service", "Date", "Vehicle", "Status", "Action"].map(h => (
+                        <th key={h} style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.3)", fontWeight: 400, textAlign: "left", padding: "8px 12px", letterSpacing: 1 }}>{h}</th>
+                      ))}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {activeBookings.length === 0 && (
+                      <tr><td colSpan={6} style={{ padding: "24px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.3)" }}>No active bookings — new and confirmed jobs will appear here.</td></tr>
+                    )}
+                    {activeBookings.map(b => (
+                      <tr key={b.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)", cursor: "pointer" }} onClick={() => { setSelectedBooking(b); setChatInput(""); }}>
+                        <td style={{ padding: "14px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 500 }}>{b.customer}</td>
+                        <td style={{ padding: "14px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.6)" }}>{b.service}</td>
+                        <td style={{ padding: "14px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.6)" }}>{b.date}</td>
+                        <td style={{ padding: "14px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.5)" }}>{b.vehicle || "—"}</td>
+                        <td style={{ padding: "14px 12px" }}>
+                          <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: b.status === "confirmed" ? "#10B981" : b.status === "pending" ? "#F59E0B" : "rgba(255,255,255,0.4)" }}>● {b.status}</span>
+                        </td>
+                        <td style={{ padding: "14px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#FF4D00" }}>Open →</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+
+                {archivedBookings.length > 0 && (
+                  <div style={{ background: "#111", border: "1px solid rgba(255,255,255,0.06)", padding: "20px 24px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: showArchived ? 16 : 0 }}>
+                      <div>
+                        <div style={{ fontSize: 22, letterSpacing: 1 }}>ARCHIVED BOOKINGS</div>
+                        <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.35)", marginTop: 4 }}>{archivedBookings.length} completed or cancelled job{archivedBookings.length !== 1 ? "s" : ""}</div>
+                      </div>
+                      <button onClick={() => setShowArchived(v => !v)} style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.7)", padding: "8px 14px", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", fontSize: 12 }}>
+                        {showArchived ? "Hide Archived" : "Show Archived"}
+                      </button>
+                    </div>
+
+                    {showArchived && (
+                      <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                        <thead>
+                          <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                            {["Customer", "Service", "Date", "Vehicle", "Status", "Action"].map(h => (
+                              <th key={h} style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.3)", fontWeight: 400, textAlign: "left", padding: "8px 12px", letterSpacing: 1 }}>{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {archivedBookings.map(b => (
+                            <tr key={b.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)", cursor: "pointer", opacity: 0.9 }} onClick={() => { setSelectedBooking(b); setChatInput(""); }}>
+                              <td style={{ padding: "14px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 500 }}>{b.customer}</td>
+                              <td style={{ padding: "14px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.6)" }}>{b.service}</td>
+                              <td style={{ padding: "14px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.6)" }}>{b.date}</td>
+                              <td style={{ padding: "14px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.5)" }}>{b.vehicle || "—"}</td>
+                              <td style={{ padding: "14px 12px" }}>
+                                <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: b.status === "completed" ? "rgba(255,255,255,0.55)" : "#EF4444" }}>● {b.status}</span>
+                              </td>
+                              <td style={{ padding: "14px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#FF4D00" }}>Open →</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
+                )}
+              </div>
             )}
 
             {/* CALENDAR VIEW */}
@@ -486,7 +600,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
                   <div style={{ fontSize: 28, letterSpacing: 2 }}>{MONTH_NAMES[calMonth].toUpperCase()} {calYear}</div>
                   <button onClick={nextMonth} style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)", padding: "6px 14px", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", fontSize: 16 }}>›</button>
                   <div style={{ marginLeft: "auto", fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.3)" }}>
-                    {Object.values(bookingsByDay).flat().length} booking{Object.values(bookingsByDay).flat().length !== 1 ? "s" : ""} this month
+                    {Object.values(bookingsByDay).flat().length} confirmed booking{Object.values(bookingsByDay).flat().length !== 1 ? "s" : ""} this month
                   </div>
                 </div>
 
