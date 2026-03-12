@@ -23,6 +23,7 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
   const [loginError, setLoginError] = useState("");
+  const [postLoginNav, setPostLoginNav] = useState(null);
 
   // ── Supabase: shops + auth state ──────────────────────────
   const [shops, setShops] = useState([]);
@@ -56,6 +57,19 @@ export default function App() {
   }, []);
 
   const nav = (v) => {
+    // Gate booking behind customer auth
+    if (v === "booking") {
+      const role = currentProfile?.role || currentUser?.user_metadata?.role;
+      if (!currentUser) {
+        setPostLoginNav("booking");
+        setView("customer-login");
+        return;
+      }
+      if (role === "company") {
+        setView("company-dash");
+        return;
+      }
+    }
     setView(v);
     setBookingConfirmed(false);
     setBookingStep(1);
@@ -63,6 +77,11 @@ export default function App() {
     setSelectedDate(null);
     setLoginError("");
     setLoginForm({ email: "", password: "" });
+    // Re-fetch shops whenever the customer-facing pages are visited
+    // so newly registered companies appear immediately
+    if (v === "search" || v === "landing") {
+      fetchShops().then(data => { if (data) setShops(data); });
+    }
   };
 
   const handleLogin = async (type) => {
@@ -84,6 +103,12 @@ export default function App() {
       }
       setCurrentUser(data.user);
       setCurrentProfile(profile);
+      if (postLoginNav && type === "customer") {
+        const dest = postLoginNav;
+        setPostLoginNav(null);
+        setView(dest);
+        return;
+      }
       nav(type === "customer" ? "customer-dash" : "company-dash");
     } catch {
       setLoginError("Something went wrong. Please try again.");
@@ -95,14 +120,14 @@ export default function App() {
     nav("landing");
   };
 
-  if (view === "landing") return <LandingPage nav={nav} shops={shops} setBookingShop={setBookingShop} setSelectedShop={setSelectedShop} />;
-  if (view === "search") return <SearchPage nav={nav} shops={shops} searchQuery={searchQuery} setSearchQuery={setSearchQuery} setSelectedShop={setSelectedShop} setBookingShop={setBookingShop} />;
-  if (view === "shop") return <ShopProfile nav={nav} selectedShop={selectedShop} setBookingShop={setBookingShop} />;
+  if (view === "landing") return <LandingPage nav={nav} shops={shops} setBookingShop={setBookingShop} setSelectedShop={setSelectedShop} currentUser={currentUser} currentProfile={currentProfile} onLogout={handleLogout} />;
+  if (view === "search") return <SearchPage nav={nav} shops={shops} searchQuery={searchQuery} setSearchQuery={setSearchQuery} setSelectedShop={setSelectedShop} setBookingShop={setBookingShop} currentUser={currentUser} currentProfile={currentProfile} onLogout={handleLogout} />;
+  if (view === "shop") return <ShopProfile nav={nav} selectedShop={selectedShop} setBookingShop={setBookingShop} currentUser={currentUser} currentProfile={currentProfile} onLogout={handleLogout} />;
   if (view === "booking") return <BookingFlow nav={nav} bookingShop={bookingShop} bookingStep={bookingStep} setBookingStep={setBookingStep} selectedSlot={selectedSlot} setSelectedSlot={setSelectedSlot} selectedDate={selectedDate} setSelectedDate={setSelectedDate} bookingConfirmed={bookingConfirmed} setBookingConfirmed={setBookingConfirmed} currentUser={currentUser} />;
   if (view === "customer-dash") return <CustomerDashboard nav={nav} currentUser={currentUser} currentProfile={currentProfile} onLogout={handleLogout} />;
   if (view === "pricing") return <PricingPage nav={nav} />;
   if (view === "company-dash") return <CompanyDashboard nav={nav} dashTab={dashTab} setDashTab={setDashTab} currentUser={currentUser} currentProfile={currentProfile} onLogout={handleLogout} />;
-  if (view === "customer-login") return <CustomerLogin nav={nav} loginForm={loginForm} setLoginForm={setLoginForm} loginError={loginError} setLoginError={setLoginError} handleLogin={handleLogin} />;
+  if (view === "customer-login") return <CustomerLogin nav={nav} loginForm={loginForm} setLoginForm={setLoginForm} loginError={loginError} setLoginError={setLoginError} handleLogin={handleLogin} bookingContext={!!postLoginNav} />;
   if (view === "company-login") return <CompanyLogin nav={nav} loginForm={loginForm} setLoginForm={setLoginForm} loginError={loginError} setLoginError={setLoginError} handleLogin={handleLogin} />;
   return null;
 }

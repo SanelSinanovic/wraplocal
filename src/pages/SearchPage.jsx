@@ -1,6 +1,7 @@
 import { SHOPS as STATIC_SHOPS } from "../data/data";
 
-export default function SearchPage({ nav, shops: liveShops, searchQuery, setSearchQuery, setSelectedShop, setBookingShop }) {
+export default function SearchPage({ nav, shops: liveShops, searchQuery, setSearchQuery, setSelectedShop, setBookingShop, currentUser, currentProfile, onLogout }) {
+  const role = currentUser ? (currentProfile?.role || currentUser?.user_metadata?.role || "customer") : null;
   const shops = liveShops && liveShops.length > 0 ? liveShops : STATIC_SHOPS;
   return (
     <div style={{ fontFamily: "'Bebas Neue', cursive", background: "#0A0A0A", minHeight: "100vh", color: "#fff" }}>
@@ -11,7 +12,16 @@ export default function SearchPage({ nav, shops: liveShops, searchQuery, setSear
           <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="City, zip, or shop name..." style={{ flex: 1, background: "#1A1A1A", border: "1px solid rgba(255,255,255,0.1)", padding: "10px 16px", color: "#fff", fontFamily: "'DM Sans', sans-serif", fontSize: 14, outline: "none" }} />
           <button className="btn-main">Search</button>
         </div>
-        <button className="btn-main" onClick={() => nav("customer-login")} style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.6)", fontSize: 13 }}>My Bookings</button>
+        {currentUser ? (
+          <div style={{ display: "flex", gap: 8, alignItems: "center", flexShrink: 0 }}>
+            <button className="btn-main" onClick={() => nav(role === "company" ? "company-dash" : "customer-dash")} style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.6)", fontSize: 13 }}>
+              {role === "company" ? "Dashboard" : "My Bookings"}
+            </button>
+            <button className="btn-main" onClick={onLogout} style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.4)", fontSize: 13 }}>Sign Out</button>
+          </div>
+        ) : (
+          <button className="btn-main" onClick={() => nav("customer-login")} style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.6)", fontSize: 13 }}>My Bookings</button>
+        )}
       </nav>
 
       <div className="search-pad" style={{ padding: "30px 40px" }}>
@@ -21,21 +31,21 @@ export default function SearchPage({ nav, shops: liveShops, searchQuery, setSear
             <div key={shop.id} className="card-hover" onClick={() => { setSelectedShop(shop); nav("shop"); }}
               style={{ background: "#111", border: "1px solid rgba(255,255,255,0.06)", overflow: "hidden" }}>
               <div className="shop-card-inner" style={{ display: "flex" }}>
-                <img className="shop-img" src={shop.image} alt={shop.name} style={{ width: 240, height: 160, objectFit: "cover", flexShrink: 0 }} />
+                <img className="shop-img" src={shop.image || shop.banner_url || 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=600&q=80'} alt={shop.name} style={{ width: 240, height: 160, objectFit: "cover", flexShrink: 0 }} />
                 <div style={{ padding: "20px 24px", flex: 1, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div>
                     <div style={{ fontSize: 26, letterSpacing: 1, marginBottom: 4 }}>{shop.name}</div>
                     <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)", marginBottom: 10 }}>
-                      ★ {shop.rating} ({shop.reviews} reviews) · {shop.location} · {shop.distance}
+                      ★ {shop.rating} ({shop.reviews ?? shop.review_count ?? 0} reviews) · {shop.location || shop.city}{shop.distance ? ` · ${shop.distance}` : ''}
                     </div>
                     <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                      {shop.tags.map(t => <span key={t} style={{ padding: "2px 10px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.5)" }}>{t}</span>)}
+                      {(shop.tags || []).map(t => <span key={t} style={{ padding: "2px 10px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.5)" }}>{t}</span>)}
                     </div>
                   </div>
                   <div className="shop-card-right" style={{ textAlign: "right", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
                     <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)" }}>From</div>
-                    <div style={{ fontSize: 32, color: "#FF4D00", marginBottom: 8 }}>${shop.price.toLocaleString()}</div>
-                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: shop.availability === "Today" ? "#10B981" : "#F59E0B", marginBottom: 8 }}>● Available {shop.availability}</div>
+                    <div style={{ fontSize: 32, color: "#FF4D00", marginBottom: 8 }}>${(shop.price ?? shop.price_from ?? 0).toLocaleString()}</div>
+                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: shop.availability === "Today" ? "#10B981" : "#F59E0B", marginBottom: 8 }}>{shop.availability ? `● Available ${shop.availability}` : '● Contact for availability'}</div>
                     <button className="btn-main shop-book-btn" onClick={(e) => { e.stopPropagation(); setBookingShop(shop); nav("booking"); }}>Book Now</button>
                   </div>
                 </div>

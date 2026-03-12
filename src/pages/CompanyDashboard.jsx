@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
-import { fetchUserShop, fetchCompanyBookings, createShop, updateShop } from "../lib/queries";
+import { useState, useEffect, useRef } from "react";
+import { supabase } from "../lib/supabase";
+import { fetchUserShop, fetchCompanyBookings, createShop, updateShop, fetchMessages, sendMessage as dbSendMessage, subscribeToMessages, subscribeToShopBookings } from "../lib/queries";
 
 // Parse "Mon DD, YYYY" → { month (0-indexed), day, year }
 function parseDate(str) {
@@ -7,13 +8,93 @@ function parseDate(str) {
   return { month: d.getMonth(), day: d.getDate(), year: d.getFullYear() };
 }
 
+// ── Booking detail + chat panel ─────────────────────────────────────────────
+// Defined at module level so React never remounts it when parent state changes
+function BookingDetailPanel({ selectedBooking, messagesMap, chatInput, setChatInput, sendCompanyMessage, chatEndRef, updateBookingStatus, setSelectedBooking, backLabel }) {
+  if (!selectedBooking) return null;
+  const b = selectedBooking;
+  const messages = messagesMap[b.id] || [];
+  return (
+    <div style={{ marginBottom: 32 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20, cursor: "pointer" }} onClick={() => setSelectedBooking(null)}>
+        <span style={{ color: "#FF4D00", fontSize: 18 }}>←</span>
+        <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.5)" }}>{backLabel}</span>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: 20, alignItems: "start" }}>
+        <div>
+          <div style={{ background: "#111", border: "1px solid rgba(255,255,255,0.07)", padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
+            <div>
+              <div style={{ fontSize: 20, letterSpacing: 1 }}>#{String(b.id).slice(0,8)} — {b.customer}</div>
+              <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)" }}>{b.service} · {b.date} at {b.time_slot}</div>
+            </div>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {b.status === "pending" && (
+                <button onClick={() => updateBookingStatus(b.id, "confirmed")} style={{ background: "#10B981", color: "#fff", border: "none", padding: "8px 16px", fontFamily: "'Bebas Neue', cursive", fontSize: 14, letterSpacing: 1, cursor: "pointer" }}>✓ Confirm</button>
+              )}
+              {b.status !== "completed" && b.status !== "cancelled" && (
+                <button onClick={() => updateBookingStatus(b.id, "completed")} style={{ background: "transparent", color: "rgba(255,255,255,0.4)", border: "1px solid rgba(255,255,255,0.15)", padding: "8px 16px", fontFamily: "'Bebas Neue', cursive", fontSize: 14, letterSpacing: 1, cursor: "pointer" }}>Complete</button>
+              )}
+              {b.status !== "cancelled" && (
+                <button onClick={() => updateBookingStatus(b.id, "cancelled")} style={{ background: "transparent", color: "rgba(255,77,0,0.6)", border: "1px solid rgba(255,77,0,0.2)", padding: "8px 16px", fontFamily: "'Bebas Neue', cursive", fontSize: 14, letterSpacing: 1, cursor: "pointer" }}>Cancel</button>
+              )}
+            </div>
+          </div>
+          <div style={{ background: "#0D0D0D", border: "1px solid rgba(255,255,255,0.07)", borderTop: "none", padding: 20, minHeight: 280, maxHeight: 400, overflowY: "auto", display: "flex", flexDirection: "column", gap: 14 }}>
+            {messages.length === 0 && (
+              <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.25)", textAlign: "center", marginTop: 60 }}>No messages yet. Send the customer a quote or message below.</div>
+            )}
+            {messages.map((msg, i) => (
+              <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: msg.from === "shop" ? "flex-end" : "flex-start" }}>
+                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.25)", marginBottom: 4 }}>{msg.from === "shop" ? "You" : b.customer} · {msg.time}</div>
+                <div style={{ maxWidth: "72%", background: msg.from === "shop" ? "#FF4D00" : "#1A1A1A", color: "#fff", padding: "10px 14px", fontFamily: "'DM Sans', sans-serif", fontSize: 14, lineHeight: 1.5, borderRadius: msg.from === "shop" ? "12px 12px 2px 12px" : "12px 12px 12px 2px" }}>{msg.text}</div>
+              </div>
+            ))}
+            <div ref={chatEndRef} />
+          </div>
+          <div style={{ display: "flex", border: "1px solid rgba(255,255,255,0.07)", borderTop: "none" }}>
+            <input
+              style={{ flex: 1, background: "#1A1A1A", border: "none", padding: "12px 16px", color: "#fff", fontFamily: "'DM Sans', sans-serif", fontSize: 14, outline: "none" }}
+              placeholder={`Message ${b.customer}… send a quote, confirm details, etc.`}
+              value={chatInput}
+              onChange={e => setChatInput(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && sendCompanyMessage()}
+            />
+            <button onClick={sendCompanyMessage} style={{ background: "#FF4D00", color: "#fff", border: "none", padding: "12px 24px", fontFamily: "'Bebas Neue', cursive", fontSize: 16, letterSpacing: 2, cursor: "pointer" }}>Send</button>
+          </div>
+        </div>
+        <div style={{ background: "#111", border: "1px solid rgba(255,255,255,0.07)", padding: 20 }}>
+          <div style={{ fontSize: 18, letterSpacing: 1, marginBottom: 16 }}>REQUEST DETAILS</div>
+          {[["Customer", b.customer],["Service", b.service],["Date", b.date],["Time", b.time_slot],["Vehicle", b.vehicle || "—"],["Design", b.design_option || "—"]].map(([l, v]) => (
+            <div key={l} style={{ marginBottom: 12 }}>
+              <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)", letterSpacing: 1, marginBottom: 2 }}>{l.toUpperCase()}</div>
+              <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#fff" }}>{v}</div>
+            </div>
+          ))}
+          <div style={{ height: 1, background: "rgba(255,255,255,0.06)", margin: "14px 0" }} />
+          <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)", letterSpacing: 1, marginBottom: 6 }}>STATUS</div>
+          <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: b.status === "confirmed" ? "#10B981" : b.status === "pending" ? "#F59E0B" : b.status === "cancelled" ? "#EF4444" : "rgba(255,255,255,0.5)" }}>
+            ● {b.status?.charAt(0).toUpperCase() + b.status?.slice(1)}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser, currentProfile, onLogout }) {
   const [bookingsView, setBookingsView] = useState("list");
   const [dashboardBookings, setDashboardBookings] = useState([]);
   const [userShop, setUserShop] = useState(null);
   const [isNewShop, setIsNewShop] = useState(false);
-  const [profileForm, setProfileForm] = useState({ name: "", city: "", state: "", phone: "", website: "", bio: "", turnaround: "", price_from: "" });
-  const [saveStatus, setSaveStatus] = useState(""); // "", "saving", "saved", "error"
+  const [profileForm, setProfileForm] = useState({ name: "", city: "", phone: "", website: "", bio: "", price_from: "" });
+  const [saveStatus, setSaveStatus] = useState("");
+  const [shopError, setShopError] = useState("");
+  const [bookingsError, setBookingsError] = useState("");
+  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [selectedBookingSource, setSelectedBookingSource] = useState("bookings");
+  const [messagesMap, setMessagesMap] = useState({});
+  const [chatInput, setChatInput] = useState("");
+  const chatEndRef = useRef(null);
   const today = new Date();
   const [calYear, setCalYear] = useState(today.getFullYear());
   const [calMonth, setCalMonth] = useState(today.getMonth());
@@ -23,41 +104,110 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
     setProfileForm({
       name: shop.name || "",
       city: shop.city || "",
-      state: shop.state || "",
       phone: shop.phone || "",
       website: shop.website || "",
       bio: shop.bio || "",
-      turnaround: shop.turnaround || "",
       price_from: shop.price_from != null ? String(shop.price_from) : "",
     });
   };
 
-  // Fetch (or auto-create) the shop for the logged-in company user
   useEffect(() => {
     if (!currentUser) return;
-    fetchUserShop(currentUser.id).then(async shop => {
+    let bookingsChannel = null;
+    setShopError("");
+
+    (async () => {
+      const { data: shop, error: fetchError } = await fetchUserShop(currentUser.id);
+      if (fetchError) {
+        setShopError("Could not load your shop: " + fetchError.message);
+        return;
+      }
       if (!shop) {
-        // First login — create a shop record so customers can find them
         const businessName =
           currentUser.user_metadata?.business_name ||
           currentProfile?.name ||
           'My Wrap Shop';
-        const newShop = await createShop({ ownerId: currentUser.id, name: businessName });
-        if (newShop) {
-          setUserShop(newShop);
-          syncProfileForm(newShop);
-          setIsNewShop(true);
-          setDashTab("profile");
+        await supabase.from('profiles').upsert({
+          id: currentUser.id,
+          role: 'company',
+          name: currentUser.user_metadata?.name || businessName,
+        }, { onConflict: 'id' });
+        const { data: newShop, error: createError } = await createShop({ ownerId: currentUser.id, name: businessName });
+        if (createError || !newShop) {
+          setShopError("Could not create your shop: " + (createError?.message || "Unknown error"));
+          return;
         }
+        setUserShop(newShop);
+        syncProfileForm(newShop);
+        setIsNewShop(true);
+        setDashTab("profile");
         return;
       }
       setUserShop(shop);
       syncProfileForm(shop);
-      fetchCompanyBookings(shop.id).then(data => {
-        if (data && data.length > 0) setDashboardBookings(data);
+
+      const { data: bookingsData, error: bookingsError } = await fetchCompanyBookings(shop.id);
+      if (bookingsError) {
+        console.error('fetchCompanyBookings error:', bookingsError);
+        setBookingsError('Could not load bookings: ' + (bookingsError.message || JSON.stringify(bookingsError)));
+      } else {
+        setDashboardBookings(bookingsData || []);
+      }
+
+      // Realtime: refresh bookings list whenever anything changes on this shop
+      bookingsChannel = subscribeToShopBookings(shop.id, async () => {
+        const { data: refreshed } = await fetchCompanyBookings(shop.id);
+        if (refreshed) setDashboardBookings(refreshed);
+      });
+    })();
+
+    return () => { bookingsChannel?.unsubscribe(); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser]);
+
+  // When company selects a booking, load its messages and subscribe
+  useEffect(() => {
+    if (!selectedBooking || !currentUser) return;
+    let channel;
+    fetchMessages(selectedBooking.id).then(msgs => {
+      setMessagesMap(prev => ({ ...prev, [selectedBooking.id]: msgs }));
+    });
+    channel = subscribeToMessages(selectedBooking.id, newMsg => {
+      setMessagesMap(prev => {
+        const existing = prev[selectedBooking.id] || [];
+        if (newMsg.id && existing.some(m => m.id === newMsg.id)) return prev;
+        return { ...prev, [selectedBooking.id]: [...existing, newMsg] };
       });
     });
-  }, [currentUser, currentProfile]);
+    return () => { channel?.unsubscribe(); };
+  }, [selectedBooking, currentUser]);
+
+  useEffect(() => {
+    if (selectedBooking) chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messagesMap, selectedBooking]);
+
+  const sendCompanyMessage = async () => {
+    const text = chatInput.trim();
+    if (!text || !selectedBooking) return;
+    setChatInput("");
+    const result = await dbSendMessage({ bookingId: selectedBooking.id, senderId: currentUser.id, senderRole: "company", text });
+    // Supabase postgres_changes doesn't echo back to the sender, so add locally
+    if (result) {
+      const now = new Date().toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+      setMessagesMap(prev => ({
+        ...prev,
+        [selectedBooking.id]: [...(prev[selectedBooking.id] || []), { id: result.id, from: "shop", text, time: now }],
+      }));
+    }
+  };
+
+  const updateBookingStatus = async (bookingId, status) => {
+    const { error } = await supabase.from("bookings").update({ status }).eq("id", bookingId);
+    if (!error) {
+      setDashboardBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status } : b));
+      setSelectedBooking(prev => prev ? { ...prev, status } : prev);
+    }
+  };
 
   const handleSaveProfile = async () => {
     if (!userShop) return;
@@ -65,13 +215,10 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
     const updates = {
       name: profileForm.name.trim() || userShop.name,
       city: profileForm.city.trim(),
-      state: profileForm.state.trim(),
       phone: profileForm.phone.trim(),
       website: profileForm.website.trim(),
       bio: profileForm.bio.trim(),
-      turnaround: profileForm.turnaround.trim(),
       price_from: profileForm.price_from ? parseFloat(profileForm.price_from) : 0,
-      avatar: (profileForm.name || userShop.name).split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase(),
     };
     const updated = await updateShop(userShop.id, updates);
     if (updated) {
@@ -85,6 +232,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
   };
 
   const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
   const DAY_NAMES = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 
   const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
@@ -99,6 +247,10 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
       bookingsByDay[day].push(b);
     }
   });
+
+  const pendingCount = dashboardBookings.filter(b => b.status === "pending").length;
+
+  // BookingDetailPanel is defined at module level — see top of file
 
   const prevMonth = () => {
     if (calMonth === 0) { setCalMonth(11); setCalYear(y => y - 1); }
@@ -119,8 +271,13 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
       <div className="company-sidebar" style={{ width: 220, background: "#0D0D0D", borderRight: "1px solid rgba(255,255,255,0.06)", padding: "24px 16px", display: "flex", flexDirection: "column", flexShrink: 0 }}>
         <div className="sidebar-logo" style={{ fontSize: 20, letterSpacing: 4, color: "#FF4D00", marginBottom: 32, padding: "0 4px", cursor: "pointer" }} onClick={() => nav("landing")}>WRAP<span style={{ color: "#fff" }}>LOCAL</span></div>
         <div className="sidebar-sub" style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.2)", letterSpacing: 2, marginBottom: 8, padding: "0 4px" }}>{userShop?.name?.toUpperCase() || "MY SHOP"}</div>
-        {[["overview", "📊 Overview"], ["bookings", "📅 Bookings"], ["profile", "✏️ Profile"], ["payments", "💰 Payments"], ["settings", "⚙️ Settings"]].map(([k, l]) => (
-          <div key={k} className={`nav-item${dashTab === k ? " active" : ""}`} onClick={() => setDashTab(k)}>{l}</div>
+        {[["overview", "📊 Overview"], ["requests", "📬 Requests"], ["bookings", "📅 Bookings"], ["profile", "✏️ Profile"], ["payments", "💰 Payments"], ["settings", "⚙️ Settings"]].map(([k, l]) => (
+          <div key={k} className={`nav-item${dashTab === k ? " active" : ""}`} onClick={() => { setDashTab(k); setSelectedBooking(null); }} style={{ justifyContent: "space-between" }}>
+            <span>{l}</span>
+            {k === "requests" && pendingCount > 0 && (
+              <span style={{ background: "#FF4D00", color: "#fff", fontFamily: "'DM Sans', sans-serif", fontSize: 11, fontWeight: 700, padding: "1px 7px", borderRadius: 10, minWidth: 20, textAlign: "center" }}>{pendingCount}</span>
+            )}
+          </div>
         ))}
         <div style={{ flex: 1 }} />
         {currentUser && (
@@ -136,6 +293,18 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
 
       {/* Main content */}
       <div className="company-main" style={{ flex: 1, overflow: "auto", padding: "32px 40px" }}>
+        {shopError && (
+          <div style={{ background: "rgba(255,77,0,0.1)", border: "1px solid rgba(255,77,0,0.4)", padding: "16px 20px", marginBottom: 24, fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "#FF4D00", lineHeight: 1.6 }}>
+            <b>Shop setup failed:</b> {shopError}
+            <button onClick={() => { setShopError(""); }} style={{ marginLeft: 16, background: "#FF4D00", color: "#fff", border: "none", padding: "4px 12px", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", fontSize: 12 }}>Retry</button>
+          </div>
+        )}
+        {bookingsError && (
+          <div style={{ background: "rgba(255,77,0,0.06)", border: "1px solid rgba(255,77,0,0.25)", padding: "12px 16px", marginBottom: 16, fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,120,60,0.9)", lineHeight: 1.6 }}>
+            ⚠️ {bookingsError}
+            <button onClick={() => setBookingsError("")} style={{ marginLeft: 12, background: "none", border: "none", color: "#FF4D00", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", fontSize: 12, textDecoration: "underline" }}>Dismiss</button>
+          </div>
+        )}
         {dashTab === "overview" && (() => {
           const totalRevenue = dashboardBookings.reduce((s, b) => s + (b.amount || 0), 0);
           const totalFee = Math.round(totalRevenue * 0.07 * 100) / 100;
@@ -215,9 +384,57 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
           );
         })()}
 
+        {dashTab === "requests" && (
+          <div>
+            {selectedBooking ? (
+              <BookingDetailPanel selectedBooking={selectedBooking} messagesMap={messagesMap} chatInput={chatInput} setChatInput={setChatInput} sendCompanyMessage={sendCompanyMessage} chatEndRef={chatEndRef} updateBookingStatus={updateBookingStatus} setSelectedBooking={setSelectedBooking} backLabel="← Back to booking requests" />
+            ) : (
+              <div>
+                <div style={{ marginBottom: 28 }}>
+                  <div style={{ fontSize: 40, letterSpacing: 2, marginBottom: 4 }}>BOOKING REQUESTS</div>
+                  <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.4)" }}>New appointment requests from customers waiting for your response</div>
+                </div>
+                {dashboardBookings.filter(b => b.status === "pending").length === 0 ? (
+                  <div style={{ background: "#111", border: "1px solid rgba(255,255,255,0.06)", padding: "48px 32px", textAlign: "center" }}>
+                    <div style={{ fontSize: 40, marginBottom: 12 }}>📬</div>
+                    <div style={{ fontSize: 24, letterSpacing: 1, marginBottom: 8 }}>NO PENDING REQUESTS</div>
+                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.3)" }}>New booking requests will appear here when customers submit them.</div>
+                  </div>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                    {dashboardBookings.filter(b => b.status === "pending").map(b => (
+                      <div key={b.id}
+                        onClick={() => { setSelectedBooking(b); setChatInput(""); }}
+                        style={{ background: "#111", border: "1px solid rgba(255,77,0,0.25)", padding: "20px 24px", cursor: "pointer", transition: "border-color 0.2s", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16 }}
+                        onMouseEnter={e => e.currentTarget.style.borderColor = "#FF4D00"}
+                        onMouseLeave={e => e.currentTarget.style.borderColor = "rgba(255,77,0,0.25)"}>
+                        <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
+                          <div style={{ width: 44, height: 44, background: "rgba(255,77,0,0.12)", border: "1px solid rgba(255,77,0,0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0 }}>📅</div>
+                          <div>
+                            <div style={{ fontSize: 20, letterSpacing: 1, marginBottom: 4 }}>{b.customer}</div>
+                            <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.5)", marginBottom: 2 }}>{b.service}</div>
+                            <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.3)" }}>{b.date} at {b.time_slot} · {b.vehicle || "Vehicle not specified"}</div>
+                          </div>
+                        </div>
+                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6, flexShrink: 0 }}>
+                          <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#F59E0B" }}>● Pending Review</span>
+                          <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#FF4D00" }}>Open Request →</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
         {dashTab === "bookings" && (
           <div>
+            {selectedBooking && <BookingDetailPanel selectedBooking={selectedBooking} messagesMap={messagesMap} chatInput={chatInput} setChatInput={setChatInput} sendCompanyMessage={sendCompanyMessage} chatEndRef={chatEndRef} updateBookingStatus={updateBookingStatus} setSelectedBooking={setSelectedBooking} backLabel="← Back to all bookings" />}
+
             {/* Header + toggle */}
+            {!selectedBooking && (
             <div className="bookings-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 24 }}>
               <div>
                 <div style={{ fontSize: 40, letterSpacing: 2, marginBottom: 4 }}>ALL BOOKINGS</div>
@@ -228,29 +445,32 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
                 <button className={bookingsView === "calendar" ? "active" : ""} onClick={() => setBookingsView("calendar")}>📅 Calendar</button>
               </div>
             </div>
+            )}
 
             {/* LIST VIEW */}
-            {bookingsView === "list" && (
+            {!selectedBooking && bookingsView === "list" && (
               <table style={{ width: "100%", borderCollapse: "collapse" }}>
                 <thead>
                   <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-                    {["ID", "Customer", "Service", "Date", "Status", "Amount", "Your Payout"].map(h => (
+                    {["Customer", "Service", "Date", "Vehicle", "Status", "Action"].map(h => (
                       <th key={h} style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.3)", fontWeight: 400, textAlign: "left", padding: "8px 12px", letterSpacing: 1 }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
+                  {dashboardBookings.length === 0 && (
+                    <tr><td colSpan={6} style={{ padding: "24px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.3)" }}>No bookings yet — they will appear here when customers request appointments.</td></tr>
+                  )}
                   {dashboardBookings.map(b => (
-                    <tr key={b.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                      <td style={{ padding: "14px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#FF4D00" }}>{b.id}</td>
-                      <td style={{ padding: "14px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 13 }}>{b.customer}</td>
+                    <tr key={b.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)", cursor: "pointer" }} onClick={() => { setSelectedBooking(b); setChatInput(""); }}>
+                      <td style={{ padding: "14px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 500 }}>{b.customer}</td>
                       <td style={{ padding: "14px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.6)" }}>{b.service}</td>
                       <td style={{ padding: "14px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.6)" }}>{b.date}</td>
+                      <td style={{ padding: "14px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.5)" }}>{b.vehicle || "—"}</td>
                       <td style={{ padding: "14px 12px" }}>
-                        <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: b.status === "confirmed" ? "#10B981" : "rgba(255,255,255,0.4)" }}>● {b.status}</span>
+                        <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: b.status === "confirmed" ? "#10B981" : b.status === "pending" ? "#F59E0B" : "rgba(255,255,255,0.4)" }}>● {b.status}</span>
                       </td>
-                      <td style={{ padding: "14px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 13 }}>${b.amount}</td>
-                      <td style={{ padding: "14px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#10B981" }}>${b.payout.toFixed(2)}</td>
+                      <td style={{ padding: "14px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#FF4D00" }}>Open →</td>
                     </tr>
                   ))}
                 </tbody>
@@ -258,7 +478,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
             )}
 
             {/* CALENDAR VIEW */}
-            {bookingsView === "calendar" && (
+            {!selectedBooking && bookingsView === "calendar" && (
               <div>
                 {/* Month nav */}
                 <div style={{ display: "flex", alignItems: "center", gap: 20, marginBottom: 20 }}>
@@ -389,9 +609,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
                 ["Phone", "phone", "tel", "e.g. (404) 555-0123"],
                 ["Website", "website", "text", "e.g. chromekingswraps.com"],
                 ["City", "city", "text", "e.g. Atlanta"],
-                ["State", "state", "text", "e.g. GA"],
                 ["Starting Price ($)", "price_from", "number", "e.g. 500"],
-                ["Turnaround Time", "turnaround", "text", "e.g. 2-3 days"],
               ].map(([label, key, type, placeholder]) => (
                 <div key={key}>
                   <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", letterSpacing: 1, marginBottom: 6 }}>{label.toUpperCase()}</div>

@@ -37,10 +37,11 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
       setMessagesMap(prev => ({ ...prev, [selectedBooking.id]: msgs }));
     });
     channel = subscribeToMessages(selectedBooking.id, newMsg => {
-      setMessagesMap(prev => ({
-        ...prev,
-        [selectedBooking.id]: [...(prev[selectedBooking.id] || []), newMsg],
-      }));
+      setMessagesMap(prev => {
+        const existing = prev[selectedBooking.id] || [];
+        if (newMsg.id && existing.some(m => m.id === newMsg.id)) return prev;
+        return { ...prev, [selectedBooking.id]: [...existing, newMsg] };
+      });
     });
     return () => { channel?.unsubscribe(); };
   }, [selectedBooking, currentUser]);
@@ -52,18 +53,14 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
   const sendMessage = async () => {
     const text = chatInput.trim();
     if (!text || !selectedBooking) return;
-    const now = new Date().toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
-    const optimistic = { from: "me", text, time: now };
-    // Optimistic local update
-    setMessagesMap(prev => ({
-      ...prev,
-      [selectedBooking.id]: [...(prev[selectedBooking.id] || []), optimistic],
-    }));
     setChatInput("");
     // Persist to Supabase if logged in
     if (currentUser) {
       await dbSendMessage({ bookingId: selectedBooking.id, senderId: currentUser.id, senderRole: "customer", text });
     } else {
+      // Demo: simulate shop reply (optimistic for non-logged-in demo only)
+      const now = new Date().toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+      setMessagesMap(prev => ({ ...prev, [selectedBooking.id]: [...(prev[selectedBooking.id] || []), { from: "me", text, time: now }] }));
       // Demo: simulate shop reply
       if (selectedBooking.status === "confirmed") {
         setTimeout(() => {

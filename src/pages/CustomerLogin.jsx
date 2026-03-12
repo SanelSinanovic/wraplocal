@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { supabase } from "../lib/supabase";
 
-export default function CustomerLogin({ nav, loginForm, setLoginForm, loginError, setLoginError, handleLogin }) {
+export default function CustomerLogin({ nav, loginForm, setLoginForm, loginError, setLoginError, handleLogin, bookingContext }) {
   const [mode, setMode] = useState("login"); // "login" | "signup"
   const [signupForm, setSignupForm] = useState({ name: "", email: "", password: "", confirm: "" });
   const [signupError, setSignupError] = useState("");
@@ -36,6 +36,15 @@ export default function CustomerLogin({ nav, loginForm, setLoginForm, loginError
       </nav>
       <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: 40 }}>
         <div style={{ width: "100%", maxWidth: 400 }}>
+          {bookingContext && (
+            <div style={{ background: "rgba(255,77,0,0.08)", border: "1px solid rgba(255,77,0,0.3)", padding: "14px 18px", marginBottom: 28, display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ fontSize: 20 }}>🔒</span>
+              <div>
+                <div style={{ fontFamily: "'Bebas Neue', cursive", fontSize: 16, letterSpacing: 1, color: "#FF4D00", marginBottom: 2 }}>SIGN IN TO CONTINUE</div>
+                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.5)", lineHeight: 1.4 }}>You need an account to book and track your appointment requests.</div>
+              </div>
+            </div>
+          )}
 
           {/* Mode tabs */}
           <div style={{ display: "flex", marginBottom: 32, borderBottom: "1px solid rgba(255,255,255,0.08)" }}>

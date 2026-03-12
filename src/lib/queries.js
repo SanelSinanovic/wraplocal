@@ -28,9 +28,12 @@ export async function fetchUserShop(ownerId) {
     .from('shops')
     .select('*')
     .eq('owner_id', ownerId)
-    .single()
-  if (error) { return null }
-  return data
+    .limit(1)
+  if (error) {
+    console.error('fetchUserShop:', error)
+    return { data: null, error }
+  }
+  return { data: (data && data.length > 0) ? data[0] : null, error: null }
 }
 
 export async function updateShop(shopId, fields) {
@@ -44,25 +47,26 @@ export async function updateShop(shopId, fields) {
   return data
 }
 
-export async function createShop({ ownerId, name, city = '', state = '' }) {
+export async function createShop({ ownerId, name, city = '' }) {
   const { data, error } = await supabase
     .from('shops')
-    .insert({
+    .upsert({
       owner_id: ownerId,
       name: name || 'My Wrap Shop',
       city,
-      state,
       rating: 0,
       review_count: 0,
       price_from: 0,
-      turnaround: 'TBD',
-      avatar: name ? name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() : 'WS',
       color: '#FF4D00',
-    })
+    }, { onConflict: 'owner_id', ignoreDuplicates: true })
     .select()
-    .single()
-  if (error) { console.error('createShop:', error); return null }
-  return data
+    .limit(1)
+  if (error) { console.error('createShop:', error); return { data: null, error } }
+  // If ignoreDuplicates suppressed the insert, fetch the existing row
+  if (!data || data.length === 0) {
+    return fetchUserShop(ownerId)
+  }
+  return { data: data[0], error: null }
 }
 
 // ── PROFILES ─────────────────────────────────────────────────────────────────
@@ -101,40 +105,70 @@ export async function fetchCustomerBookings(customerId) {
 export async function fetchCompanyBookings(shopId) {
   const { data, error } = await supabase
     .from('bookings')
-    .select('*, customer:profiles(name)')
+    .select('*')
     .eq('shop_id', shopId)
     .order('created_at', { ascending: false })
-  if (error) { console.error('fetchCompanyBookings:', error); return null }
-  return data.map(b => ({
-    ...b,
-    customer: b.customer?.name || 'Unknown',
-    payout: b.amount ? Math.round(b.amount * 0.93 * 100) / 100 : 0,
-  }))
+  if (error) { console.error('fetchCompanyBookings:', error); return { data: null, error } }
+  if (!data || data.length === 0) return { data: [], error: null }
+
+  // Fetch customer names from profiles in one batch (best-effort — may be empty if no profile row)
+  const customerIds = [...new Set(data.map(b => b.customer_id).filter(Boolean))]
+  const { data: profiles } = await supabase
+    .from('profiles')
+    .select('id, name')
+    .in('id', customerIds)
+  const nameById = Object.fromEntries((profiles || []).map(p => [p.id, p.name]))
+
+  return {
+    data: data.map(b => ({
+      ...b,
+      customer: nameById[b.customer_id] || 'Customer',
+      payout: b.amount ? Math.round(b.amount * 0.93 * 100) / 100 : 0,
+    })),
+    error: null,
+  }
 }
 
-export async function createBooking({ shopId, customerId, service, date, timeSlot, vehicle, designOption, designFileUrl, amount }) {
-  const fee = Math.round(amount * 0.07 * 100) / 100
-  const total = Math.round((amount + fee) * 100) / 100
+export function subscribeToShopBookings(shopId, callback) {
+  return supabase
+    .channel(`bookings-shop-${shopId}`)
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'bookings',
+      filter: `shop_id=eq.${shopId}`,
+    }, payload => callback(payload))
+    .subscribe()
+}
+
+export async function createBooking({ shopId, customerId, service, date, timeSlot, vehicle, designOption, designFileUrl, amount = 0 }) {
+  // Build the row with only the required columns first
+  const row = {
+    shop_id: shopId,
+    customer_id: customerId,
+    service,
+    date,
+    time_slot: timeSlot,
+    status: 'pending',
+  }
+  // Add optional columns — these only work if the columns exist in your DB
+  if (vehicle) row.vehicle = vehicle
+  if (designOption) row.design_option = designOption
+  if (designFileUrl) row.design_file_url = designFileUrl
+  if (amount != null) {
+    const fee = Math.round(amount * 0.07 * 100) / 100
+    const total = Math.round((amount + fee) * 100) / 100
+    row.amount = amount
+    row.fee = fee
+    row.total = total
+  }
   const { data, error } = await supabase
     .from('bookings')
-    .insert({
-      shop_id: shopId,
-      customer_id: customerId,
-      service,
-      date,
-      time_slot: timeSlot,
-      vehicle,
-      design_option: designOption || null,
-      design_file_url: designFileUrl || null,
-      amount,
-      fee,
-      total,
-      status: 'pending',
-    })
+    .insert(row)
     .select()
     .single()
-  if (error) { console.error('createBooking:', error); return null }
-  return data
+  if (error) { console.error('createBooking:', error); return { data: null, error } }
+  return { data, error: null }
 }
 
 // ── MESSAGES ─────────────────────────────────────────────────────────────────

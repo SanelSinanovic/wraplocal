@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { SHOPS as STATIC_SHOPS } from "../data/data";
 
-export default function LandingPage({ nav, shops: liveShops, setBookingShop, setSelectedShop }) {
+export default function LandingPage({ nav, shops: liveShops, setBookingShop, setSelectedShop, currentUser, currentProfile, onLogout }) {
+  const role = currentUser ? (currentProfile?.role || currentUser?.user_metadata?.role || "customer") : null;
+  const firstName = currentUser ? ((currentProfile?.name || currentUser?.user_metadata?.name || currentUser?.email || "").split(" ")[0].split("@")[0]) : null;
   // Fall back to bundled static data until Supabase responds
   const shops = liveShops && liveShops.length > 0 ? liveShops : STATIC_SHOPS;
   const [menuOpen, setMenuOpen] = useState(false);
@@ -48,11 +50,24 @@ export default function LandingPage({ nav, shops: liveShops, setBookingShop, set
         <div className="nav-links" style={{ display: "flex", gap: 32 }}>
           <span className="nav-link" onClick={() => nav("search")}>Find Shops</span>
           <span className="nav-link" onClick={() => nav("pricing")}>For Businesses</span>
-          <span className="nav-link" onClick={() => nav("customer-login")}>My Bookings</span>
+          {role !== "company" && (
+            <span className="nav-link" onClick={() => nav(currentUser ? "customer-dash" : "customer-login")}>My Bookings</span>
+          )}
         </div>
-        <div className="nav-btns" style={{ display: "flex", gap: 12 }}>
-          <button className="btn-ghost" onClick={() => nav("company-login")}>Business Login</button>
-          <button className="btn-main" onClick={() => nav("search")}>Find a Shop</button>
+        <div className="nav-btns" style={{ display: "flex", gap: 12, alignItems: "center" }}>
+          {currentUser ? (
+            <>
+              <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.5)" }}>👤 {firstName}</span>
+              <button className="btn-ghost" onClick={() => nav(role === "company" ? "company-dash" : "customer-dash")}>{role === "company" ? "Dashboard" : "My Bookings"}</button>
+              <button className="btn-ghost" style={{ borderColor: "rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.5)" }} onClick={onLogout}>Sign Out</button>
+            </>
+          ) : (
+            <>
+              <button className="btn-ghost" onClick={() => nav("customer-login")}>Customer Login</button>
+              <button className="btn-ghost" onClick={() => nav("company-login")}>Business Login</button>
+              <button className="btn-main" onClick={() => nav("search")}>Find a Shop</button>
+            </>
+          )}
         </div>
         <button className="hamburger" onClick={() => setMenuOpen(o => !o)} aria-label="Menu">
           {menuOpen ? (
@@ -66,9 +81,21 @@ export default function LandingPage({ nav, shops: liveShops, setBookingShop, set
         <div className="mobile-menu">
           <span onClick={() => { nav("search"); setMenuOpen(false); }}>Find Shops</span>
           <span onClick={() => { nav("pricing"); setMenuOpen(false); }}>For Businesses</span>
-          <span onClick={() => { nav("customer-login"); setMenuOpen(false); }}>My Bookings</span>
-          <button className="mob-btn" onClick={() => { nav("search"); setMenuOpen(false); }}>Find a Shop →</button>
-          <button className="mob-btn-ghost" onClick={() => { nav("company-login"); setMenuOpen(false); }}>Business Login</button>
+          {role !== "company" && (
+            <span onClick={() => { nav(currentUser ? "customer-dash" : "customer-login"); setMenuOpen(false); }}>My Bookings</span>
+          )}
+          {currentUser ? (
+            <>
+              <button className="mob-btn" onClick={() => { nav(role === "company" ? "company-dash" : "customer-dash"); setMenuOpen(false); }}>{role === "company" ? "My Dashboard →" : "My Bookings →"}</button>
+              <button className="mob-btn-ghost" onClick={() => { onLogout(); setMenuOpen(false); }}>Sign Out</button>
+            </>
+          ) : (
+            <>
+              <button className="mob-btn" onClick={() => { nav("search"); setMenuOpen(false); }}>Find a Shop →</button>
+              <button className="mob-btn-ghost" onClick={() => { nav("customer-login"); setMenuOpen(false); }}>Customer Login</button>
+              <button className="mob-btn-ghost" onClick={() => { nav("company-login"); setMenuOpen(false); }}>Business Login</button>
+            </>
+          )}
         </div>
       )}
 
@@ -180,21 +207,21 @@ export default function LandingPage({ nav, shops: liveShops, setBookingShop, set
             <div key={shop.id} className="card-hover" onClick={() => { setSelectedShop(shop); nav("shop"); }}
               style={{ background: "#111", border: "1px solid rgba(255,255,255,0.06)", overflow: "hidden" }}>
               <div style={{ position: "relative", height: 200, overflow: "hidden" }}>
-                <img src={shop.image} alt={shop.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                <img src={shop.image || shop.banner_url || 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=600&q=80'} alt={shop.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.7), transparent)" }} />
-                <div style={{ position: "absolute", top: 12, right: 12, background: shop.color, padding: "3px 10px", fontFamily: "'DM Sans', sans-serif", fontSize: 12, fontWeight: 600 }}>{shop.availability}</div>
+                {shop.availability && <div style={{ position: "absolute", top: 12, right: 12, background: shop.color || '#FF4D00', padding: "3px 10px", fontFamily: "'DM Sans', sans-serif", fontSize: 12, fontWeight: 600 }}>{shop.availability}</div>}
               </div>
               <div style={{ padding: 20 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
                   <div style={{ fontSize: 22, letterSpacing: 1 }}>{shop.name}</div>
                   <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#FF4D00", fontWeight: 600 }}>★ {shop.rating}</div>
                 </div>
-                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)", marginBottom: 12 }}>{shop.location} · {shop.distance} · {shop.reviews} reviews</div>
+                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)", marginBottom: 12 }}>{shop.location || shop.city}{shop.distance ? ` · ${shop.distance}` : ''} · {shop.reviews ?? shop.review_count ?? 0} reviews</div>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16 }}>
-                  {shop.tags.map(t => <span key={t} style={{ padding: "3px 10px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.5)" }}>{t}</span>)}
+                  {(shop.tags || []).map(t => <span key={t} style={{ padding: "3px 10px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.5)" }}>{t}</span>)}
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.5)" }}>From <b style={{ color: "#fff" }}>${shop.price.toLocaleString()}</b></span>
+                  <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.5)" }}>From <b style={{ color: "#fff" }}>${(shop.price ?? shop.price_from ?? 0).toLocaleString()}</b></span>
                   <button className="btn-main" style={{ fontSize: 13, padding: "8px 18px" }} onClick={(e) => { e.stopPropagation(); setBookingShop(shop); nav("booking"); }}>Book Now</button>
                 </div>
               </div>
