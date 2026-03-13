@@ -180,15 +180,52 @@ export async function fetchMessages(bookingId) {
     .eq('booking_id', bookingId)
     .order('sent_at', { ascending: true })
   if (error) { console.error('fetchMessages:', error); return [] }
-  // Normalize to { from, text, time } shape the chat UI expects
-  return data.map(m => ({
+  return data.map(normalizeMessageRow)
+}
+
+function normalizeMessageRow(m) {
+  const text = m.text || ''
+  const from = m.sender_role === 'customer' ? 'me' : 'shop'
+  const time = new Date(m.sent_at).toLocaleString('en-US', {
+    month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
+  })
+
+  if (text.startsWith('QUOTE_OFFER::')) {
+    const amount = Number(text.split('::')[1])
+    return {
+      id: m.id,
+      from,
+      text: Number.isFinite(amount) ? `Quote offer: $${amount.toFixed(2)}` : 'Quote offer received',
+      time,
+      quoteOffer: Number.isFinite(amount) ? amount : null,
+      rawText: text,
+    }
+  }
+
+  if (text.startsWith('QUOTE_RESPONSE::')) {
+    const [, decision, amountRaw] = text.split('::')
+    const amount = Number(amountRaw)
+    const decisionLabel = decision === 'accepted' ? 'accepted' : 'declined'
+    return {
+      id: m.id,
+      from,
+      text: Number.isFinite(amount)
+        ? `Quote ${decisionLabel} (${decision === 'accepted' ? '$' + amount.toFixed(2) : '$' + amount.toFixed(2)})`
+        : `Quote ${decisionLabel}`,
+      time,
+      quoteResponse: decision,
+      quoteAmount: Number.isFinite(amount) ? amount : null,
+      rawText: text,
+    }
+  }
+
+  return {
     id: m.id,
-    from: m.sender_role === 'customer' ? 'me' : 'shop',
-    text: m.text,
-    time: new Date(m.sent_at).toLocaleString('en-US', {
-      month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
-    }),
-  }))
+    from,
+    text,
+    time,
+    rawText: text,
+  }
 }
 
 export async function sendMessage({ bookingId, senderId, senderRole, text }) {
@@ -217,14 +254,7 @@ export function subscribeToMessages(bookingId, callback) {
       filter: `booking_id=eq.${bookingId}`,
     }, payload => {
       const m = payload.new
-      callback({
-        id: m.id,
-        from: m.sender_role === 'customer' ? 'me' : 'shop',
-        text: m.text,
-        time: new Date(m.sent_at).toLocaleString('en-US', {
-          month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
-        }),
-      })
+      callback(normalizeMessageRow(m))
     })
     .subscribe()
 }

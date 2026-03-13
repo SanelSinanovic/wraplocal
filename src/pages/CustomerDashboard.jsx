@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { BOOKINGS } from "../data/data";
+import { supabase } from "../lib/supabase";
 import { fetchCustomerBookings, fetchMessages, sendMessage as dbSendMessage, subscribeToMessages } from "../lib/queries";
 
 function mergeMessages(existing = [], incoming = []) {
@@ -109,6 +110,70 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
     }
   };
 
+  const handleQuoteDecision = async (decision, amount) => {
+    if (!currentUser || !selectedBooking) return;
+    const normalizedAmount = Number(amount) || 0;
+    const nextStatus = decision === "accepted" ? "confirmed" : "cancelled";
+    const updatePayload = decision === "accepted"
+      ? {
+          status: nextStatus,
+          amount: normalizedAmount,
+          fee: Math.round(normalizedAmount * 0.07 * 100) / 100,
+          total: Math.round((normalizedAmount + (normalizedAmount * 0.07)) * 100) / 100,
+        }
+      : { status: nextStatus };
+
+    const { error } = await supabase
+      .from("bookings")
+      .update(updatePayload)
+      .eq("id", selectedBooking.id)
+      .eq("customer_id", currentUser.id);
+    if (error) return;
+
+    const marker = `QUOTE_RESPONSE::${decision}::${normalizedAmount.toFixed(2)}`;
+    const result = await dbSendMessage({
+      bookingId: selectedBooking.id,
+      senderId: currentUser.id,
+      senderRole: "customer",
+      text: marker,
+    });
+
+    const nextTotal = decision === "accepted"
+      ? Math.round((normalizedAmount + (normalizedAmount * 0.07)) * 100) / 100
+      : selectedBooking.total;
+    const nextFee = decision === "accepted"
+      ? Math.round(normalizedAmount * 0.07 * 100) / 100
+      : selectedBooking.fee;
+
+    setBookings(prev => prev.map(b => b.id === selectedBooking.id
+      ? { ...b, status: nextStatus, amount: decision === "accepted" ? normalizedAmount : b.amount, fee: nextFee, total: nextTotal }
+      : b
+    ));
+    setSelectedBooking(prev => prev
+      ? { ...prev, status: nextStatus, amount: decision === "accepted" ? normalizedAmount : prev.amount, fee: nextFee, total: nextTotal }
+      : prev
+    );
+
+    if (result) {
+      const time = new Date(result.sent_at || Date.now()).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+      const decisionText = decision === "accepted"
+        ? `Quote accepted ($${normalizedAmount.toFixed(2)})`
+        : `Quote declined ($${normalizedAmount.toFixed(2)})`;
+      setMessagesMap(prev => ({
+        ...prev,
+        [selectedBooking.id]: mergeMessages(prev[selectedBooking.id] || [], {
+          id: result.id,
+          from: "me",
+          text: decisionText,
+          time,
+          quoteResponse: decision,
+          quoteAmount: normalizedAmount,
+          rawText: marker,
+        }),
+      }));
+    }
+  };
+
   const Navbar = () => (
     <nav style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 40px", background: "#0D0D0D", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
       <div style={{ fontSize: 24, letterSpacing: 4, color: "#FF4D00", cursor: "pointer" }} onClick={() => nav("landing")}>WRAP<span style={{ color: "#fff" }}>LOCAL</span></div>
@@ -128,6 +193,14 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
   if (selectedBooking) {
     const b = selectedBooking;
     const messages = messagesMap[b.id];
+    const lastQuoteIndex = messages.reduce((idx, msg, i) => msg?.quoteOffer != null ? i : idx, -1);
+    const pendingQuote = lastQuoteIndex >= 0
+      ? (() => {
+          const offerMessage = messages[lastQuoteIndex];
+          const alreadyResponded = messages.slice(lastQuoteIndex + 1).some(msg => msg?.quoteResponse === "accepted" || msg?.quoteResponse === "declined" || msg?.quoteResponse === "rejected");
+          return alreadyResponded ? null : offerMessage;
+        })()
+      : null;
     return (
       <div style={{ fontFamily: "'Bebas Neue', cursive", background: "#0A0A0A", minHeight: "100vh", color: "#fff" }}>
         <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap'); * { box-sizing: border-box; } .chat-input { background: #1A1A1A; border: 1px solid rgba(255,255,255,0.1); padding: 12px 16px; color: #fff; font-family: 'DM Sans', sans-serif; font-size: 14px; outline: none; flex: 1; } .chat-input:focus { border-color: #FF4D00; } .send-btn { background: #FF4D00; color: #fff; border: none; padding: 12px 24px; font-family: 'Bebas Neue', cursive; font-size: 16px; letter-spacing: 2px; cursor: pointer; flex-shrink: 0; } @media (max-width: 768px) { .detail-wrap { padding: 20px !important; } .detail-layout { grid-template-columns: 1fr !important; } }`}</style>
@@ -180,6 +253,18 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
               </div>
 
               {/* Input */}
+              {b.status === "pending" && pendingQuote && (
+                <div style={{ border: "1px solid rgba(255,255,255,0.07)", borderTop: "none", padding: "14px 16px", background: "#111" }}>
+                  <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.8)", marginBottom: 10 }}>
+                    Quote received: <span style={{ color: "#10B981", fontWeight: 600 }}>${Number(pendingQuote.quoteOffer).toFixed(2)}</span>
+                  </div>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button onClick={() => handleQuoteDecision("accepted", pendingQuote.quoteOffer)} style={{ background: "#10B981", color: "#fff", border: "none", padding: "9px 14px", fontFamily: "'Bebas Neue', cursive", fontSize: 14, letterSpacing: 1, cursor: "pointer" }}>Accept Quote</button>
+                    <button onClick={() => handleQuoteDecision("rejected", pendingQuote.quoteOffer)} style={{ background: "transparent", color: "rgba(255,77,0,0.9)", border: "1px solid rgba(255,77,0,0.4)", padding: "9px 14px", fontFamily: "'Bebas Neue', cursive", fontSize: 14, letterSpacing: 1, cursor: "pointer" }}>Decline Quote</button>
+                  </div>
+                </div>
+              )}
+
               <div style={{ display: "flex", gap: 0, border: "1px solid rgba(255,255,255,0.07)", borderTop: "none" }}>
                 <input
                   className="chat-input"

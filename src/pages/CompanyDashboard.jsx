@@ -56,7 +56,7 @@ function mergeMessages(existing = [], incoming = []) {
 
 // ── Booking detail + chat panel ─────────────────────────────────────────────
 // Defined at module level so React never remounts it when parent state changes
-function BookingDetailPanel({ selectedBooking, messagesMap, chatInput, setChatInput, sendCompanyMessage, chatEndRef, updateBookingStatus, setSelectedBooking, backLabel }) {
+function BookingDetailPanel({ selectedBooking, messagesMap, chatInput, setChatInput, quoteInput, setQuoteInput, sendQuoteOffer, sendCompanyMessage, chatEndRef, updateBookingStatus, setSelectedBooking, backLabel }) {
   if (!selectedBooking) return null;
   const b = selectedBooking;
   const messages = messagesMap[b.id] || [];
@@ -97,6 +97,20 @@ function BookingDetailPanel({ selectedBooking, messagesMap, chatInput, setChatIn
             ))}
             <div ref={chatEndRef} />
           </div>
+          {b.status === "pending" && (
+            <div style={{ display: "flex", gap: 8, border: "1px solid rgba(255,255,255,0.07)", borderTop: "none", padding: 12, background: "#111" }}>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={quoteInput}
+                onChange={e => setQuoteInput(e.target.value)}
+                placeholder="Enter quote amount (e.g. 1200)"
+                style={{ flex: 1, background: "#1A1A1A", border: "1px solid rgba(255,255,255,0.1)", padding: "10px 12px", color: "#fff", fontFamily: "'DM Sans', sans-serif", fontSize: 13, outline: "none" }}
+              />
+              <button onClick={sendQuoteOffer} style={{ background: "#10B981", color: "#fff", border: "none", padding: "10px 16px", fontFamily: "'Bebas Neue', cursive", fontSize: 14, letterSpacing: 1, cursor: "pointer" }}>Send Quote</button>
+            </div>
+          )}
           <div style={{ display: "flex", border: "1px solid rgba(255,255,255,0.07)", borderTop: "none" }}>
             <input
               style={{ flex: 1, background: "#1A1A1A", border: "none", padding: "12px 16px", color: "#fff", fontFamily: "'DM Sans', sans-serif", fontSize: 14, outline: "none" }}
@@ -141,6 +155,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
   const [selectedBookingSource, setSelectedBookingSource] = useState("bookings");
   const [messagesMap, setMessagesMap] = useState({});
   const [chatInput, setChatInput] = useState("");
+  const [quoteInput, setQuoteInput] = useState("");
   const chatEndRef = useRef(null);
   const today = new Date();
   const [calYear, setCalYear] = useState(today.getFullYear());
@@ -248,6 +263,30 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
         [selectedBooking.id]: mergeMessages(prev[selectedBooking.id] || [], { id: result.id, from: "shop", text, time }),
       }));
     }
+  };
+
+  const sendQuoteOffer = async () => {
+    if (!selectedBooking || selectedBooking.status !== "pending") return;
+    const amount = Number(quoteInput);
+    if (!Number.isFinite(amount) || amount <= 0) return;
+
+    const marker = `QUOTE_OFFER::${amount.toFixed(2)}`;
+    const result = await dbSendMessage({ bookingId: selectedBooking.id, senderId: currentUser.id, senderRole: "company", text: marker });
+    if (!result) return;
+
+    const time = new Date(result.sent_at || Date.now()).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+    setMessagesMap(prev => ({
+      ...prev,
+      [selectedBooking.id]: mergeMessages(prev[selectedBooking.id] || [], {
+        id: result.id,
+        from: "shop",
+        text: `Quote offer: $${amount.toFixed(2)}`,
+        time,
+        quoteOffer: amount,
+        rawText: marker,
+      }),
+    }));
+    setQuoteInput("");
   };
 
   const updateBookingStatus = async (bookingId, status) => {
@@ -459,7 +498,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
         {dashTab === "requests" && (
           <div>
             {selectedBooking ? (
-              <BookingDetailPanel selectedBooking={selectedBooking} messagesMap={messagesMap} chatInput={chatInput} setChatInput={setChatInput} sendCompanyMessage={sendCompanyMessage} chatEndRef={chatEndRef} updateBookingStatus={updateBookingStatus} setSelectedBooking={setSelectedBooking} backLabel="← Back to booking requests" />
+              <BookingDetailPanel selectedBooking={selectedBooking} messagesMap={messagesMap} chatInput={chatInput} setChatInput={setChatInput} quoteInput={quoteInput} setQuoteInput={setQuoteInput} sendQuoteOffer={sendQuoteOffer} sendCompanyMessage={sendCompanyMessage} chatEndRef={chatEndRef} updateBookingStatus={updateBookingStatus} setSelectedBooking={setSelectedBooking} backLabel="← Back to booking requests" />
             ) : (
               <div>
                 <div style={{ marginBottom: 28 }}>
@@ -476,7 +515,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
                   <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                     {dashboardBookings.filter(b => b.status === "pending").map(b => (
                       <div key={b.id}
-                        onClick={() => { setSelectedBooking(b); setChatInput(""); }}
+                        onClick={() => { setSelectedBooking(b); setChatInput(""); setQuoteInput(""); }}
                         style={{ background: "#111", border: "1px solid rgba(255,77,0,0.25)", padding: "20px 24px", cursor: "pointer", transition: "border-color 0.2s", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16 }}
                         onMouseEnter={e => e.currentTarget.style.borderColor = "#FF4D00"}
                         onMouseLeave={e => e.currentTarget.style.borderColor = "rgba(255,77,0,0.25)"}>
@@ -503,7 +542,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
 
         {dashTab === "bookings" && (
           <div>
-            {selectedBooking && <BookingDetailPanel selectedBooking={selectedBooking} messagesMap={messagesMap} chatInput={chatInput} setChatInput={setChatInput} sendCompanyMessage={sendCompanyMessage} chatEndRef={chatEndRef} updateBookingStatus={updateBookingStatus} setSelectedBooking={setSelectedBooking} backLabel="← Back to all bookings" />}
+            {selectedBooking && <BookingDetailPanel selectedBooking={selectedBooking} messagesMap={messagesMap} chatInput={chatInput} setChatInput={setChatInput} quoteInput={quoteInput} setQuoteInput={setQuoteInput} sendQuoteOffer={sendQuoteOffer} sendCompanyMessage={sendCompanyMessage} chatEndRef={chatEndRef} updateBookingStatus={updateBookingStatus} setSelectedBooking={setSelectedBooking} backLabel="← Back to all bookings" />}
 
             {/* Header + toggle */}
             {!selectedBooking && (
@@ -535,7 +574,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
                       <tr><td colSpan={6} style={{ padding: "24px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.3)" }}>No active bookings — new and confirmed jobs will appear here.</td></tr>
                     )}
                     {activeBookings.map(b => (
-                      <tr key={b.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)", cursor: "pointer" }} onClick={() => { setSelectedBooking(b); setChatInput(""); }}>
+                      <tr key={b.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)", cursor: "pointer" }} onClick={() => { setSelectedBooking(b); setChatInput(""); setQuoteInput(""); }}>
                         <td style={{ padding: "14px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 500 }}>{b.customer}</td>
                         <td style={{ padding: "14px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.6)" }}>{b.service}</td>
                         <td style={{ padding: "14px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.6)" }}>{b.date}</td>
@@ -572,7 +611,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
                         </thead>
                         <tbody>
                           {archivedBookings.map(b => (
-                            <tr key={b.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)", cursor: "pointer", opacity: 0.9 }} onClick={() => { setSelectedBooking(b); setChatInput(""); }}>
+                            <tr key={b.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)", cursor: "pointer", opacity: 0.9 }} onClick={() => { setSelectedBooking(b); setChatInput(""); setQuoteInput(""); }}>
                               <td style={{ padding: "14px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 500 }}>{b.customer}</td>
                               <td style={{ padding: "14px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.6)" }}>{b.service}</td>
                               <td style={{ padding: "14px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.6)" }}>{b.date}</td>
