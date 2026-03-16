@@ -1,12 +1,36 @@
 import { useState } from "react";
 import { SHOPS as STATIC_SHOPS } from "../data/data";
+import { SERVICE_CATEGORIES } from "../lib/services";
 
-export default function LandingPage({ nav, shops: liveShops, setBookingShop, setSelectedShop, currentUser, currentProfile, onLogout }) {
+const CATEGORY_META = {
+  "Vehicle Wraps": {
+    icon: "🚗",
+    accent: "#FF4D00",
+    bg: "rgba(255,77,0,0.06)",
+    border: "rgba(255,77,0,0.2)",
+    desc: "Full wraps, color changes, PPF, and custom vinyl graphics for any vehicle.",
+  },
+  "Signage": {
+    icon: "🪟",
+    accent: "#3B82F6",
+    bg: "rgba(59,130,246,0.06)",
+    border: "rgba(59,130,246,0.2)",
+    desc: "Monument signs, LED displays, banners, and window graphics for your business.",
+  },
+};
+
+export default function LandingPage({ nav, shops: liveShops, setBookingShop, setSelectedShop, setServiceFilter, currentUser, currentProfile, onLogout }) {
   const role = currentUser ? (currentProfile?.role || currentUser?.user_metadata?.role || "customer") : null;
   const firstName = currentUser ? ((currentProfile?.name || currentUser?.user_metadata?.name || currentUser?.email || "").split(" ")[0].split("@")[0]) : null;
-  // Fall back to bundled static data until Supabase responds
   const shops = liveShops && liveShops.length > 0 ? liveShops : STATIC_SHOPS;
   const [menuOpen, setMenuOpen] = useState(false);
+  const [hoveredService, setHoveredService] = useState(null);
+
+  const goToService = (serviceName) => {
+    setServiceFilter(serviceName);
+    nav("search");
+  };
+
   return (
     <div style={{ fontFamily: "'Bebas Neue', cursive, sans-serif", background: "#0A0A0A", minHeight: "100vh", color: "#fff", overflow: "hidden" }}>
       <style>{`
@@ -21,6 +45,8 @@ export default function LandingPage({ nav, shops: liveShops, setBookingShop, set
         .nav-link:hover { color: #fff; }
         .card-hover { transition: transform 0.3s, box-shadow 0.3s; cursor: pointer; }
         .card-hover:hover { transform: translateY(-6px); box-shadow: 0 20px 60px rgba(255,77,0,0.2); }
+        .svc-pill { font-family: 'DM Sans', sans-serif; font-size: 13px; padding: 8px 16px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.03); color: rgba(255,255,255,0.6); cursor: pointer; transition: all 0.18s; display: flex; align-items: center; gap: 6px; }
+        .svc-pill:hover { color: #fff; border-color: rgba(255,255,255,0.35); background: rgba(255,255,255,0.07); transform: translateX(3px); }
         .hamburger { display: none; background: none; border: none; cursor: pointer; padding: 4px; }
         .mobile-menu { display: none; }
         @media (max-width: 768px) {
@@ -28,7 +54,7 @@ export default function LandingPage({ nav, shops: liveShops, setBookingShop, set
           .nav-btns { display: none !important; }
           .hamburger { display: flex; flex-direction: column; gap: 5px; }
           .mobile-menu { display: flex; flex-direction: column; background: rgba(10,10,10,0.98); border-bottom: 1px solid rgba(255,255,255,0.08); padding: 12px 20px 20px; gap: 4px; }
-          .mobile-menu a, .mobile-menu span { font-family: 'DM Sans', sans-serif; font-size: 15px; color: rgba(255,255,255,0.7); cursor: pointer; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: block; }
+          .mobile-menu span { font-family: 'DM Sans', sans-serif; font-size: 15px; color: rgba(255,255,255,0.7); cursor: pointer; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: block; }
           .mobile-menu .mob-btn { margin-top: 12px; background: #FF4D00; color: #fff; border: none; padding: 14px; font-family: 'Bebas Neue', cursive; font-size: 17px; letter-spacing: 2px; cursor: pointer; width: 100%; }
           .mobile-menu .mob-btn-ghost { margin-top: 8px; background: transparent; color: rgba(255,255,255,0.7); border: 1px solid rgba(255,255,255,0.2); padding: 12px; font-family: 'Bebas Neue', cursive; font-size: 15px; letter-spacing: 2px; cursor: pointer; width: 100%; }
           .hero-section { padding: 60px 20px 40px !important; }
@@ -36,6 +62,7 @@ export default function LandingPage({ nav, shops: liveShops, setBookingShop, set
           .hero-right { display: none !important; }
           .stats-row { gap: 28px !important; }
           .section-pad { padding: 40px 20px !important; }
+          .services-grid { grid-template-columns: 1fr !important; }
           .shops-grid { grid-template-columns: 1fr !important; }
           .steps-grid { grid-template-columns: 1fr !important; gap: 16px !important; }
           .biz-cta { flex-direction: column !important; gap: 20px !important; margin: 0 20px 60px !important; padding: 36px 24px !important; }
@@ -101,31 +128,31 @@ export default function LandingPage({ nav, shops: liveShops, setBookingShop, set
 
       {/* HERO */}
       <div className="hero-section" style={{ position: "relative", padding: "100px 60px 80px", overflow: "hidden" }}>
-        <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at 60% 50%, rgba(255,77,0,0.15) 0%, transparent 70%)", pointerEvents: "none" }} />
-        <div style={{ position: "absolute", top: -200, right: -200, width: 600, height: 600, border: "1px solid rgba(255,77,0,0.1)", borderRadius: "50%", pointerEvents: "none" }} />
-        <div style={{ position: "absolute", top: -100, right: -100, width: 400, height: 400, border: "1px solid rgba(255,77,0,0.08)", borderRadius: "50%", pointerEvents: "none" }} />
+        <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at 60% 50%, rgba(255,77,0,0.13) 0%, transparent 65%)", pointerEvents: "none" }} />
+        <div style={{ position: "absolute", top: -200, right: -200, width: 600, height: 600, border: "1px solid rgba(255,77,0,0.08)", borderRadius: "50%", pointerEvents: "none" }} />
+        <div style={{ position: "absolute", top: -100, right: -100, width: 400, height: 400, border: "1px solid rgba(255,77,0,0.06)", borderRadius: "50%", pointerEvents: "none" }} />
 
         <div className="hero-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 60, alignItems: "center", position: "relative" }}>
           <div>
-            <div style={{ display: "inline-block", background: "rgba(255,77,0,0.1)", border: "1px solid rgba(255,77,0,0.3)", padding: "6px 16px", marginBottom: 24, fontFamily: "'DM Sans', sans-serif", fontSize: 13, letterSpacing: 2, color: "#FF4D00" }}>
-              🔥 BOOK IN UNDER 2 MINUTES
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(255,77,0,0.1)", border: "1px solid rgba(255,77,0,0.3)", padding: "6px 16px", marginBottom: 24, fontFamily: "'DM Sans', sans-serif", fontSize: 12, letterSpacing: 2, color: "#FF4D00" }}>
+              🔥 VEHICLE WRAPS · SIGNAGE · AND MORE
             </div>
-            <h1 style={{ fontSize: "clamp(56px, 6vw, 100px)", lineHeight: 0.95, letterSpacing: 3, marginBottom: 24 }}>
-              YOUR CAR.<br />
+            <h1 style={{ fontSize: "clamp(54px, 6vw, 96px)", lineHeight: 0.95, letterSpacing: 3, marginBottom: 24 }}>
+              YOUR<br />VISION.<br />
               <span style={{ color: "#FF4D00", position: "relative" }}>
-                TRANSFORMED.
+                BUILT BOLD.
                 <div style={{ position: "absolute", bottom: -4, left: 0, right: 0, height: 3, background: "#FF4D00" }} />
               </span>
             </h1>
-            <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 17, color: "rgba(255,255,255,0.5)", maxWidth: 480, lineHeight: 1.6, marginTop: 16, marginBottom: 40, fontWeight: 300 }}>
-              Find and book top-rated local car wrapping studios. Compare portfolios, read reviews, and schedule your transformation — all in one place.
+            <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 17, color: "rgba(255,255,255,0.5)", maxWidth: 480, lineHeight: 1.65, marginTop: 20, marginBottom: 40, fontWeight: 300 }}>
+              Find and book top-rated local shops for vehicle wraps, monument signs, LED displays, window graphics, banners, and more — all in one place.
             </p>
             <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
               <button className="btn-main" style={{ fontSize: 20, padding: "16px 40px" }} onClick={() => nav("search")}>Find Shops Near Me →</button>
               <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.3)" }}>No account needed</span>
             </div>
             <div className="stats-row" style={{ display: "flex", gap: 48, marginTop: 64 }}>
-              {[["500+", "Shops Listed"], ["12K+", "Bookings Made"], ["4.8★", "Avg Rating"]].map(([n, l]) => (
+              {[["500+", "Shops Listed"], ["12K+", "Jobs Completed"], ["4.8★", "Avg Rating"]].map(([n, l]) => (
                 <div key={l}>
                   <div style={{ fontSize: 40, color: "#FF4D00" }}>{n}</div>
                   <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)", marginTop: 2 }}>{l}</div>
@@ -135,7 +162,7 @@ export default function LandingPage({ nav, shops: liveShops, setBookingShop, set
           </div>
 
           <div className="hero-right" style={{ position: "relative", display: "flex", flexDirection: "column", gap: 16 }}>
-            <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: 340, height: 340, background: "radial-gradient(circle, rgba(255,77,0,0.12) 0%, transparent 70%)", pointerEvents: "none" }} />
+            <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: 340, height: 340, background: "radial-gradient(circle, rgba(255,77,0,0.1) 0%, transparent 70%)", pointerEvents: "none" }} />
             <div style={{ background: "#111", border: "1px solid rgba(255,255,255,0.08)", overflow: "hidden", boxShadow: "0 32px 80px rgba(0,0,0,0.6)", position: "relative", zIndex: 1 }}>
               <div style={{ position: "relative", height: 180, overflow: "hidden" }}>
                 <img src="https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=600&q=80" alt="shop" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -151,8 +178,8 @@ export default function LandingPage({ nav, shops: liveShops, setBookingShop, set
                   <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#FF4D00", fontWeight: 700 }}>★ 4.9</div>
                 </div>
                 <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 14 }}>Atlanta, GA · 2.1 mi · 214 reviews</div>
-                <div style={{ display: "flex", gap: 6, marginBottom: 18 }}>
-                  {["Full Wraps", "PPF", "Color Change"].map(t => (
+                <div style={{ display: "flex", gap: 6, marginBottom: 18, flexWrap: "wrap" }}>
+                  {["Full Color Change Wrap", "PPF Paint Protection Film", "Monument Signs"].map(t => (
                     <span key={t} style={{ padding: "3px 10px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.5)" }}>{t}</span>
                   ))}
                 </div>
@@ -163,12 +190,6 @@ export default function LandingPage({ nav, shops: liveShops, setBookingShop, set
                   </div>
                   <button onClick={() => { setBookingShop(shops[0]); nav("booking"); }} style={{ background: "#FF4D00", color: "#fff", border: "none", padding: "10px 22px", fontFamily: "'Bebas Neue', cursive", fontSize: 16, letterSpacing: 2, cursor: "pointer" }}>Book Now</button>
                 </div>
-              </div>
-              <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", padding: "14px 20px", display: "flex", gap: 8, alignItems: "center" }}>
-                <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)", marginRight: 4 }}>TODAY</span>
-                {["9:00 AM", "11:00 AM", "2:00 PM"].map((s, i) => (
-                  <span key={s} style={{ padding: "4px 12px", background: i === 1 ? "rgba(255,77,0,0.15)" : "rgba(255,255,255,0.04)", border: `1px solid ${i === 1 ? "#FF4D00" : "rgba(255,255,255,0.08)"}`, fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: i === 1 ? "#FF4D00" : "rgba(255,255,255,0.5)" }}>{s}</span>
-                ))}
               </div>
             </div>
             <div style={{ background: "#0D0D0D", border: "1px solid rgba(255,255,255,0.07)", padding: "14px 18px", display: "flex", alignItems: "center", gap: 14, boxShadow: "0 8px 32px rgba(0,0,0,0.4)", zIndex: 1 }}>
@@ -193,9 +214,62 @@ export default function LandingPage({ nav, shops: liveShops, setBookingShop, set
         </div>
       </div>
 
+      {/* BROWSE BY SERVICE */}
+      <div className="section-pad" style={{ padding: "70px 60px", background: "#0D0D0D", borderTop: "1px solid rgba(255,255,255,0.05)", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+        <div style={{ textAlign: "center", marginBottom: 52 }}>
+          <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#FF4D00", letterSpacing: 3, marginBottom: 10 }}>WHAT ARE YOU LOOKING FOR?</div>
+          <div style={{ fontSize: 48, letterSpacing: 2 }}>BROWSE BY SERVICE</div>
+          <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 15, color: "rgba(255,255,255,0.4)", marginTop: 12, lineHeight: 1.6 }}>
+            Click any service to instantly find shops near you that offer it.
+          </p>
+        </div>
+        <div className="services-grid" style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 24 }}>
+          {SERVICE_CATEGORIES.map(({ category, services }) => {
+            const meta = CATEGORY_META[category] || { icon: "⚙️", accent: "#FF4D00", bg: "rgba(255,77,0,0.06)", border: "rgba(255,77,0,0.2)", desc: "" };
+            return (
+              <div key={category} style={{ background: "#111", border: `1px solid ${meta.border}`, overflow: "hidden" }}>
+                {/* Category header */}
+                <div style={{ background: meta.bg, borderBottom: `1px solid ${meta.border}`, padding: "22px 28px", display: "flex", alignItems: "center", gap: 14 }}>
+                  <div style={{ fontSize: 32 }}>{meta.icon}</div>
+                  <div>
+                    <div style={{ fontSize: 28, letterSpacing: 2, color: meta.accent }}>{category.toUpperCase()}</div>
+                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.45)", marginTop: 2 }}>{meta.desc}</div>
+                  </div>
+                </div>
+                {/* Service pills */}
+                <div style={{ padding: "20px 28px 24px", display: "flex", flexDirection: "column", gap: 6 }}>
+                  {services.map(({ name, description }) => (
+                    <button
+                      key={name}
+                      className="svc-pill"
+                      onMouseEnter={() => setHoveredService(name)}
+                      onMouseLeave={() => setHoveredService(null)}
+                      onClick={() => goToService(name)}
+                      style={{ textAlign: "left", background: hoveredService === name ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.025)", borderColor: hoveredService === name ? meta.accent : "rgba(255,255,255,0.08)", color: hoveredService === name ? "#fff" : "rgba(255,255,255,0.6)" }}
+                    >
+                      <span style={{ flex: 1, fontSize: 14 }}>{name}</span>
+                      <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.28)", marginLeft: "auto", paddingLeft: 12 }}>{description}</span>
+                      <span style={{ color: meta.accent, fontSize: 14, marginLeft: 8, flexShrink: 0 }}>→</span>
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => nav("search")}
+                    style={{ marginTop: 8, fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: meta.accent, background: "none", border: `1px solid ${meta.border}`, padding: "8px 16px", cursor: "pointer", letterSpacing: 1, transition: "all 0.15s" }}
+                    onMouseEnter={e => { e.currentTarget.style.background = meta.bg; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = "none"; }}
+                  >
+                    BROWSE ALL {category.toUpperCase()} SHOPS →
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
       {/* FEATURED SHOPS */}
-      <div className="section-pad" style={{ padding: "60px 60px 80px" }}>
-          <div className="shops-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 32 }}>
+      <div className="section-pad" style={{ padding: "70px 60px 80px" }}>
+        <div className="shops-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 32 }}>
           <div>
             <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#FF4D00", letterSpacing: 3, marginBottom: 8 }}>FEATURED NEAR YOU</div>
             <div style={{ fontSize: 42, letterSpacing: 2 }}>TOP RATED SHOPS</div>
@@ -203,7 +277,7 @@ export default function LandingPage({ nav, shops: liveShops, setBookingShop, set
           <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.4)", cursor: "pointer" }} onClick={() => nav("search")}>View all →</span>
         </div>
         <div className="shops-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20 }}>
-          {shops.map(shop => (
+          {shops.slice(0, 3).map(shop => (
             <div key={shop.id} className="card-hover" onClick={() => { setSelectedShop(shop); nav("shop"); }}
               style={{ background: "#111", border: "1px solid rgba(255,255,255,0.06)", overflow: "hidden" }}>
               <div style={{ position: "relative", height: 200, overflow: "hidden" }}>
@@ -216,9 +290,11 @@ export default function LandingPage({ nav, shops: liveShops, setBookingShop, set
                   <div style={{ fontSize: 22, letterSpacing: 1 }}>{shop.name}</div>
                   <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#FF4D00", fontWeight: 600 }}>★ {shop.rating}</div>
                 </div>
-                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)", marginBottom: 12 }}>{shop.location || shop.city}{shop.distance ? ` · ${shop.distance}` : ''} · {shop.reviews ?? shop.review_count ?? 0} reviews</div>
+                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)", marginBottom: 12 }}>
+                  {shop.location || shop.city}{shop.distance ? ` · ${shop.distance}` : ''} · {shop.reviews ?? shop.review_count ?? 0} reviews
+                </div>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16 }}>
-                  {(shop.tags || []).map(t => <span key={t} style={{ padding: "3px 10px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.5)" }}>{t}</span>)}
+                  {(shop.tags || []).slice(0, 3).map(t => <span key={t} style={{ padding: "3px 10px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.5)" }}>{t}</span>)}
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.5)" }}>From <b style={{ color: "#fff" }}>${(shop.price ?? shop.price_from ?? 0).toLocaleString()}</b></span>
@@ -231,18 +307,18 @@ export default function LandingPage({ nav, shops: liveShops, setBookingShop, set
       </div>
 
       {/* HOW IT WORKS */}
-      <div className="section-pad" style={{ padding: "60px 60px 100px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+      <div className="section-pad" style={{ padding: "70px 60px 100px", borderTop: "1px solid rgba(255,255,255,0.06)", background: "#0D0D0D" }}>
         <div style={{ textAlign: "center", marginBottom: 60 }}>
           <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#FF4D00", letterSpacing: 3, marginBottom: 8 }}>SIMPLE PROCESS</div>
           <div style={{ fontSize: 48, letterSpacing: 2 }}>HOW IT WORKS</div>
         </div>
         <div className="steps-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 40 }}>
           {[
-            { n: "01", t: "Search & Compare", d: "Find local wrap shops, browse portfolios, compare prices and read real customer reviews." },
-            { n: "02", t: "Book Instantly", d: "Choose your service, pick a time slot, and confirm your appointment in under 2 minutes." },
-            { n: "03", t: "Get Wrapped", d: "Show up, get your car transformed, and pay securely through WrapLocal." },
+            { n: "01", t: "Pick Your Service", d: "Browse Vehicle Wraps, Signage, and more. Choose exactly what you need and filter shops that offer it." },
+            { n: "02", t: "Book Instantly", d: "Select your shop, choose a time slot, describe your project, and submit your request in under 2 minutes." },
+            { n: "03", t: "Get a Quote & Confirm", d: "The shop reviews your request and sends a quote. Accept it to lock in your booking and get the job done." },
           ].map(s => (
-            <div key={s.n} style={{ padding: "40px", border: "1px solid rgba(255,255,255,0.06)", background: "#0D0D0D", position: "relative", overflow: "hidden" }}>
+            <div key={s.n} style={{ padding: "40px", border: "1px solid rgba(255,255,255,0.06)", background: "#111", position: "relative", overflow: "hidden" }}>
               <div style={{ position: "absolute", top: -20, right: -10, fontSize: 120, color: "rgba(255,77,0,0.04)", fontFamily: "'Bebas Neue', cursive" }}>{s.n}</div>
               <div style={{ fontSize: 56, color: "#FF4D00", marginBottom: 16 }}>{s.n}</div>
               <div style={{ fontSize: 26, letterSpacing: 1, marginBottom: 12 }}>{s.t}</div>
@@ -255,10 +331,12 @@ export default function LandingPage({ nav, shops: liveShops, setBookingShop, set
       {/* FOR BUSINESSES CTA */}
       <div className="biz-cta" style={{ margin: "0 60px 80px", background: "linear-gradient(135deg, #FF4D00 0%, #FF8C00 100%)", padding: "60px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
-          <div style={{ fontSize: 48, letterSpacing: 2, marginBottom: 12 }}>OWN A WRAP SHOP?</div>
-          <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 16, color: "rgba(255,255,255,0.8)" }}>List your business for $49.99/month and get discovered by thousands of local customers.</div>
+          <div style={{ fontSize: 48, letterSpacing: 2, marginBottom: 12 }}>OWN A WRAP OR SIGN SHOP?</div>
+          <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 16, color: "rgba(255,255,255,0.85)", lineHeight: 1.6, maxWidth: 520 }}>
+            List your business for $49.99/month. Set your services, get discovered by local customers, and manage all your bookings and quotes in one place.
+          </div>
         </div>
-        <button onClick={() => nav("pricing")} style={{ background: "#fff", color: "#FF4D00", border: "none", padding: "16px 40px", fontFamily: "'Bebas Neue', cursive", fontSize: 20, letterSpacing: 2, cursor: "pointer", whiteSpace: "nowrap" }}>
+        <button onClick={() => nav("pricing")} style={{ background: "#fff", color: "#FF4D00", border: "none", padding: "16px 40px", fontFamily: "'Bebas Neue', cursive", fontSize: 20, letterSpacing: 2, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}>
           Get Listed →
         </button>
       </div>

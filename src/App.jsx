@@ -21,6 +21,7 @@ export default function App() {
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
   const [dashTab, setDashTab] = useState("overview");
   const [searchQuery, setSearchQuery] = useState("");
+  const [serviceFilter, setServiceFilter] = useState(null);
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
   const [loginError, setLoginError] = useState("");
   const [postLoginNav, setPostLoginNav] = useState(null);
@@ -120,8 +121,8 @@ export default function App() {
     nav("landing");
   };
 
-  if (view === "landing") return <LandingPage nav={nav} shops={shops} setBookingShop={setBookingShop} setSelectedShop={setSelectedShop} currentUser={currentUser} currentProfile={currentProfile} onLogout={handleLogout} />;
-  if (view === "search") return <SearchPage nav={nav} shops={shops} searchQuery={searchQuery} setSearchQuery={setSearchQuery} setSelectedShop={setSelectedShop} setBookingShop={setBookingShop} currentUser={currentUser} currentProfile={currentProfile} onLogout={handleLogout} />;
+  if (view === "landing") return <LandingPage nav={nav} shops={shops} setBookingShop={setBookingShop} setSelectedShop={setSelectedShop} setServiceFilter={setServiceFilter} currentUser={currentUser} currentProfile={currentProfile} onLogout={handleLogout} />;
+  if (view === "search") return <SearchPage nav={nav} shops={shops} searchQuery={searchQuery} setSearchQuery={setSearchQuery} serviceFilter={serviceFilter} setServiceFilter={setServiceFilter} setSelectedShop={setSelectedShop} setBookingShop={setBookingShop} currentUser={currentUser} currentProfile={currentProfile} onLogout={handleLogout} />;
   if (view === "shop") return <ShopProfile nav={nav} selectedShop={selectedShop} setBookingShop={setBookingShop} currentUser={currentUser} currentProfile={currentProfile} onLogout={handleLogout} />;
   if (view === "booking") return <BookingFlow nav={nav} bookingShop={bookingShop} bookingStep={bookingStep} setBookingStep={setBookingStep} selectedSlot={selectedSlot} setSelectedSlot={setSelectedSlot} selectedDate={selectedDate} setSelectedDate={setSelectedDate} bookingConfirmed={bookingConfirmed} setBookingConfirmed={setBookingConfirmed} currentUser={currentUser} />;
   if (view === "customer-dash") return <CustomerDashboard nav={nav} currentUser={currentUser} currentProfile={currentProfile} onLogout={handleLogout} />;

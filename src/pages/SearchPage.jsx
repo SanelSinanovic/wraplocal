@@ -1,11 +1,19 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SHOPS as STATIC_SHOPS } from "../data/data";
 import { SERVICE_CATEGORIES } from "../lib/services";
 
-export default function SearchPage({ nav, shops: liveShops, searchQuery, setSearchQuery, setSelectedShop, setBookingShop, currentUser, currentProfile, onLogout }) {
+export default function SearchPage({ nav, shops: liveShops, searchQuery, setSearchQuery, serviceFilter, setServiceFilter, setSelectedShop, setBookingShop, currentUser, currentProfile, onLogout }) {
   const role = currentUser ? (currentProfile?.role || currentUser?.user_metadata?.role || "customer") : null;
   const allShops = liveShops && liveShops.length > 0 ? liveShops : STATIC_SHOPS;
   const [activeService, setActiveService] = useState(null);
+
+  // Consume a service filter set from LandingPage
+  useEffect(() => {
+    if (serviceFilter) {
+      setActiveService(serviceFilter);
+      setServiceFilter(null);
+    }
+  }, [serviceFilter, setServiceFilter]);
 
   const q = searchQuery.trim().toLowerCase();
   const shops = allShops.filter(shop => {
