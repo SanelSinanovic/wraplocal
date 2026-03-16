@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { createBooking, sendMessage } from "../lib/queries";
 import { supabase } from "../lib/supabase";
+import { SERVICE_CATEGORIES } from "../lib/services";
 
 export default function BookingFlow({
   nav, bookingShop, bookingStep, setBookingStep,
@@ -113,16 +114,12 @@ export default function BookingFlow({
                 <div>
                   <div style={{ fontSize: 36, letterSpacing: 1, marginBottom: 6 }}>CHOOSE A SERVICE</div>
                   <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.35)", marginBottom: 22 }}>
-                    Pricing depends on your vehicle — the shop will send you a quote after reviewing your request.
+                    The shop will send you a quote after reviewing your request.
                   </div>
-                  {[
-                    ["Full Color Change Wrap", "Complete vehicle color transformation"],
-                    ["Partial Wrap", "Hood, roof, trunk, or custom panels"],
-                    ["Racing Stripes", "Single or dual stripe packages"],
-                    ["PPF Paint Protection Film", "Clear bra to protect your paint"],
-                    ["Chrome Delete", "Replace chrome trim with vinyl"],
-                    ["Custom Design Wrap", "Unique graphics and full custom design"],
-                  ].map(([s, d]) => (
+                  {SERVICE_CATEGORIES.map(({ category, services }) => (
+                    <div key={category} style={{ marginBottom: 24 }}>
+                      <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)", letterSpacing: 2, marginBottom: 10 }}>{category.toUpperCase()}</div>
+                      {services.map(({ name: s, description: d }) => (
                     <div key={s} onClick={() => setSelectedService(s)}
                       style={{ padding: "16px 20px", border: "1px solid", borderColor: selectedService === s ? "#FF4D00" : "rgba(255,255,255,0.08)", background: selectedService === s ? "rgba(255,77,0,0.07)" : "#111", marginBottom: 8, cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", transition: "all 0.15s" }}
                       onMouseEnter={e => { if (selectedService !== s) e.currentTarget.style.borderColor = "rgba(255,77,0,0.4)"; }}
@@ -134,6 +131,8 @@ export default function BookingFlow({
                       <div style={{ width: 22, height: 22, borderRadius: "50%", border: `2px solid ${selectedService === s ? "#FF4D00" : "rgba(255,255,255,0.2)"}`, background: selectedService === s ? "#FF4D00" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all 0.15s" }}>
                         {selectedService === s && <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#fff" }} />}
                       </div>
+                    </div>
+                      ))}
                     </div>
                   ))}
                   <div style={{ marginTop: 24, marginBottom: 6 }}>

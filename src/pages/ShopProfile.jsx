@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ALL_SERVICE_NAMES } from "../lib/services";
 
 const PLACEHOLDER_PORTFOLIO = [
   "https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=600&q=80",
@@ -7,13 +8,6 @@ const PLACEHOLDER_PORTFOLIO = [
   "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=600&q=80",
   "https://images.unsplash.com/photo-1525609004556-c46c7d6cf023?w=600&q=80",
   "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80",
-];
-
-const DEFAULT_SERVICES = [
-  "Full Color Change Wrap",
-  "Partial Wrap",
-  "Racing Stripes",
-  "PPF Protection",
 ];
 
 export default function ShopProfile({ nav, selectedShop, setBookingShop, currentUser, currentProfile, onLogout }) {
@@ -206,12 +200,16 @@ export default function ShopProfile({ nav, selectedShop, setBookingShop, current
                   <div style={{ fontSize: 20, letterSpacing: 2 }}>SERVICES</div>
                 </div>
                 <div style={{ padding: "0 22px 6px" }}>
-                  {DEFAULT_SERVICES.map(name => (
-                    <div key={name} style={{ display: "flex", justifyContent: "space-between", padding: "11px 0", borderBottom: "1px solid rgba(255,255,255,0.04)", fontFamily: "'DM Sans', sans-serif", fontSize: 13 }}>
-                      <span style={{ color: "rgba(255,255,255,0.65)" }}>{name}</span>
-                      <span style={{ color: "rgba(255,255,255,0.22)", fontSize: 12 }}>Quote on request</span>
-                    </div>
-                  ))}
+                  {(() => {
+                    const shopServices = (shop.tags || []).filter(t => ALL_SERVICE_NAMES.includes(t));
+                    const displayServices = shopServices.length > 0 ? shopServices : ALL_SERVICE_NAMES.slice(0, 4);
+                    return displayServices.map(name => (
+                      <div key={name} style={{ display: "flex", justifyContent: "space-between", padding: "11px 0", borderBottom: "1px solid rgba(255,255,255,0.04)", fontFamily: "'DM Sans', sans-serif", fontSize: 13 }}>
+                        <span style={{ color: "rgba(255,255,255,0.65)" }}>{name}</span>
+                        <span style={{ color: "rgba(255,255,255,0.22)", fontSize: 12 }}>Quote on request</span>
+                      </div>
+                    ));
+                  })()}
                 </div>
                 <div style={{ padding: "14px 22px 22px" }}>
                   <div style={{ marginBottom: 14, fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.35)", lineHeight: 1.5 }}>

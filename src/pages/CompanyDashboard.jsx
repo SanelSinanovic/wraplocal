@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "../lib/supabase";
 import { fetchUserShop, fetchCompanyBookings, createShop, updateShop, fetchMessages, sendMessage as dbSendMessage, subscribeToMessages, subscribeToShopBookings } from "../lib/queries";
+import { SERVICE_CATEGORIES, ALL_SERVICE_NAMES } from "../lib/services";
 
 // Parse "Mon DD, YYYY" → { month (0-indexed), day, year }
 function parseDate(str) {
@@ -148,6 +149,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
   const [userShop, setUserShop] = useState(null);
   const [isNewShop, setIsNewShop] = useState(false);
   const [profileForm, setProfileForm] = useState({ name: "", city: "", phone: "", website: "", bio: "", price_from: "" });
+  const [selectedServices, setSelectedServices] = useState([]);
   const [saveStatus, setSaveStatus] = useState("");
   const [shopError, setShopError] = useState("");
   const [bookingsError, setBookingsError] = useState("");
@@ -171,6 +173,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
       bio: shop.bio || "",
       price_from: shop.price_from != null ? String(shop.price_from) : "",
     });
+    setSelectedServices((shop.tags || []).filter(t => ALL_SERVICE_NAMES.includes(t)));
   };
 
   useEffect(() => {
@@ -326,6 +329,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
       website: profileForm.website.trim(),
       bio: profileForm.bio.trim(),
       price_from: profileForm.price_from ? parseFloat(profileForm.price_from) : 0,
+      tags: selectedServices,
     };
     const updated = await updateShop(userShop.id, updates);
     if (updated) {
@@ -775,6 +779,32 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
                   />
                 </div>
               ))}
+              <div>
+                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", letterSpacing: 1, marginBottom: 10 }}>SERVICES OFFERED</div>
+                {SERVICE_CATEGORIES.map(({ category, services }) => (
+                  <div key={category} style={{ marginBottom: 16 }}>
+                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.25)", letterSpacing: 2, marginBottom: 8 }}>{category.toUpperCase()}</div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                      {services.map(({ name }) => {
+                        const checked = selectedServices.includes(name);
+                        return (
+                          <label key={name} style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: checked ? "#fff" : "rgba(255,255,255,0.5)" }}>
+                            <div
+                              onClick={() => setSelectedServices(prev =>
+                                prev.includes(name) ? prev.filter(s => s !== name) : [...prev, name]
+                              )}
+                              style={{ width: 16, height: 16, border: `2px solid ${checked ? "#FF4D00" : "rgba(255,255,255,0.2)"}`, background: checked ? "#FF4D00" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, cursor: "pointer" }}
+                            >
+                              {checked && <div style={{ width: 8, height: 2, background: "#fff", position: "relative" }}><div style={{ position: "absolute", width: 2, height: 8, background: "#fff", top: -3, left: 3 }} /></div>}
+                            </div>
+                            {name}
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
               <div>
                 <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", letterSpacing: 1, marginBottom: 6 }}>BIO / ABOUT YOUR SHOP</div>
                 <textarea
