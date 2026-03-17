@@ -19,13 +19,18 @@ function mergeMessages(existing = [], incoming = []) {
   return merged;
 }
 
-export default function CustomerDashboard({ nav, currentUser, currentProfile, onLogout }) {
+export default function CustomerDashboard({ nav, currentUser, currentProfile, onLogout, stripeReturn, setStripeReturn }) {
   const [bookings, setBookings] = useState([]);
   const [bookingsLoaded, setBookingsLoaded] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [messagesMap, setMessagesMap] = useState({});
   const [chatInput, setChatInput] = useState("");
   const chatEndRef = useRef(null);
+
+  // ── Payment modal state ──────────────────────────────────
+  const [paymentBooking, setPaymentBooking] = useState(null); // { booking, amount }
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [paymentError, setPaymentError] = useState("");
 
   // Load bookings: real data if logged in, static demo otherwise
   useEffect(() => {
@@ -174,6 +179,49 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
     }
   };
 
+  // ── Confirm booking after Stripe payment (doesn't depend on selectedBooking state) ──
+  const confirmBookingFromPayment = async (bookingId, amount) => {
+    if (!currentUser) return;
+    const normalizedAmount = Number(amount) || 0;
+    const fee = Math.round(normalizedAmount * 0.07 * 100) / 100;
+    const total = Math.round((normalizedAmount + normalizedAmount * 0.07) * 100) / 100;
+    await supabase.from("bookings").update({ status: "confirmed", amount: normalizedAmount, fee, total }).eq("id", bookingId).eq("customer_id", currentUser.id);
+    const marker = `QUOTE_RESPONSE::accepted::${normalizedAmount.toFixed(2)}`;
+    await dbSendMessage({ bookingId, senderId: currentUser.id, senderRole: "customer", text: marker });
+    setBookings(prev => prev.map(b => String(b.id) === String(bookingId) ? { ...b, status: "confirmed", amount: normalizedAmount, fee, total } : b));
+  };
+
+  // ── Consume Stripe return after bookings are loaded ──────────────────────
+  useEffect(() => {
+    if (!stripeReturn || !bookingsLoaded) return;
+    const booking = bookings.find(b => String(b.id) === String(stripeReturn.bookingId));
+    if (booking) {
+      confirmBookingFromPayment(stripeReturn.bookingId, stripeReturn.amount);
+      setSelectedBooking({ ...booking, status: "confirmed" });
+      setStripeReturn(null);
+    }
+  }, [stripeReturn, bookingsLoaded]);
+
+  // ── Redirect to Stripe Checkout ──────────────────────────────────────────
+  const handleProceedToPayment = async () => {
+    if (!paymentBooking) return;
+    setPaymentLoading(true);
+    setPaymentError("");
+    const { booking, amount } = paymentBooking;
+    const successUrl = `${window.location.origin}/?stripe_success=1&booking_id=${booking.id}&amount=${amount}`;
+    const cancelUrl  = `${window.location.origin}/?stripe_cancel=1`;
+    const { data, error } = await supabase.functions.invoke("create-checkout-session", {
+      body: { bookingId: booking.id, serviceAmount: amount, serviceName: booking.service, shopName: booking.shop, successUrl, cancelUrl },
+    });
+    if (error || !data?.url) {
+      const msg = data?.error || error?.message || error?.toString() || "Unknown error";
+      setPaymentError(`Payment setup failed: ${msg}`);
+      setPaymentLoading(false);
+      return;
+    }
+    window.location.href = data.url;
+  };
+
   const Navbar = () => (
     <nav style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 40px", background: "#0D0D0D", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
       <div style={{ fontSize: 24, letterSpacing: 4, color: "#FF4D00", cursor: "pointer" }} onClick={() => nav("landing")}>WRAP<span style={{ color: "#fff" }}>LOCAL</span></div>
@@ -192,7 +240,7 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
   // ── BOOKING DETAIL + CHAT VIEW ──────────────────────────────────────────────
   if (selectedBooking) {
     const b = selectedBooking;
-    const messages = messagesMap[b.id];
+    const messages = messagesMap[b.id] || [];
     const lastQuoteIndex = messages.reduce((idx, msg, i) => msg?.quoteOffer != null ? i : idx, -1);
     const pendingQuote = lastQuoteIndex >= 0
       ? (() => {
@@ -253,13 +301,13 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
               </div>
 
               {/* Input */}
-              {b.status === "pending" && pendingQuote && (
+              {pendingQuote && (
                 <div style={{ border: "1px solid rgba(255,255,255,0.07)", borderTop: "none", padding: "14px 16px", background: "#111" }}>
                   <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.8)", marginBottom: 10 }}>
                     Quote received: <span style={{ color: "#10B981", fontWeight: 600 }}>${Number(pendingQuote.quoteOffer).toFixed(2)}</span>
                   </div>
                   <div style={{ display: "flex", gap: 8 }}>
-                    <button onClick={() => handleQuoteDecision("accepted", pendingQuote.quoteOffer)} style={{ background: "#10B981", color: "#fff", border: "none", padding: "9px 14px", fontFamily: "'Bebas Neue', cursive", fontSize: 14, letterSpacing: 1, cursor: "pointer" }}>Accept Quote</button>
+                    <button onClick={() => setPaymentBooking({ booking: selectedBooking, amount: pendingQuote.quoteOffer })} style={{ background: "#10B981", color: "#fff", border: "none", padding: "9px 14px", fontFamily: "'Bebas Neue', cursive", fontSize: 14, letterSpacing: 1, cursor: "pointer" }}>Accept &amp; Pay →</button>
                     <button onClick={() => handleQuoteDecision("rejected", pendingQuote.quoteOffer)} style={{ background: "transparent", color: "rgba(255,77,0,0.9)", border: "1px solid rgba(255,77,0,0.4)", padding: "9px 14px", fontFamily: "'Bebas Neue', cursive", fontSize: 14, letterSpacing: 1, cursor: "pointer" }}>Decline Quote</button>
                   </div>
                 </div>
@@ -321,6 +369,41 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
             </div>
           </div>
         </div>
+
+      {/* ── Payment modal ── */}
+      {paymentBooking && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "20px" }}>
+          <div style={{ background: "#111", border: "1px solid rgba(255,255,255,0.1)", width: "100%", maxWidth: 460, padding: "32px", fontFamily: "'DM Sans', sans-serif" }}>
+            <div style={{ fontFamily: "'Bebas Neue', cursive", fontSize: 32, letterSpacing: 2, marginBottom: 6 }}>COMPLETE PAYMENT</div>
+            <div style={{ fontSize: 13, color: "rgba(255,255,255,0.45)", marginBottom: 28 }}>{paymentBooking.booking.shop} · {paymentBooking.booking.service}</div>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, marginBottom: 10 }}>
+              <span style={{ color: "rgba(255,255,255,0.5)" }}>Service</span>
+              <span>${Number(paymentBooking.amount).toFixed(2)}</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, marginBottom: 10 }}>
+              <span style={{ color: "rgba(255,255,255,0.5)" }}>WrapLocal fee (7%)</span>
+              <span>${(Number(paymentBooking.amount) * 0.07).toFixed(2)}</span>
+            </div>
+            <div style={{ height: 1, background: "rgba(255,255,255,0.08)", margin: "14px 0" }} />
+            <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "'Bebas Neue', cursive", fontSize: 28, letterSpacing: 1, marginBottom: 24 }}>
+              <span>TOTAL</span>
+              <span style={{ color: "#FF4D00" }}>${(Number(paymentBooking.amount) * 1.07).toFixed(2)}</span>
+            </div>
+            {paymentError && <div style={{ fontSize: 13, color: "#ef4444", marginBottom: 14 }}>{paymentError}</div>}
+            <button
+              onClick={handleProceedToPayment}
+              disabled={paymentLoading}
+              style={{ width: "100%", background: paymentLoading ? "#555" : "#10B981", color: "#fff", border: "none", padding: "14px", fontFamily: "'Bebas Neue', cursive", fontSize: 20, letterSpacing: 2, cursor: paymentLoading ? "default" : "pointer", marginBottom: 12 }}
+            >
+              {paymentLoading ? "Connecting to Stripe…" : `🔒 PAY $${(Number(paymentBooking.amount) * 1.07).toFixed(2)} →`}
+            </button>
+            <div style={{ textAlign: "center" }}>
+              <span onClick={() => { setPaymentBooking(null); setPaymentError(""); }} style={{ fontSize: 13, color: "rgba(255,255,255,0.35)", cursor: "pointer", textDecoration: "underline" }}>Maybe Later</span>
+            </div>
+            <div style={{ textAlign: "center", marginTop: 16, fontSize: 11, color: "rgba(255,255,255,0.2)", letterSpacing: 1 }}>POWERED BY STRIPE</div>
+          </div>
+        </div>
+      )}
       </div>
     );
   }
@@ -367,6 +450,41 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
         )}
         <button className="btn-main" style={{ marginTop: 24, fontSize: 16 }} onClick={() => nav("search")}>Book Another Appointment →</button>
       </div>
+
+      {/* ── Payment modal ── */}
+      {paymentBooking && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "20px" }}>
+          <div style={{ background: "#111", border: "1px solid rgba(255,255,255,0.1)", width: "100%", maxWidth: 460, padding: "32px", fontFamily: "'DM Sans', sans-serif" }}>
+            <div style={{ fontFamily: "'Bebas Neue', cursive", fontSize: 32, letterSpacing: 2, marginBottom: 6 }}>COMPLETE PAYMENT</div>
+            <div style={{ fontSize: 13, color: "rgba(255,255,255,0.45)", marginBottom: 28 }}>{paymentBooking.booking.shop} · {paymentBooking.booking.service}</div>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, marginBottom: 10 }}>
+              <span style={{ color: "rgba(255,255,255,0.5)" }}>Service</span>
+              <span>${Number(paymentBooking.amount).toFixed(2)}</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, marginBottom: 10 }}>
+              <span style={{ color: "rgba(255,255,255,0.5)" }}>WrapLocal fee (7%)</span>
+              <span>${(Number(paymentBooking.amount) * 0.07).toFixed(2)}</span>
+            </div>
+            <div style={{ height: 1, background: "rgba(255,255,255,0.08)", margin: "14px 0" }} />
+            <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "'Bebas Neue', cursive", fontSize: 28, letterSpacing: 1, marginBottom: 24 }}>
+              <span>TOTAL</span>
+              <span style={{ color: "#FF4D00" }}>${(Number(paymentBooking.amount) * 1.07).toFixed(2)}</span>
+            </div>
+            {paymentError && <div style={{ fontSize: 13, color: "#ef4444", marginBottom: 14 }}>{paymentError}</div>}
+            <button
+              onClick={handleProceedToPayment}
+              disabled={paymentLoading}
+              style={{ width: "100%", background: paymentLoading ? "#555" : "#10B981", color: "#fff", border: "none", padding: "14px", fontFamily: "'Bebas Neue', cursive", fontSize: 20, letterSpacing: 2, cursor: paymentLoading ? "default" : "pointer", marginBottom: 12 }}
+            >
+              {paymentLoading ? "Connecting to Stripe…" : `🔒 PAY $${(Number(paymentBooking.amount) * 1.07).toFixed(2)} →`}
+            </button>
+            <div style={{ textAlign: "center" }}>
+              <span onClick={() => { setPaymentBooking(null); setPaymentError(""); }} style={{ fontSize: 13, color: "rgba(255,255,255,0.35)", cursor: "pointer", textDecoration: "underline" }}>Maybe Later</span>
+            </div>
+            <div style={{ textAlign: "center", marginTop: 16, fontSize: 11, color: "rgba(255,255,255,0.2)", letterSpacing: 1 }}>POWERED BY STRIPE</div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -22,6 +22,7 @@ export default function App() {
   const [dashTab, setDashTab] = useState("overview");
   const [searchQuery, setSearchQuery] = useState("");
   const [serviceFilter, setServiceFilter] = useState(null);
+  const [stripeReturn, setStripeReturn] = useState(null);
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
   const [loginError, setLoginError] = useState("");
   const [postLoginNav, setPostLoginNav] = useState(null);
@@ -42,6 +43,16 @@ export default function App() {
         fetchProfile(session.user.id).then(p => setCurrentProfile(p));
       }
     });
+
+    // Detect Stripe Checkout redirect (?stripe_success=1&booking_id=xxx&amount=xxx)
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('stripe_success') === '1') {
+      const bookingId = urlParams.get('booking_id');
+      const amount = parseFloat(urlParams.get('amount'));
+      if (bookingId && !isNaN(amount)) setStripeReturn({ bookingId, amount });
+      window.history.replaceState({}, '', window.location.pathname);
+      setView('customer-dash');
+    }
 
     // Listen for auth changes (login / logout)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -125,7 +136,7 @@ export default function App() {
   if (view === "search") return <SearchPage nav={nav} shops={shops} searchQuery={searchQuery} setSearchQuery={setSearchQuery} serviceFilter={serviceFilter} setServiceFilter={setServiceFilter} setSelectedShop={setSelectedShop} setBookingShop={setBookingShop} currentUser={currentUser} currentProfile={currentProfile} onLogout={handleLogout} />;
   if (view === "shop") return <ShopProfile nav={nav} selectedShop={selectedShop} setBookingShop={setBookingShop} currentUser={currentUser} currentProfile={currentProfile} onLogout={handleLogout} />;
   if (view === "booking") return <BookingFlow nav={nav} bookingShop={bookingShop} bookingStep={bookingStep} setBookingStep={setBookingStep} selectedSlot={selectedSlot} setSelectedSlot={setSelectedSlot} selectedDate={selectedDate} setSelectedDate={setSelectedDate} bookingConfirmed={bookingConfirmed} setBookingConfirmed={setBookingConfirmed} currentUser={currentUser} />;
-  if (view === "customer-dash") return <CustomerDashboard nav={nav} currentUser={currentUser} currentProfile={currentProfile} onLogout={handleLogout} />;
+  if (view === "customer-dash") return <CustomerDashboard nav={nav} currentUser={currentUser} currentProfile={currentProfile} onLogout={handleLogout} stripeReturn={stripeReturn} setStripeReturn={setStripeReturn} />;
   if (view === "pricing") return <PricingPage nav={nav} />;
   if (view === "company-dash") return <CompanyDashboard nav={nav} dashTab={dashTab} setDashTab={setDashTab} currentUser={currentUser} currentProfile={currentProfile} onLogout={handleLogout} />;
   if (view === "customer-login") return <CustomerLogin nav={nav} loginForm={loginForm} setLoginForm={setLoginForm} loginError={loginError} setLoginError={setLoginError} handleLogin={handleLogin} bookingContext={!!postLoginNav} />;
