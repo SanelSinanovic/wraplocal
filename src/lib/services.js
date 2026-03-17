@@ -20,6 +20,7 @@ export const SERVICE_CATEGORIES = [
       { name: "Monument Signs", description: "Freestanding exterior monument signage" },
       { name: "Banners", description: "Vinyl banners for indoor or outdoor use" },
       { name: "LED Signs", description: "Illuminated LED cabinet and channel signs" },
+      { name: "Channel Letters", description: "3D dimensional lettering for storefronts" },
       { name: "Window Graphics", description: "Storefront window decals and frosted film" },
     ],
   },
