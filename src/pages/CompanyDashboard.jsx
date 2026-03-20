@@ -159,6 +159,10 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
   const [chatInput, setChatInput] = useState("");
   const [quoteInput, setQuoteInput] = useState("");
   const chatEndRef = useRef(null);
+  const photoInputRef = useRef(null);
+  const [profilePhotoUrl, setProfilePhotoUrl] = useState("");
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const [photoError, setPhotoError] = useState("");
   const today = new Date();
   const [calYear, setCalYear] = useState(today.getFullYear());
   const [calMonth, setCalMonth] = useState(today.getMonth());
@@ -174,6 +178,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
       price_from: shop.price_from != null ? String(shop.price_from) : "",
     });
     setSelectedServices((shop.tags || []).filter(t => ALL_SERVICE_NAMES.includes(t)));
+    setProfilePhotoUrl(shop.banner_url || "");
   };
 
   useEffect(() => {
@@ -330,6 +335,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
       bio: profileForm.bio.trim(),
       price_from: profileForm.price_from ? parseFloat(profileForm.price_from) : 0,
       tags: selectedServices,
+      banner_url: profilePhotoUrl || userShop.banner_url || "",
     };
     const updated = await updateShop(userShop.id, updates);
     if (updated) {
@@ -340,6 +346,26 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
     } else {
       setSaveStatus("error");
     }
+  };
+
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPhotoUploading(true);
+    setPhotoError("");
+    const ext = file.name.split('.').pop();
+    const path = `${currentUser.id}/profile.${ext}`;
+    const { error: upErr } = await supabase.storage
+      .from('shop-images')
+      .upload(path, file, { upsert: true });
+    if (upErr) {
+      setPhotoError("Upload failed: " + upErr.message);
+      setPhotoUploading(false);
+      return;
+    }
+    const { data: { publicUrl } } = supabase.storage.from('shop-images').getPublicUrl(path);
+    setProfilePhotoUrl(publicUrl);
+    setPhotoUploading(false);
   };
 
   const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -761,6 +787,45 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
             )}
             <div style={{ fontSize: 40, letterSpacing: 2, marginBottom: 32 }}>BUSINESS PROFILE</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+              {/* Profile Photo Upload */}
+              <div>
+                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", letterSpacing: 1, marginBottom: 10 }}>
+                  PROFILE PHOTO <span style={{ color: "#FF4D00" }}>*</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+                  <div
+                    onClick={() => photoInputRef.current?.click()}
+                    style={{ width: 100, height: 100, background: "#1A1A1A", border: `2px solid ${profilePhotoUrl ? "#FF4D00" : "rgba(255,255,255,0.15)"}`, overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+                  >
+                    {profilePhotoUrl ? (
+                      <img src={profilePhotoUrl} alt="Profile" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    ) : (
+                      <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.2)", textAlign: "center", padding: 8, lineHeight: 1.5 }}>NO<br/>PHOTO</div>
+                    )}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      ref={photoInputRef}
+                      onChange={handlePhotoUpload}
+                      style={{ display: "none" }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => photoInputRef.current?.click()}
+                      disabled={photoUploading}
+                      style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", padding: "10px 20px", fontFamily: "'Bebas Neue', cursive", fontSize: 16, letterSpacing: 1, cursor: photoUploading ? "not-allowed" : "pointer", opacity: photoUploading ? 0.6 : 1 }}
+                    >
+                      {photoUploading ? "UPLOADING..." : profilePhotoUrl ? "CHANGE PHOTO" : "UPLOAD PHOTO"}
+                    </button>
+                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 8, lineHeight: 1.5 }}>
+                      This photo appears on your public listing.<br/>JPG, PNG, or WEBP recommended.
+                    </div>
+                    {photoError && <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#FF4D00", marginTop: 6 }}>{photoError}</div>}
+                  </div>
+                </div>
+              </div>
               {[  
                 ["Business Name", "name", "text", "e.g. Chrome Kings Wraps"],
                 ["Phone", "phone", "tel", "e.g. (404) 555-0123"],
@@ -815,14 +880,15 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
                   style={{ width: "100%", background: "#1A1A1A", border: "1px solid rgba(255,255,255,0.1)", padding: "12px 16px", color: "#fff", fontFamily: "'DM Sans', sans-serif", fontSize: 14, outline: "none", resize: "vertical" }}
                 />
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
                 <button
                   onClick={handleSaveProfile}
-                  disabled={saveStatus === "saving"}
-                  style={{ background: "#FF4D00", color: "#fff", border: "none", padding: "14px 32px", fontFamily: "'Bebas Neue', cursive", fontSize: 18, letterSpacing: 2, cursor: saveStatus === "saving" ? "not-allowed" : "pointer", opacity: saveStatus === "saving" ? 0.6 : 1 }}
+                  disabled={saveStatus === "saving" || !profilePhotoUrl}
+                  style={{ background: profilePhotoUrl ? "#FF4D00" : "rgba(255,77,0,0.3)", color: "#fff", border: "none", padding: "14px 32px", fontFamily: "'Bebas Neue', cursive", fontSize: 18, letterSpacing: 2, cursor: (saveStatus === "saving" || !profilePhotoUrl) ? "not-allowed" : "pointer", opacity: saveStatus === "saving" ? 0.6 : 1 }}
                 >
                   {saveStatus === "saving" ? "Saving..." : "Save Profile"}
                 </button>
+                {!profilePhotoUrl && <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,77,0,0.8)" }}>⚠ Profile photo required</span>}
                 {saveStatus === "saved" && <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "#10B981" }}>✓ Profile saved!</span>}
                 {saveStatus === "error" && <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "#FF4D00" }}>Something went wrong. Try again.</span>}
               </div>

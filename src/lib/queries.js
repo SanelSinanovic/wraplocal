@@ -50,7 +50,7 @@ export async function updateShop(shopId, fields) {
 export async function createShop({ ownerId, name, city = '' }) {
   const { data, error } = await supabase
     .from('shops')
-    .upsert({
+    .insert({
       owner_id: ownerId,
       name: name || 'My Wrap Shop',
       city,
@@ -58,11 +58,17 @@ export async function createShop({ ownerId, name, city = '' }) {
       review_count: 0,
       price_from: 0,
       color: '#FF4D00',
-    }, { onConflict: 'owner_id', ignoreDuplicates: true })
+    })
     .select()
     .limit(1)
-  if (error) { console.error('createShop:', error); return { data: null, error } }
-  // If ignoreDuplicates suppressed the insert, fetch the existing row
+  if (error) {
+    // If a shop already exists for this owner (race condition), just fetch it
+    if (error.code === '23505') {
+      return fetchUserShop(ownerId)
+    }
+    console.error('createShop:', error)
+    return { data: null, error }
+  }
   if (!data || data.length === 0) {
     return fetchUserShop(ownerId)
   }
