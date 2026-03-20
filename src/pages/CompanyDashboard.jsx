@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "../lib/supabase";
-import { fetchUserShop, fetchCompanyBookings, createShop, updateShop, fetchMessages, sendMessage as dbSendMessage, subscribeToMessages, subscribeToShopBookings } from "../lib/queries";
+import { fetchUserShop, fetchCompanyBookings, createShop, updateShop, fetchMessages, sendMessage as dbSendMessage, subscribeToMessages, subscribeToShopBookings, fetchPortfolioImages, addPortfolioImage, deletePortfolioImage } from "../lib/queries";
 import { SERVICE_CATEGORIES, ALL_SERVICE_NAMES } from "../lib/services";
 
 // Parse "Mon DD, YYYY" → { month (0-indexed), day, year }
@@ -163,6 +163,10 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
   const [profilePhotoUrl, setProfilePhotoUrl] = useState("");
   const [photoUploading, setPhotoUploading] = useState(false);
   const [photoError, setPhotoError] = useState("");
+  const portfolioInputRef = useRef(null);
+  const [portfolioImages, setPortfolioImages] = useState([]);
+  const [portfolioUploading, setPortfolioUploading] = useState(false);
+  const [portfolioError, setPortfolioError] = useState("");
   const today = new Date();
   const [calYear, setCalYear] = useState(today.getFullYear());
   const [calMonth, setCalMonth] = useState(today.getMonth());
@@ -215,6 +219,9 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
       }
       setUserShop(shop);
       syncProfileForm(shop);
+
+      const { data: portData } = await fetchPortfolioImages(shop.id);
+      setPortfolioImages(portData || []);
 
       const { data: bookingsData, error: bookingsError } = await fetchCompanyBookings(shop.id);
       if (bookingsError) {
@@ -348,6 +355,40 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
     }
   };
 
+  const handlePortfolioUpload = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    setPortfolioUploading(true);
+    setPortfolioError("");
+    const nextOrder = portfolioImages.length;
+    const uploaded = [];
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const ext = file.name.split('.').pop();
+      const path = `${currentUser.id}/portfolio/${Date.now()}_${i}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from('shop-images')
+        .upload(path, file, { upsert: false });
+      if (upErr) {
+        setPortfolioError("Upload failed: " + upErr.message);
+        break;
+      }
+      const { data: { publicUrl } } = supabase.storage.from('shop-images').getPublicUrl(path);
+      const { data: row } = await addPortfolioImage(userShop.id, publicUrl, nextOrder + i);
+      if (row) uploaded.push(row);
+    }
+    setPortfolioImages(prev => [...prev, ...uploaded]);
+    setPortfolioUploading(false);
+    e.target.value = "";
+  };
+
+  const handlePortfolioDelete = async (img) => {
+    const { error } = await deletePortfolioImage(img.id);
+    if (!error) {
+      setPortfolioImages(prev => prev.filter(p => p.id !== img.id));
+    }
+  };
+
   const handlePhotoUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -460,6 +501,14 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
                 <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.4)" }}>{monthName} overview</div>
               </div>
             </div>
+            {!profilePhotoUrl && (
+              <div
+                onClick={() => setDashTab("profile")}
+                style={{ background: "rgba(255,77,0,0.08)", border: "1px solid rgba(255,77,0,0.3)", padding: "14px 20px", marginBottom: 24, fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.7)", lineHeight: 1.6, cursor: "pointer" }}
+              >
+                🔒 <strong style={{ color: "#FF4D00" }}>Your listing is hidden from customers.</strong> Add a profile photo to appear in search results. <span style={{ color: "#FF4D00", textDecoration: "underline" }}>Go to Profile →</span>
+              </div>
+            )}
             <div className="stats-4" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 32 }}>
               {[
                 ["Total Revenue", `$${totalRevenue.toLocaleString()}`, `${dashboardBookings.length} booking${dashboardBookings.length !== 1 ? "s" : ""}`, "#10B981"],
@@ -786,6 +835,11 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
               </div>
             )}
             <div style={{ fontSize: 40, letterSpacing: 2, marginBottom: 32 }}>BUSINESS PROFILE</div>
+            {!profilePhotoUrl && (
+              <div style={{ background: "rgba(255,77,0,0.08)", border: "1px solid rgba(255,77,0,0.3)", padding: "14px 20px", marginBottom: 24, fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.7)", lineHeight: 1.6 }}>
+                🔒 <strong style={{ color: "#FF4D00" }}>Your listing is hidden from customers.</strong> Upload a profile photo to make your shop discoverable in search results.
+              </div>
+            )}
             <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
               {/* Profile Photo Upload */}
               <div>
@@ -880,6 +934,67 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
                   style={{ width: "100%", background: "#1A1A1A", border: "1px solid rgba(255,255,255,0.1)", padding: "12px 16px", color: "#fff", fontFamily: "'DM Sans', sans-serif", fontSize: 14, outline: "none", resize: "vertical" }}
                 />
               </div>
+
+              {/* ── Portfolio Images ── */}
+              <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)", paddingTop: 28 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                  <div>
+                    <div style={{ fontSize: 26, letterSpacing: 2 }}>PORTFOLIO</div>
+                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.35)", marginTop: 4 }}>These photos appear on your public shop page</div>
+                  </div>
+                  <div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      ref={portfolioInputRef}
+                      onChange={handlePortfolioUpload}
+                      style={{ display: "none" }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => portfolioInputRef.current?.click()}
+                      disabled={portfolioUploading}
+                      style={{ background: "transparent", border: "1px solid rgba(255,77,0,0.5)", color: "#FF4D00", padding: "10px 20px", fontFamily: "'Bebas Neue', cursive", fontSize: 16, letterSpacing: 1, cursor: portfolioUploading ? "not-allowed" : "pointer", opacity: portfolioUploading ? 0.6 : 1 }}
+                    >
+                      {portfolioUploading ? "UPLOADING..." : "+ ADD PHOTOS"}
+                    </button>
+                  </div>
+                </div>
+                {portfolioError && <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#FF4D00", marginBottom: 12 }}>{portfolioError}</div>}
+                {portfolioImages.length === 0 ? (
+                  <div
+                    onClick={() => portfolioInputRef.current?.click()}
+                    style={{ border: "2px dashed rgba(255,255,255,0.1)", padding: "40px 20px", textAlign: "center", cursor: "pointer" }}
+                  >
+                    <div style={{ fontSize: 32, marginBottom: 8, opacity: 0.3 }}>🖼</div>
+                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.25)" }}>No portfolio photos yet. Click to upload.</div>
+                  </div>
+                ) : (
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+                    {portfolioImages.map(img => (
+                      <div key={img.id} style={{ position: "relative", aspectRatio: "4/3", background: "#1A1A1A", overflow: "hidden" }}>
+                        <img src={img.url} alt="Portfolio" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                        <button
+                          onClick={() => handlePortfolioDelete(img)}
+                          style={{ position: "absolute", top: 6, right: 6, background: "rgba(0,0,0,0.75)", border: "none", color: "#fff", width: 26, height: 26, borderRadius: 2, cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}
+                          title="Remove photo"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                    <div
+                      onClick={() => portfolioInputRef.current?.click()}
+                      style={{ aspectRatio: "4/3", border: "2px dashed rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexDirection: "column", gap: 6 }}
+                    >
+                      <div style={{ fontSize: 22, opacity: 0.3 }}>+</div>
+                      <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.2)", letterSpacing: 1 }}>ADD</div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
                 <button
                   onClick={handleSaveProfile}

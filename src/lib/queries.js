@@ -1,11 +1,44 @@
 import { supabase } from './supabase'
 
+// ── PORTFOLIO IMAGES ─────────────────────────────────────────────────────────
+
+export async function fetchPortfolioImages(shopId) {
+  const { data, error } = await supabase
+    .from('portfolio_images')
+    .select('id, url, display_order')
+    .eq('shop_id', shopId)
+    .order('display_order', { ascending: true })
+  if (error) { console.error('fetchPortfolioImages:', error); return { data: [], error } }
+  return { data: data || [], error: null }
+}
+
+export async function addPortfolioImage(shopId, url, displayOrder) {
+  const { data, error } = await supabase
+    .from('portfolio_images')
+    .insert({ shop_id: shopId, url, display_order: displayOrder })
+    .select()
+    .single()
+  if (error) { console.error('addPortfolioImage:', error); return { data: null, error } }
+  return { data, error: null }
+}
+
+export async function deletePortfolioImage(id) {
+  const { error } = await supabase
+    .from('portfolio_images')
+    .delete()
+    .eq('id', id)
+  if (error) { console.error('deletePortfolioImage:', error); return { error } }
+  return { error: null }
+}
+
 // ── SHOPS ────────────────────────────────────────────────────────────────────
 
 export async function fetchShops() {
   const { data, error } = await supabase
     .from('shops')
     .select('*, portfolio_images(url, display_order), shop_slots(label, is_active)')
+    .not('banner_url', 'is', null)
+    .neq('banner_url', '')
     .order('rating', { ascending: false })
   if (error) { console.error('fetchShops:', error); return null }
   return data.map(shop => ({

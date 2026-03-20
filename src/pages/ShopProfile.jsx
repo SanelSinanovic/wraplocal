@@ -202,8 +202,12 @@ export default function ShopProfile({ nav, selectedShop, setBookingShop, current
                 <div style={{ padding: "0 22px 6px" }}>
                   {(() => {
                     const shopServices = (shop.tags || []).filter(t => ALL_SERVICE_NAMES.includes(t));
-                    const displayServices = shopServices.length > 0 ? shopServices : ALL_SERVICE_NAMES.slice(0, 4);
-                    return displayServices.map(name => (
+                    if (shopServices.length === 0) return (
+                      <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.25)", padding: "12px 0", fontStyle: "italic" }}>
+                        No services listed yet.
+                      </div>
+                    );
+                    return shopServices.map(name => (
                       <div key={name} style={{ display: "flex", justifyContent: "space-between", padding: "11px 0", borderBottom: "1px solid rgba(255,255,255,0.04)", fontFamily: "'DM Sans', sans-serif", fontSize: 13 }}>
                         <span style={{ color: "rgba(255,255,255,0.65)" }}>{name}</span>
                         <span style={{ color: "rgba(255,255,255,0.22)", fontSize: 12 }}>Quote on request</span>
