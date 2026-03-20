@@ -1,4 +1,4 @@
-// Canonical list of all service types offered on WrapLocal.
+// Canonical list of all service types offered on Kidor.
 // Used in BookingFlow (customer picks service), CompanyDashboard (shop selects offerings),
 // and ShopProfile (displays shop services).
 

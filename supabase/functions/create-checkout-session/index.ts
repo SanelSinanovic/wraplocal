@@ -31,12 +31,12 @@ Deno.serve(async (req) => {
     params.append("line_items[0][price_data][currency]", "usd");
     params.append("line_items[0][price_data][unit_amount]", String(serviceCents));
     params.append("line_items[0][price_data][product_data][name]", serviceName || "Service");
-    params.append("line_items[0][price_data][product_data][description]", shopName || "via WrapLocal");
+    params.append("line_items[0][price_data][product_data][description]", shopName || "via Kidor");
     params.append("line_items[0][quantity]", "1");
     // Line item 1 — platform fee
     params.append("line_items[1][price_data][currency]", "usd");
     params.append("line_items[1][price_data][unit_amount]", String(feeCents));
-    params.append("line_items[1][price_data][product_data][name]", "WrapLocal Platform Fee (7%)");
+    params.append("line_items[1][price_data][product_data][name]", "Kidor Platform Fee (7%)");
     params.append("line_items[1][quantity]", "1");
     params.append("success_url", successUrl);
     params.append("cancel_url", cancelUrl);

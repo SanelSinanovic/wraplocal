@@ -25,6 +25,22 @@ export default function LandingPage({ nav, shops: liveShops, setBookingShop, set
   const shops = liveShops && liveShops.length > 0 ? liveShops : STATIC_SHOPS;
   const [menuOpen, setMenuOpen] = useState(false);
   const [hoveredService, setHoveredService] = useState(null);
+  const [activeSlide, setActiveSlide] = useState(0);
+
+  const SLIDES = [
+    { label: "Full Color Change Wrap", category: "Vehicle Wraps", accent: "#FF4D00", img: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=800&q=85" },
+    { label: "Monument Signs", category: "Signage", accent: "#3B82F6", img: "https://images.unsplash.com/photo-1486325212027-8081e485255e?w=800&q=85" },
+    { label: "Channel Letters", category: "Signage", accent: "#3B82F6", img: "https://images.unsplash.com/photo-1535957998253-26ae1ef29506?w=800&q=85" },
+    { label: "PPF Paint Protection Film", category: "Vehicle Wraps", accent: "#FF4D00", img: "https://images.unsplash.com/photo-1555215695-3004980ad54e?w=800&q=85" },
+    { label: "LED Signs", category: "Signage", accent: "#3B82F6", img: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=85" },
+    { label: "Custom Design Wrap", category: "Vehicle Wraps", accent: "#FF4D00", img: "https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=800&q=85" },
+    { label: "Window Graphics", category: "Signage", accent: "#3B82F6", img: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800&q=85" },
+  ];
+
+  useEffect(() => {
+    const t = setInterval(() => setActiveSlide(s => (s + 1) % SLIDES.length), 3500);
+    return () => clearInterval(t);
+  }, []);
 
   useEffect(() => {
     const els = document.querySelectorAll('.reveal');
@@ -71,6 +87,9 @@ export default function LandingPage({ nav, shops: liveShops, setBookingShop, set
         .hero-notif-1 { animation: slideInRight 0.55s cubic-bezier(0.22,1,0.36,1) 0.65s both; }
         .hero-notif-2 { animation: slideInRight 0.55s cubic-bezier(0.22,1,0.36,1) 0.82s both; }
         .live-dot { animation: pulse-dot 1.8s ease-in-out infinite; }
+        @keyframes imgFade { 0% { opacity: 0; transform: scale(1.04); } 15% { opacity: 1; transform: scale(1); } 88% { opacity: 1; transform: scale(1.02); } 100% { opacity: 0; transform: scale(1.04); } }
+        .slide-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.9s ease; transform: scale(1.03); }
+        .slide-img.active { opacity: 1; transform: scale(1); transition: opacity 0.9s ease, transform 6s ease; }
         .reveal { opacity: 0; transform: translateY(38px); transition: opacity 0.7s cubic-bezier(0.22,1,0.36,1), transform 0.7s cubic-bezier(0.22,1,0.36,1); }
         .reveal.visible { opacity: 1; transform: translateY(0); }
         .reveal-stagger > * { opacity: 0; transform: translateY(36px); transition: opacity 0.6s cubic-bezier(0.22,1,0.36,1), transform 0.6s cubic-bezier(0.22,1,0.36,1); }
@@ -106,7 +125,7 @@ export default function LandingPage({ nav, shops: liveShops, setBookingShop, set
 
       {/* NAV */}
       <nav className="nav-pad" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 60px", borderBottom: "1px solid rgba(255,255,255,0.06)", position: "sticky", top: 0, background: "rgba(10,10,10,0.95)", backdropFilter: "blur(20px)", zIndex: 100 }}>
-        <div style={{ fontSize: 28, letterSpacing: 4, color: "#FF4D00" }}>WRAP<span style={{ color: "#fff" }}>LOCAL</span></div>
+        <div style={{ fontSize: 28, letterSpacing: 4, color: "#FF4D00" }}>KI<span style={{ color: "#fff" }}>DOR</span></div>
         <div className="nav-links" style={{ display: "flex", gap: 32 }}>
           <span className="nav-link" onClick={() => nav("search")}>Find Shops</span>
           <span className="nav-link" onClick={() => nav("pricing")}>For Businesses</span>
@@ -194,34 +213,46 @@ export default function LandingPage({ nav, shops: liveShops, setBookingShop, set
             </div>
           </div>
 
-          <div className="hero-right hero-card" style={{ position: "relative", display: "flex", flexDirection: "column", gap: 16 }}>
-            <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: 340, height: 340, background: "radial-gradient(circle, rgba(255,77,0,0.1) 0%, transparent 70%)", pointerEvents: "none" }} />
-            <div style={{ background: "#111", border: "1px solid rgba(255,255,255,0.08)", overflow: "hidden", boxShadow: "0 32px 80px rgba(0,0,0,0.6)", position: "relative", zIndex: 1 }}>
-              <div style={{ position: "relative", height: 180, overflow: "hidden" }}>
-                <img src="https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=600&q=80" alt="shop" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.75), transparent)" }} />
-                <div style={{ position: "absolute", top: 12, left: 12, background: "rgba(10,10,10,0.7)", border: "1px solid rgba(255,255,255,0.1)", backdropFilter: "blur(8px)", padding: "4px 10px", fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.7)", display: "flex", alignItems: "center", gap: 6 }}>
-                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#10B981", display: "inline-block" }} />Available Today
+          <div className="hero-right hero-card" style={{ position: "relative", display: "flex", flexDirection: "column", gap: 14 }}>
+            {/* ── ROTATING SERVICE GALLERY ── */}
+            <div style={{ position: "relative", height: 420, overflow: "hidden", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 32px 80px rgba(0,0,0,0.7)", zIndex: 1 }}>
+              {/* Images — all stacked, active one fades in */}
+              {SLIDES.map((slide, i) => (
+                <img
+                  key={slide.label}
+                  src={slide.img}
+                  alt={slide.label}
+                  className={`slide-img${i === activeSlide ? " active" : ""}`}
+                />
+              ))}
+
+              {/* Dark gradient overlay */}
+              <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.15) 100%)", zIndex: 2 }} />
+
+              {/* Category badge top-left */}
+              <div style={{ position: "absolute", top: 16, left: 16, zIndex: 3 }}>
+                <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(0,0,0,0.6)", border: `1px solid ${SLIDES[activeSlide].accent}44`, backdropFilter: "blur(8px)", padding: "5px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 11, letterSpacing: 2, color: SLIDES[activeSlide].accent, transition: "color 0.6s" }}>
+                  {SLIDES[activeSlide].category === "Vehicle Wraps" ? "🚗" : "🪟"} {SLIDES[activeSlide].category.toUpperCase()}
                 </div>
-                <div style={{ position: "absolute", top: 12, right: 12, background: "#FF4D00", padding: "3px 10px", fontFamily: "'DM Sans', sans-serif", fontSize: 11, fontWeight: 700 }}>FEATURED</div>
               </div>
-              <div style={{ padding: 20 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
-                  <div style={{ fontSize: 22, letterSpacing: 1 }}>Chrome Kings Wraps</div>
-                  <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#FF4D00", fontWeight: 700 }}>★ 4.9</div>
-                </div>
-                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 14 }}>Atlanta, GA · 2.1 mi · 214 reviews</div>
-                <div style={{ display: "flex", gap: 6, marginBottom: 18, flexWrap: "wrap" }}>
-                  {["Full Color Change Wrap", "PPF Paint Protection Film", "Monument Signs"].map(t => (
-                    <span key={t} style={{ padding: "3px 10px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.5)" }}>{t}</span>
+
+              {/* Book button top-right */}
+              <button onClick={() => nav("search")} style={{ position: "absolute", top: 16, right: 16, zIndex: 3, background: "rgba(255,77,0,0.9)", color: "#fff", border: "none", padding: "7px 16px", fontFamily: "'Bebas Neue', cursive", fontSize: 15, letterSpacing: 2, cursor: "pointer" }}>BOOK →</button>
+
+              {/* Service label bottom */}
+              <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "24px 22px", zIndex: 3 }}>
+                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.45)", letterSpacing: 2, marginBottom: 6 }}>NOW BOOKING</div>
+                <div style={{ fontSize: 32, letterSpacing: 2, lineHeight: 1, marginBottom: 14, transition: "opacity 0.4s" }}>{SLIDES[activeSlide].label.toUpperCase()}</div>
+
+                {/* Dot indicators */}
+                <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                  {SLIDES.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setActiveSlide(i)}
+                      style={{ width: i === activeSlide ? 22 : 6, height: 6, borderRadius: 3, border: "none", cursor: "pointer", background: i === activeSlide ? SLIDES[activeSlide].accent : "rgba(255,255,255,0.25)", transition: "all 0.35s", padding: 0 }}
+                    />
                   ))}
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <div>
-                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)", marginBottom: 2 }}>Starting from</div>
-                    <div style={{ fontSize: 28, color: "#fff", letterSpacing: 1 }}>$1,200</div>
-                  </div>
-                  <button onClick={() => { setBookingShop(shops[0]); nav("booking"); }} style={{ background: "#FF4D00", color: "#fff", border: "none", padding: "10px 22px", fontFamily: "'Bebas Neue', cursive", fontSize: 16, letterSpacing: 2, cursor: "pointer" }}>Book Now</button>
                 </div>
               </div>
             </div>

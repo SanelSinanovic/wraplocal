@@ -224,7 +224,7 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
 
   const Navbar = () => (
     <nav style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 40px", background: "#0D0D0D", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-      <div style={{ fontSize: 24, letterSpacing: 4, color: "#FF4D00", cursor: "pointer" }} onClick={() => nav("landing")}>WRAP<span style={{ color: "#fff" }}>LOCAL</span></div>
+      <div style={{ fontSize: 24, letterSpacing: 4, color: "#FF4D00", cursor: "pointer" }} onClick={() => nav("landing")}>KI<span style={{ color: "#fff" }}>DOR</span></div>
       <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
         <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#FF4D00", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Sans', sans-serif", fontWeight: 700 }}>
           {(currentProfile?.name || "M")[0].toUpperCase()}
@@ -350,7 +350,7 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
                 <span style={{ color: "rgba(255,255,255,0.4)" }}>Service</span><span>${b.amount.toLocaleString()}.00</span>
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "'DM Sans', sans-serif", fontSize: 13, marginBottom: 8 }}>
-                <span style={{ color: "rgba(255,255,255,0.4)" }}>WrapLocal fee (7%)</span><span>${b.fee.toFixed(2)}</span>
+                <span style={{ color: "rgba(255,255,255,0.4)" }}>Kidor fee (7%)</span><span>${b.fee.toFixed(2)}</span>
               </div>
               <div style={{ height: 1, background: "rgba(255,255,255,0.06)", margin: "12px 0" }} />
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: 22, letterSpacing: 1 }}>
@@ -381,7 +381,7 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
               <span>${Number(paymentBooking.amount).toFixed(2)}</span>
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, marginBottom: 10 }}>
-              <span style={{ color: "rgba(255,255,255,0.5)" }}>WrapLocal fee (7%)</span>
+              <span style={{ color: "rgba(255,255,255,0.5)" }}>Kidor fee (7%)</span>
               <span>${(Number(paymentBooking.amount) * 0.07).toFixed(2)}</span>
             </div>
             <div style={{ height: 1, background: "rgba(255,255,255,0.08)", margin: "14px 0" }} />
@@ -462,7 +462,7 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
               <span>${Number(paymentBooking.amount).toFixed(2)}</span>
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, marginBottom: 10 }}>
-              <span style={{ color: "rgba(255,255,255,0.5)" }}>WrapLocal fee (7%)</span>
+              <span style={{ color: "rgba(255,255,255,0.5)" }}>Kidor fee (7%)</span>
               <span>${(Number(paymentBooking.amount) * 0.07).toFixed(2)}</span>
             </div>
             <div style={{ height: 1, background: "rgba(255,255,255,0.08)", margin: "14px 0" }} />

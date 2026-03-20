@@ -384,7 +384,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
 
       {/* Sidebar */}
       <div className="company-sidebar" style={{ width: 220, background: "#0D0D0D", borderRight: "1px solid rgba(255,255,255,0.06)", padding: "24px 16px", display: "flex", flexDirection: "column", flexShrink: 0 }}>
-        <div className="sidebar-logo" style={{ fontSize: 20, letterSpacing: 4, color: "#FF4D00", marginBottom: 32, padding: "0 4px", cursor: "pointer" }} onClick={() => nav("landing")}>WRAP<span style={{ color: "#fff" }}>LOCAL</span></div>
+        <div className="sidebar-logo" style={{ fontSize: 20, letterSpacing: 4, color: "#FF4D00", marginBottom: 32, padding: "0 4px", cursor: "pointer" }} onClick={() => nav("landing")}>KI<span style={{ color: "#fff" }}>DOR</span></div>
         <div className="sidebar-sub" style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.2)", letterSpacing: 2, marginBottom: 8, padding: "0 4px" }}>{userShop?.name?.toUpperCase() || "MY SHOP"}</div>
         {[["overview", "📊 Overview"], ["requests", "📬 Requests"], ["bookings", "📅 Bookings"], ["profile", "✏️ Profile"], ["payments", "💰 Payments"], ["settings", "⚙️ Settings"]].map(([k, l]) => (
           <div key={k} className={`nav-item${dashTab === k ? " active" : ""}`} onClick={() => { setDashTab(k); setSelectedBooking(null); }} style={{ justifyContent: "space-between" }}>
@@ -438,12 +438,12 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
               {[
                 ["Total Revenue", `$${totalRevenue.toLocaleString()}`, `${dashboardBookings.length} booking${dashboardBookings.length !== 1 ? "s" : ""}`, "#10B981"],
                 ["Bookings", String(dashboardBookings.length), "All time", "#10B981"],
-                ["WrapLocal Fee (7%)", `-$${totalFee.toFixed(2)}`, "Platform fee", "#F59E0B"],
+                ["Kidor Fee (7%)", `-$${totalFee.toFixed(2)}`, "Platform fee", "#F59E0B"],
                 ["Net Payout", `$${netPayout.toLocaleString()}`, "After fees", "#FF4D00"],
               ].map(([l, v, s, c]) => (
                 <div key={l} className="stat-card">
                   <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 8 }}>{l}</div>
-                  <div style={{ fontSize: 36, letterSpacing: 1, color: l === "WrapLocal Fee (7%)" ? "rgba(255,255,255,0.7)" : "#fff", marginBottom: 6 }}>{v}</div>
+                  <div style={{ fontSize: 36, letterSpacing: 1, color: l === "Kidor Fee (7%)" ? "rgba(255,255,255,0.7)" : "#fff", marginBottom: 6 }}>{v}</div>
                   <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: c }}>{s}</div>
                 </div>
               ))}
@@ -719,7 +719,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
           return (
           <div>
             <div style={{ fontSize: 40, letterSpacing: 2, marginBottom: 8 }}>PAYMENTS & PAYOUTS</div>
-            <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.4)", marginBottom: 32 }}>WrapLocal retains 7% of all bookings as a platform fee</div>
+            <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.4)", marginBottom: 32 }}>Kidor retains 7% of all bookings as a platform fee</div>
             <div className="stats-3" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 40 }}>
               <div className="stat-card">
                 <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 8 }}>TOTAL REVENUE</div>
@@ -729,7 +729,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
               <div className="stat-card">
                 <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 8 }}>PLATFORM FEE (7%)</div>
                 <div style={{ fontSize: 40, color: "#F59E0B" }}>${totalFee.toFixed(2)}</div>
-                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.3)", marginTop: 6 }}>Retained by WrapLocal</div>
+                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.3)", marginTop: 6 }}>Retained by Kidor</div>
               </div>
               <div className="stat-card">
                 <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 8 }}>NET PAYOUT</div>
@@ -741,7 +741,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
               <div style={{ fontSize: 22, letterSpacing: 1, marginBottom: 20 }}>FEE BREAKDOWN — {monthLabel}</div>
               <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.5)", lineHeight: 2 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid rgba(255,255,255,0.05)", padding: "8px 0" }}><span>Total Booking Revenue</span><span style={{ color: "#fff" }}>${totalRevenue.toFixed(2)}</span></div>
-                <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid rgba(255,255,255,0.05)", padding: "8px 0" }}><span>WrapLocal Fee (7%)</span><span style={{ color: "#F59E0B" }}>-${totalFee.toFixed(2)}</span></div>
+                <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid rgba(255,255,255,0.05)", padding: "8px 0" }}><span>Kidor Fee (7%)</span><span style={{ color: "#F59E0B" }}>-${totalFee.toFixed(2)}</span></div>
                 <div style={{ display: "flex", justifyContent: "space-between", padding: "12px 0" }}><span style={{ fontSize: 18, fontFamily: "'Bebas Neue', cursive", letterSpacing: 1 }}>NET PAYOUT</span><span style={{ fontSize: 18, color: "#10B981", fontFamily: "'Bebas Neue', cursive" }}>${netPayout.toFixed(2)}</span></div>
               </div>
             </div>
@@ -753,7 +753,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
           <div style={{ maxWidth: 600 }}>
             {isNewShop && (
               <div style={{ background: "rgba(255,77,0,0.08)", border: "1px solid rgba(255,77,0,0.3)", padding: "20px 24px", marginBottom: 32 }}>
-                <div style={{ fontSize: 26, letterSpacing: 2, marginBottom: 6 }}>🎉 WELCOME TO WRAPLOCAL!</div>
+                <div style={{ fontSize: 26, letterSpacing: 2, marginBottom: 6 }}>🎉 WELCOME TO KIDOR!</div>
                 <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.6)", lineHeight: 1.7 }}>
                   Your account is live. Fill in your business details below so customers can find and book you. The more you complete, the better your listing looks.
                 </div>
