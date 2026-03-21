@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { BOOKINGS } from "../data/data";
 import { supabase } from "../lib/supabase";
-import { fetchCustomerBookings, fetchMessages, sendMessage as dbSendMessage, subscribeToMessages } from "../lib/queries";
+import { fetchCustomerBookings, fetchMessages, sendMessage as dbSendMessage, subscribeToMessages, submitReview, fetchBookingReview } from "../lib/queries";
 
 function mergeMessages(existing = [], incoming = []) {
   const list = Array.isArray(incoming) ? incoming : [incoming];
@@ -25,6 +25,11 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [messagesMap, setMessagesMap] = useState({});
   const [chatInput, setChatInput] = useState("");
+  const [reviewStars, setReviewStars] = useState(0);
+  const [reviewHover, setReviewHover] = useState(0);
+  const [reviewComment, setReviewComment] = useState("");
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [existingReview, setExistingReview] = useState(null);
   const chatEndRef = useRef(null);
 
   // ── Payment modal state ──────────────────────────────────
@@ -68,7 +73,18 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
       });
     });
     return () => { channel?.unsubscribe(); };
-  }, [selectedBooking, currentUser]);
+  }, [selectedBooking?.id, currentUser]);
+
+  useEffect(() => {
+    if (selectedBooking?.status === "completed") {
+      setExistingReview(null);
+      setReviewStars(0);
+      setReviewComment("");
+      fetchBookingReview(selectedBooking.id).then(r => {
+        if (r) { setExistingReview(r); setReviewStars(r.stars); setReviewComment(r.comment || ""); }
+      });
+    }
+  }, [selectedBooking?.id]);
 
   useEffect(() => {
     if (selectedBooking) chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -124,7 +140,7 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
           status: nextStatus,
           amount: normalizedAmount,
           fee: Math.round(normalizedAmount * 0.07 * 100) / 100,
-          total: Math.round((normalizedAmount + (normalizedAmount * 0.07)) * 100) / 100,
+          total: normalizedAmount,
         }
       : { status: nextStatus };
 
@@ -144,7 +160,7 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
     });
 
     const nextTotal = decision === "accepted"
-      ? Math.round((normalizedAmount + (normalizedAmount * 0.07)) * 100) / 100
+      ? normalizedAmount
       : selectedBooking.total;
     const nextFee = decision === "accepted"
       ? Math.round(normalizedAmount * 0.07 * 100) / 100
@@ -184,7 +200,7 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
     if (!currentUser) return;
     const normalizedAmount = Number(amount) || 0;
     const fee = Math.round(normalizedAmount * 0.07 * 100) / 100;
-    const total = Math.round((normalizedAmount + normalizedAmount * 0.07) * 100) / 100;
+    const total = normalizedAmount;
     await supabase.from("bookings").update({ status: "confirmed", amount: normalizedAmount, fee, total }).eq("id", bookingId).eq("customer_id", currentUser.id);
     const marker = `QUOTE_RESPONSE::accepted::${normalizedAmount.toFixed(2)}`;
     await dbSendMessage({ bookingId, senderId: currentUser.id, senderRole: "customer", text: marker });
@@ -379,9 +395,53 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
                 </button>
               )}
               {b.status === "completed" && (
-                <button style={{ marginTop: 20, width: "100%", background: "#FF4D00", border: "none", color: "#fff", padding: "12px", fontFamily: "'Bebas Neue', cursive", fontSize: 16, letterSpacing: 2, cursor: "pointer" }} onClick={() => nav("search")}>
-                  Book Again →
-                </button>
+                <div style={{ marginTop: 20, paddingTop: 20, borderTop: "1px solid rgba(255,255,255,0.07)" }}>
+                  <div style={{ fontSize: 18, letterSpacing: 1, marginBottom: 12 }}>LEAVE A REVIEW</div>
+                  {existingReview ? (
+                    <div>
+                      <div style={{ display: "flex", gap: 4, marginBottom: 8 }}>
+                        {[1,2,3,4,5].map(s => (
+                          <span key={s} style={{ fontSize: 24, color: s <= existingReview.stars ? "#FF4D00" : "rgba(255,255,255,0.15)" }}>★</span>
+                        ))}
+                      </div>
+                      {existingReview.comment && <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.5)", fontStyle: "italic", marginBottom: 8 }}>"{existingReview.comment}"</div>}
+                      <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.3)" }}>Review submitted — thank you!</div>
+                    </div>
+                  ) : (
+                    <div>
+                      <div style={{ display: "flex", gap: 4, marginBottom: 12 }}>
+                        {[1,2,3,4,5].map(s => (
+                          <span key={s}
+                            onMouseEnter={() => setReviewHover(s)}
+                            onMouseLeave={() => setReviewHover(0)}
+                            onClick={() => setReviewStars(s)}
+                            style={{ fontSize: 28, cursor: "pointer", color: s <= (reviewHover || reviewStars) ? "#FF4D00" : "rgba(255,255,255,0.15)", transition: "color 0.1s" }}>★</span>
+                        ))}
+                      </div>
+                      <textarea
+                        placeholder="Share your experience (optional)…"
+                        value={reviewComment}
+                        onChange={e => setReviewComment(e.target.value)}
+                        style={{ width: "100%", background: "#1A1A1A", border: "1px solid rgba(255,255,255,0.1)", padding: "10px 12px", color: "#fff", fontFamily: "'DM Sans', sans-serif", fontSize: 13, outline: "none", resize: "vertical", minHeight: 70, lineHeight: 1.5, marginBottom: 10, boxSizing: "border-box" }}
+                      />
+                      <button
+                        disabled={reviewStars === 0 || reviewSubmitting}
+                        onClick={async () => {
+                          if (!reviewStars || !currentUser) return;
+                          setReviewSubmitting(true);
+                          const { data } = await submitReview({ shopId: b.shop_id, bookingId: b.id, customerId: currentUser.id, stars: reviewStars, comment: reviewComment.trim() });
+                          if (data) setExistingReview({ stars: reviewStars, comment: reviewComment.trim() });
+                          setReviewSubmitting(false);
+                        }}
+                        style={{ width: "100%", background: reviewStars ? "#FF4D00" : "#2a2a2a", color: reviewStars ? "#fff" : "rgba(255,255,255,0.3)", border: "none", padding: "10px", fontFamily: "'Bebas Neue', cursive", fontSize: 15, letterSpacing: 2, cursor: reviewStars ? "pointer" : "default", transition: "all 0.2s" }}>
+                        {reviewSubmitting ? "Submitting…" : reviewStars ? `Submit ${reviewStars}-Star Review` : "Select a Rating"}
+                      </button>
+                    </div>
+                  )}
+                  <button style={{ marginTop: 12, width: "100%", background: "transparent", border: "1px solid rgba(255,77,0,0.3)", color: "#FF4D00", padding: "10px", fontFamily: "'Bebas Neue', cursive", fontSize: 15, letterSpacing: 2, cursor: "pointer" }} onClick={() => nav("search")}>
+                    Book Again →
+                  </button>
+                </div>
               )}
             </div>
           </div>
@@ -397,14 +457,10 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
               <span style={{ color: "rgba(255,255,255,0.5)" }}>Service</span>
               <span>${Number(paymentBooking.amount).toFixed(2)}</span>
             </div>
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, marginBottom: 10 }}>
-              <span style={{ color: "rgba(255,255,255,0.5)" }}>Kidor fee (7%)</span>
-              <span>${(Number(paymentBooking.amount) * 0.07).toFixed(2)}</span>
-            </div>
             <div style={{ height: 1, background: "rgba(255,255,255,0.08)", margin: "14px 0" }} />
             <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "'Bebas Neue', cursive", fontSize: 28, letterSpacing: 1, marginBottom: 24 }}>
               <span>TOTAL</span>
-              <span style={{ color: "#FF4D00" }}>${(Number(paymentBooking.amount) * 1.07).toFixed(2)}</span>
+              <span style={{ color: "#FF4D00" }}>${Number(paymentBooking.amount).toFixed(2)}</span>
             </div>
             {paymentError && <div style={{ fontSize: 13, color: "#ef4444", marginBottom: 14 }}>{paymentError}</div>}
             <button
@@ -412,7 +468,7 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
               disabled={paymentLoading}
               style={{ width: "100%", background: paymentLoading ? "#555" : "#10B981", color: "#fff", border: "none", padding: "14px", fontFamily: "'Bebas Neue', cursive", fontSize: 20, letterSpacing: 2, cursor: paymentLoading ? "default" : "pointer", marginBottom: 12 }}
             >
-              {paymentLoading ? "Connecting to Stripe…" : `🔒 PAY $${(Number(paymentBooking.amount) * 1.07).toFixed(2)} →`}
+              {paymentLoading ? "Connecting to Stripe…" : `🔒 PAY $${Number(paymentBooking.amount).toFixed(2)} →`}
             </button>
             <div style={{ textAlign: "center" }}>
               <span onClick={() => { setPaymentBooking(null); setPaymentError(""); }} style={{ fontSize: 13, color: "rgba(255,255,255,0.35)", cursor: "pointer", textDecoration: "underline" }}>Maybe Later</span>
@@ -478,14 +534,10 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
               <span style={{ color: "rgba(255,255,255,0.5)" }}>Service</span>
               <span>${Number(paymentBooking.amount).toFixed(2)}</span>
             </div>
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, marginBottom: 10 }}>
-              <span style={{ color: "rgba(255,255,255,0.5)" }}>Kidor fee (7%)</span>
-              <span>${(Number(paymentBooking.amount) * 0.07).toFixed(2)}</span>
-            </div>
             <div style={{ height: 1, background: "rgba(255,255,255,0.08)", margin: "14px 0" }} />
             <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "'Bebas Neue', cursive", fontSize: 28, letterSpacing: 1, marginBottom: 24 }}>
               <span>TOTAL</span>
-              <span style={{ color: "#FF4D00" }}>${(Number(paymentBooking.amount) * 1.07).toFixed(2)}</span>
+              <span style={{ color: "#FF4D00" }}>${Number(paymentBooking.amount).toFixed(2)}</span>
             </div>
             {paymentError && <div style={{ fontSize: 13, color: "#ef4444", marginBottom: 14 }}>{paymentError}</div>}
             <button
@@ -493,7 +545,7 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
               disabled={paymentLoading}
               style={{ width: "100%", background: paymentLoading ? "#555" : "#10B981", color: "#fff", border: "none", padding: "14px", fontFamily: "'Bebas Neue', cursive", fontSize: 20, letterSpacing: 2, cursor: paymentLoading ? "default" : "pointer", marginBottom: 12 }}
             >
-              {paymentLoading ? "Connecting to Stripe…" : `🔒 PAY $${(Number(paymentBooking.amount) * 1.07).toFixed(2)} →`}
+              {paymentLoading ? "Connecting to Stripe…" : `🔒 PAY $${Number(paymentBooking.amount).toFixed(2)} →`}
             </button>
             <div style={{ textAlign: "center" }}>
               <span onClick={() => { setPaymentBooking(null); setPaymentError(""); }} style={{ fontSize: 13, color: "rgba(255,255,255,0.35)", cursor: "pointer", textDecoration: "underline" }}>Maybe Later</span>

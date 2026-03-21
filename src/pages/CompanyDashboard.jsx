@@ -342,7 +342,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
       });
     });
     return () => { channel?.unsubscribe(); };
-  }, [selectedBooking, currentUser]);
+  }, [selectedBooking?.id, currentUser]);
 
   useEffect(() => {
     if (selectedBooking) chatEndRef.current?.scrollIntoView({ behavior: "smooth" });

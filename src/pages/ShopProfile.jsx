@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ALL_SERVICE_NAMES } from "../lib/services";
+import { fetchShopReviews } from "../lib/queries";
 
 const PLACEHOLDER_PORTFOLIO = [
   "https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=600&q=80",
@@ -13,6 +14,11 @@ const PLACEHOLDER_PORTFOLIO = [
 export default function ShopProfile({ nav, selectedShop, setBookingShop, currentUser, currentProfile, onLogout }) {
   const [activeTab, setActiveTab] = useState("overview");
   const [lightboxImg, setLightboxImg] = useState(null);
+  const [reviews, setReviews] = useState([]);
+
+  useEffect(() => {
+    if (selectedShop?.id) fetchShopReviews(selectedShop.id).then(setReviews);
+  }, [selectedShop?.id]);
 
   if (!selectedShop) return null;
 
@@ -149,6 +155,7 @@ export default function ShopProfile({ nav, selectedShop, setBookingShop, current
           {[
             { id: "overview", label: "Overview" },
             { id: "portfolio", label: `Portfolio (${portfolio.length})` },
+            { id: "reviews", label: `Reviews${reviews.length > 0 ? ` (${reviews.length})` : ""}` },
             { id: "contact",  label: "Contact" },
           ].map(({ id, label }) => (
             <button key={id} className={`sp-tab${activeTab === id ? " active" : ""}`} onClick={() => setActiveTab(id)}>
@@ -292,6 +299,54 @@ export default function ShopProfile({ nav, selectedShop, setBookingShop, current
                 Book an Appointment →
               </button>
             </div>
+          </div>
+        )}
+
+        {/* ── REVIEWS TAB ── */}
+        {activeTab === "reviews" && (
+          <div>
+            {reviews.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "60px 0" }}>
+                <div style={{ fontSize: 40, marginBottom: 12, opacity: 0.15 }}>★</div>
+                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.28)" }}>No reviews yet</div>
+              </div>
+            ) : (
+              <>
+                {rating > 0 && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 20, marginBottom: 32, paddingBottom: 24, borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+                    <div style={{ fontSize: 64, color: "#FF4D00", lineHeight: 1 }}>{rating.toFixed(1)}</div>
+                    <div>
+                      <div style={{ color: "#FF4D00", fontSize: 22, marginBottom: 4 }}>
+                        {"★".repeat(Math.round(rating))}{"☆".repeat(5 - Math.round(rating))}
+                      </div>
+                      <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.35)" }}>
+                        {reviewCount} review{reviewCount !== 1 ? "s" : ""}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+                  {reviews.map((r, i) => (
+                    <div key={i} style={{ padding: "24px 0", borderBottom: i < reviews.length - 1 ? "1px solid rgba(255,255,255,0.06)" : "none" }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                        <div style={{ fontSize: 16, letterSpacing: 1 }}>{r.customerName}</div>
+                        <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.28)" }}>
+                          {new Date(r.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                        </div>
+                      </div>
+                      <div style={{ color: "#FF4D00", fontSize: 15, marginBottom: r.comment ? 10 : 0 }}>
+                        {"★".repeat(r.stars)}{"☆".repeat(5 - r.stars)}
+                      </div>
+                      {r.comment && (
+                        <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.58)", lineHeight: 1.7 }}>
+                          "{r.comment}"
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         )}
 

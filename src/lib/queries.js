@@ -282,18 +282,13 @@ function normalizeMessageRow(m) {
 
 export async function sendMessage({ bookingId, senderId, senderRole, text }) {
   const normalizedSenderRole = senderRole === 'company' ? 'shop' : senderRole
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('messages')
     .insert({ booking_id: bookingId, sender_id: senderId, sender_role: normalizedSenderRole, text })
+    .select()
+    .single()
   if (error) { console.error('sendMessage:', error); return null }
-  return {
-    id: `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    booking_id: bookingId,
-    sender_id: senderId,
-    sender_role: normalizedSenderRole,
-    text,
-    sent_at: new Date().toISOString(),
-  }
+  return data
 }
 
 export function subscribeToMessages(bookingId, callback) {
@@ -309,4 +304,38 @@ export function subscribeToMessages(bookingId, callback) {
       callback(normalizeMessageRow(m))
     })
     .subscribe()
+}
+
+// ── REVIEWS ───────────────────────────────────────────────────────────────────
+
+export async function fetchBookingReview(bookingId) {
+  const { data } = await supabase
+    .from('reviews')
+    .select('stars, comment')
+    .eq('booking_id', bookingId)
+    .maybeSingle()
+  return data || null
+}
+
+export async function submitReview({ shopId, bookingId, customerId, stars, comment }) {
+  const { data, error } = await supabase
+    .from('reviews')
+    .insert({ shop_id: shopId, booking_id: bookingId, customer_id: customerId, stars, comment: comment || null })
+    .select()
+    .single()
+  return { data, error }
+}
+
+export async function fetchShopReviews(shopId) {
+  const { data } = await supabase
+    .from('reviews')
+    .select('stars, comment, created_at, customer:profiles(name)')
+    .eq('shop_id', shopId)
+    .order('created_at', { ascending: false })
+  return (data || []).map(r => ({
+    stars: r.stars,
+    comment: r.comment,
+    createdAt: r.created_at,
+    customerName: r.customer?.name || 'Customer',
+  }))
 }
