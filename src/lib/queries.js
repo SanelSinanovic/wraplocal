@@ -126,7 +126,7 @@ export async function fetchProfile(userId) {
 export async function fetchCustomerBookings(customerId) {
   const { data, error } = await supabase
     .from('bookings')
-    .select('*, shop:shops(id, name, phone, color, avatar)')
+    .select('*, shop:shops(id, name, phone, color, avatar, banner_url)')
     .eq('customer_id', customerId)
     .order('created_at', { ascending: false })
   if (error) { console.error('fetchCustomerBookings:', error); return null }
@@ -134,8 +134,9 @@ export async function fetchCustomerBookings(customerId) {
   return data.map(b => ({
     ...b,
     shop: b.shop?.name || '',
-    shopAvatar: b.shop?.avatar || '??',
+    shopAvatar: b.shop?.avatar || (b.shop?.name ? b.shop.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() : '??'),
     shopColor: b.shop?.color || '#FF4D00',
+    shopImage: b.shop?.banner_url || null,
     shopPhone: b.shop?.phone || '',
     shopId: b.shop?.id || b.shop_id,
     time: b.time_slot,

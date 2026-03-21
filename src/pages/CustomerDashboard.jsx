@@ -281,7 +281,9 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
             <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
               <div style={{ background: "#111", border: "1px solid rgba(255,255,255,0.07)", padding: "20px 24px", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <div style={{ width: 40, height: 40, background: b.shopColor, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{b.shopAvatar}</div>
+                  <div style={{ width: 40, height: 40, background: b.shopColor, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, fontFamily: "'DM Sans', sans-serif", overflow: "hidden", flexShrink: 0 }}>
+                    {b.shopImage ? <img src={b.shopImage} alt={b.shop} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : b.shopAvatar}
+                  </div>
                   <div>
                     <div style={{ fontSize: 22, letterSpacing: 1 }}>{b.shop}</div>
                     <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)" }}>{b.service} · {b.date ? `${b.date}${b.time ? ` at ${b.time}` : ""}` : "Awaiting schedule"}</div>
@@ -499,7 +501,9 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
             <div key={b.id} className="booking-row" onClick={() => setSelectedBooking(b)}
               style={{ background: "#111", border: "1px solid rgba(255,255,255,0.06)", padding: "20px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", transition: "all 0.2s" }}>
               <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
-                <div style={{ width: 44, height: 44, background: b.shopColor, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{b.shopAvatar}</div>
+                <div style={{ width: 44, height: 44, background: b.shopColor, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700, fontFamily: "'DM Sans', sans-serif", overflow: "hidden", flexShrink: 0 }}>
+                    {b.shopImage ? <img src={b.shopImage} alt={b.shop} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : b.shopAvatar}
+                  </div>
                 <div>
                   <div style={{ fontSize: 20, letterSpacing: 1 }}>{b.shop}</div>
                   <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)" }}>{b.service} · {b.date ? `${b.date} at ${b.time}` : "Awaiting schedule"}</div>
