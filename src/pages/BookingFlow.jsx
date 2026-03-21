@@ -18,6 +18,25 @@ export default function BookingFlow({
   const [customerPhone, setCustomerPhone] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const [preferredDates, setPreferredDates] = useState([]);
+
+  // Derived: does the selected service require vehicle info?
+  const vehicleCategory = SERVICE_CATEGORIES.find(c => c.category === "Vehicle Wraps");
+  const isVehicleService = !!vehicleCategory?.services.find(s => s.name === selectedService);
+
+  // Only show services that this specific shop offers
+  const shopTags = bookingShop?.tags || [];
+  const shopServiceCategories = SERVICE_CATEGORIES
+    .map(cat => ({ ...cat, services: cat.services.filter(s => shopTags.includes(s.name)) }))
+    .filter(cat => cat.services.length > 0);
+
+  // Upcoming 10 dates (excluding Sundays)
+  const upcomingDates = Array.from({ length: 14 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() + i + 1);
+    if (d.getDay() === 0) return null;
+    return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+  }).filter(Boolean).slice(0, 10);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -46,6 +65,7 @@ export default function BookingFlow({
           service: selectedService,
           date: selectedDate,
           timeSlot: selectedSlot,
+          preferredDates: preferredDates.length > 0 ? JSON.stringify(preferredDates) : null,
           vehicle: vehicleType,
           designOption,
           designFileUrl: null,
@@ -75,19 +95,19 @@ export default function BookingFlow({
 
       <nav className="booking-nav" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 40px", background: "rgba(10,10,10,0.95)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
         <div style={{ fontSize: 24, letterSpacing: 4, color: "#FF4D00", cursor: "pointer" }} onClick={() => nav("landing")}>KI<span style={{ color: "#fff" }}>DOR</span></div>
-        <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.5)", cursor: "pointer" }} onClick={() => nav("search")}>← Back</span>
+        <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.5)", cursor: "pointer" }} onClick={() => { if (bookingStep === 2) { setBookingStep(1); } else { nav("shop"); } }}>← Back</span>
       </nav>
-    
 
       {bookingConfirmed ? (
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "80vh", textAlign: "center", padding: 40 }}>
           <div style={{ fontSize: 80, marginBottom: 20 }}>🎉</div>
           <div style={{ fontSize: 56, letterSpacing: 2, marginBottom: 12, color: "#FF4D00" }}>REQUEST SENT!</div>
           <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 16, color: "rgba(255,255,255,0.5)", marginBottom: 8 }}>
-            Your request at <b style={{ color: "#fff" }}>{bookingShop.name}</b> is in for <b style={{ color: "#fff" }}>{selectedDate || "the selected date"}</b> at <b style={{ color: "#fff" }}>{selectedSlot}</b>
+            Your request at <b style={{ color: "#fff" }}>{bookingShop.name}</b> has been received.
+            {preferredDates.length > 0 && <span> Your preferred dates have been noted.</span>}
           </div>
           <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.45)", marginBottom: 10 }}>Ref #WL-{Math.floor(2000 + Math.random() * 1000)}</div>
-          <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.3)", marginBottom: 40, maxWidth: 440, lineHeight: 1.6 }}>The shop will review your vehicle details and send a personalised quote within 24 hours. Check your email or visit My Bookings to track the status.</div>
+          <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.3)", marginBottom: 40, maxWidth: 440, lineHeight: 1.6 }}>The shop will review your request and send a personalised quote. Once you agree and pay, they will schedule your appointment.</div>
           <div className="confirm-btns" style={{ display: "flex", gap: 16 }}>
             <button className="btn-main" onClick={() => nav("customer-dash")}>View My Bookings</button>
             <button className="btn-main" style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.6)" }} onClick={() => nav("landing")}>Back to Home</button>
@@ -96,14 +116,14 @@ export default function BookingFlow({
       ) : (
         <div className="booking-pad" style={{ maxWidth: 800, margin: "0 auto", padding: "40px 40px" }}>
           {/* Progress */}
-          <div style={{ display: "flex", gap: 0, marginBottom: 48 }}>
-            {["Choose Service", "Pick Date & Time", "Your Info"].map((s, i) => (
+          <div style={{ display: "flex", marginBottom: 48 }}>
+            {["Choose Service", "Your Info"].map((s, i) => (
               <div key={s} style={{ flex: 1, display: "flex", alignItems: "center", gap: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <div style={{ width: 28, height: 28, borderRadius: "50%", background: bookingStep >= i + 1 ? "#FF4D00" : "#222", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: bookingStep >= i + 1 ? "#fff" : "rgba(255,255,255,0.3)", flexShrink: 0 }}>{i + 1}</div>
                   <span className="step-label" style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: bookingStep === i + 1 ? "#fff" : "rgba(255,255,255,0.3)", whiteSpace: "nowrap" }}>{s}</span>
                 </div>
-                {i < 2 && <div style={{ flex: 1, height: 1, background: bookingStep > i + 1 ? "#FF4D00" : "rgba(255,255,255,0.1)", margin: "0 12px" }} />}
+                {i < 1 && <div style={{ flex: 1, height: 1, background: bookingStep > i + 1 ? "#FF4D00" : "rgba(255,255,255,0.1)", margin: "0 12px" }} />}
               </div>
             ))}
           </div>
@@ -116,7 +136,7 @@ export default function BookingFlow({
                   <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.35)", marginBottom: 22 }}>
                     The shop will send you a quote after reviewing your request.
                   </div>
-                  {SERVICE_CATEGORIES.map(({ category, services }) => (
+                  {(shopServiceCategories.length > 0 ? shopServiceCategories : SERVICE_CATEGORIES).map(({ category, services }) => (
                     <div key={category} style={{ marginBottom: 24 }}>
                       <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)", letterSpacing: 2, marginBottom: 10 }}>{category.toUpperCase()}</div>
                       {services.map(({ name: s, description: d }) => (
@@ -135,6 +155,7 @@ export default function BookingFlow({
                       ))}
                     </div>
                   ))}
+                  {isVehicleService && (
                   <div style={{ marginTop: 24, marginBottom: 6 }}>
                     <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 8, letterSpacing: 1 }}>YOUR VEHICLE</div>
                     <input
@@ -146,6 +167,7 @@ export default function BookingFlow({
                       Helps the shop give you an accurate quote
                     </div>
                   </div>
+                  )}
                   <div style={{ marginTop: 20 }}>
                     <button className="btn-main" disabled={!selectedService} style={{ opacity: selectedService ? 1 : 0.4 }} onClick={() => setBookingStep(2)}>
                       Continue →
@@ -156,48 +178,9 @@ export default function BookingFlow({
 
               {bookingStep === 2 && (
                 <div>
-                  {(() => {
-                    const FALLBACK_SLOTS = ["9:00 AM", "10:00 AM", "11:00 AM", "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM"];
-                    const slots = bookingShop.slots && bookingShop.slots.length > 0 ? bookingShop.slots : FALLBACK_SLOTS;
-                    const today = new Date();
-                    const upcomingDates = Array.from({ length: 7 }, (_, i) => {
-                      const d = new Date(today);
-                      d.setDate(today.getDate() + i + 1);
-                      return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-                    }).filter((_, i) => {
-                      const d = new Date(today);
-                      d.setDate(today.getDate() + i + 1);
-                      return d.getDay() !== 0; // exclude Sundays
-                    }).slice(0, 5);
-                    return (
-                      <>
-                        <div style={{ fontSize: 36, letterSpacing: 1, marginBottom: 24 }}>PICK DATE & TIME</div>
-                        <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.5)", marginBottom: 16 }}>Select a date</div>
-                        <div className="date-grid" style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 8, marginBottom: 28 }}>
-                          {upcomingDates.map(d => (
-                            <div key={d} onClick={() => setSelectedDate(d)} style={{ padding: "12px", textAlign: "center", border: "1px solid", borderColor: selectedDate === d ? "#FF4D00" : "rgba(255,255,255,0.1)", background: selectedDate === d ? "rgba(255,77,0,0.1)" : "#111", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: selectedDate === d ? "#FF4D00" : "rgba(255,255,255,0.6)" }}>
-                              {d}
-                            </div>
-                          ))}
-                        </div>
-                        <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.5)", marginBottom: 12 }}>Available time slots</div>
-                        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 28 }}>
-                          {slots.map(slot => (
-                            <div key={slot} className={`slot${selectedSlot === slot ? " active" : ""}`} onClick={() => setSelectedSlot(slot)}>{slot}</div>
-                          ))}
-                        </div>
-                        <button className="btn-main" disabled={!selectedSlot || !selectedDate} style={{ opacity: selectedSlot && selectedDate ? 1 : 0.4 }} onClick={() => setBookingStep(3)}>Continue →</button>
-                      </>
-                    );
-                  })()}
-                </div>
-              )}
-
-              {bookingStep === 3 && (
-                <div>
                   <div style={{ fontSize: 36, letterSpacing: 1, marginBottom: 6 }}>YOUR INFO</div>
                   <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.35)", marginBottom: 24 }}>
-                    No payment needed now — the shop will confirm your appointment and send a quote based on your vehicle.
+                    No payment needed now — the shop will confirm your appointment and send you a quote.
                   </div>
                   <div className="name-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
                     <div><div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>FIRST NAME</div><input placeholder="Marcus" value={firstName} onChange={e => setFirstName(e.target.value)} /></div>
@@ -205,11 +188,51 @@ export default function BookingFlow({
                   </div>
                   <div style={{ marginBottom: 14 }}><div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>EMAIL</div><input placeholder="marcus@email.com" value={customerEmail} onChange={e => setCustomerEmail(e.target.value)} /></div>
                   <div style={{ marginBottom: 14 }}><div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>PHONE</div><input placeholder="(404) 555-0100" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} /></div>
+                  {isVehicleService && (
                   <div style={{ marginBottom: 14 }}>
                     <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>VEHICLE</div>
                     <input placeholder="2023 BMW M4 Competition" value={vehicleType} onChange={e => setVehicleType(e.target.value)} />
                   </div>
-                  <div style={{ marginBottom: 14 }}>
+                  )}                  {/* Preferred dates */}
+                  <div style={{ marginBottom: 20 }}>
+                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", letterSpacing: 1, marginBottom: 4 }}>PREFERRED DATES <span style={{ color: "rgba(255,255,255,0.2)", fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(pick up to 3 — optional)</span></div>
+                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.25)", marginBottom: 12 }}>Tell the shop when works best for you — they'll confirm a date that fits.</div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
+                      {upcomingDates.map(label => {
+                        const sel = preferredDates.find(p => p.date === label);
+                        const maxed = preferredDates.length >= 3;
+                        return (
+                          <div key={label}
+                            onClick={() => {
+                              if (sel) setPreferredDates(p => p.filter(x => x.date !== label));
+                              else if (!maxed) setPreferredDates(p => [...p, { date: label, time: "Flexible" }]);
+                            }}
+                            style={{ padding: "7px 12px", border: "1px solid", borderColor: sel ? "#FF4D00" : "rgba(255,255,255,0.1)", background: sel ? "rgba(255,77,0,0.1)" : "#1A1A1A", cursor: maxed && !sel ? "not-allowed" : "pointer", fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: sel ? "#FF4D00" : "rgba(255,255,255,0.55)", transition: "all 0.15s", opacity: maxed && !sel ? 0.4 : 1 }}>
+                            {label}{sel ? " ✓" : ""}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {preferredDates.length > 0 && (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                        {preferredDates.map((p, i) => (
+                          <div key={p.date} style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", padding: "10px 12px", background: "rgba(255,77,0,0.05)", border: "1px solid rgba(255,77,0,0.15)" }}>
+                            <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.8)", flexShrink: 0, minWidth: 120 }}>{i + 1}. {p.date}</span>
+                            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                              {["Morning", "Afternoon", "Evening", "Flexible"].map(t => (
+                                <div key={t}
+                                  onClick={() => setPreferredDates(prev => prev.map(x => x.date === p.date ? { ...x, time: t } : x))}
+                                  style={{ padding: "3px 10px", border: "1px solid", borderColor: p.time === t ? "#FF4D00" : "rgba(255,255,255,0.1)", background: p.time === t ? "rgba(255,77,0,0.12)" : "transparent", fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: p.time === t ? "#FF4D00" : "rgba(255,255,255,0.4)", cursor: "pointer", transition: "all 0.15s" }}>
+                                  {t}
+                                </div>
+                              ))}
+                            </div>
+                            <span onClick={() => setPreferredDates(pd => pd.filter(x => x.date !== p.date))} style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,77,0,0.6)", cursor: "pointer", marginLeft: "auto" }}>✕</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>                  <div style={{ marginBottom: 14 }}>
                     <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 10 }}>DESIGN</div>
                     <div style={{ display: "flex", gap: 10 }}>
                       {[["own", "🎨", "I have my own design"], ["shop", "✏️", "Need the shop to design"]].map(([val, icon, label]) => (
@@ -235,10 +258,13 @@ export default function BookingFlow({
                     />
                   </div>
                   <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", padding: "14px 18px", marginBottom: 22, fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)", lineHeight: 1.6 }}>
-                    💬 After submitting, the shop will review your request, confirm your slot, and send you a personalised quote within 24 hours.
+                    💬 After submitting, the shop will review your request and send you a personalised quote. Once you agree and pay, the shop will schedule your appointment date and time.
                   </div>
                   {submitError && <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#FF6A20", marginBottom: 12, padding: "10px 14px", background: "rgba(255,77,0,0.08)", border: "1px solid rgba(255,77,0,0.2)" }}>{submitError}</div>}
-                  <button className="btn-main" style={{ width: "100%", fontSize: 20, opacity: isSubmitting ? 0.6 : 1 }} disabled={isSubmitting} onClick={handleSubmit}>{isSubmitting ? "Submitting..." : "Request Appointment →"}</button>
+                  <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                    <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)", cursor: "pointer", whiteSpace: "nowrap" }} onClick={() => setBookingStep(1)}>← Change service</span>
+                    <button className="btn-main" style={{ flex: 1, fontSize: 20, opacity: isSubmitting ? 0.6 : 1 }} disabled={isSubmitting} onClick={handleSubmit}>{isSubmitting ? "Submitting..." : "Request Appointment →"}</button>
+                  </div>
                 </div>
               )}
             </div>
@@ -259,9 +285,7 @@ export default function BookingFlow({
               <div style={{ height: 1, background: "rgba(255,255,255,0.06)", marginBottom: 16 }} />
               {[
                 ["Service", selectedService || "—"],
-                ["Vehicle", vehicleType || "—"],
-                ["Date", selectedDate || "—"],
-                ["Time", selectedSlot || "—"],
+                ...(isVehicleService ? [["Vehicle", vehicleType || "—"]] : []),
               ].map(([k, v]) => (
                 <div key={k} style={{ display: "flex", justifyContent: "space-between", fontFamily: "'DM Sans', sans-serif", fontSize: 13, marginBottom: 10, gap: 8 }}>
                   <span style={{ color: "rgba(255,255,255,0.4)", flexShrink: 0 }}>{k}</span>
@@ -270,10 +294,19 @@ export default function BookingFlow({
               ))}
               <div style={{ height: 1, background: "rgba(255,255,255,0.06)", margin: "16px 0" }} />
               <div style={{ background: "rgba(255,77,0,0.07)", border: "1px solid rgba(255,77,0,0.2)", padding: "12px 14px" }}>
-                <div style={{ fontSize: 16, letterSpacing: 1, marginBottom: 4 }}>PRICE</div>
-                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.5)", lineHeight: 1.5 }}>
-                  Quoted after review — depends on vehicle size, finish, and design.
-                </div>
+                <div style={{ fontSize: 16, letterSpacing: 1, marginBottom: 4 }}>SCHEDULING</div>
+                {preferredDates.length > 0 ? (
+                  <div>
+                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.35)", marginBottom: 8, lineHeight: 1.5 }}>Your preferred dates:</div>
+                    {preferredDates.map((p, i) => (
+                      <div key={p.date} style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.55)", marginBottom: 4 }}>{i + 1}. {p.date} — {p.time}</div>
+                    ))}
+                  </div>
+                ) : (
+                  <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.5)", lineHeight: 1.5 }}>
+                    Date &amp; time will be agreed upon with the shop after your quote is accepted.
+                  </div>
+                )}
               </div>
             </div>
           </div>

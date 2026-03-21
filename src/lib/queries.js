@@ -39,6 +39,7 @@ export async function fetchShops() {
     .select('*, portfolio_images(url, display_order), shop_slots(label, is_active)')
     .not('banner_url', 'is', null)
     .neq('banner_url', '')
+    .eq('is_listed', true)
     .order('rating', { ascending: false })
   if (error) { console.error('fetchShops:', error); return null }
   return data.map(shop => ({
@@ -141,6 +142,17 @@ export async function fetchCustomerBookings(customerId) {
   }))
 }
 
+export async function scheduleBooking(bookingId, date, timeSlot) {
+  const { data, error } = await supabase
+    .from('bookings')
+    .update({ date, time_slot: timeSlot })
+    .eq('id', bookingId)
+    .select()
+    .single()
+  if (error) { console.error('scheduleBooking:', error); return { data: null, error } }
+  return { data, error: null }
+}
+
 export async function fetchCompanyBookings(shopId) {
   const { data, error } = await supabase
     .from('bookings')
@@ -180,7 +192,7 @@ export function subscribeToShopBookings(shopId, callback) {
     .subscribe()
 }
 
-export async function createBooking({ shopId, customerId, service, date, timeSlot, vehicle, designOption, designFileUrl, amount = 0 }) {
+export async function createBooking({ shopId, customerId, service, date, timeSlot, preferredDates, vehicle, designOption, designFileUrl, amount = 0 }) {
   // Build the row with only the required columns first
   const row = {
     shop_id: shopId,
@@ -194,6 +206,7 @@ export async function createBooking({ shopId, customerId, service, date, timeSlo
   if (vehicle) row.vehicle = vehicle
   if (designOption) row.design_option = designOption
   if (designFileUrl) row.design_file_url = designFileUrl
+  if (preferredDates) row.preferred_dates = preferredDates
   if (amount != null) {
     const fee = Math.round(amount * 0.07 * 100) / 100
     const total = Math.round((amount + fee) * 100) / 100

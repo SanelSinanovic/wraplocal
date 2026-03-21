@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "../lib/supabase";
-import { fetchUserShop, fetchCompanyBookings, createShop, updateShop, fetchMessages, sendMessage as dbSendMessage, subscribeToMessages, subscribeToShopBookings, fetchPortfolioImages, addPortfolioImage, deletePortfolioImage } from "../lib/queries";
+import { fetchUserShop, fetchCompanyBookings, createShop, updateShop, fetchMessages, sendMessage as dbSendMessage, subscribeToMessages, subscribeToShopBookings, fetchPortfolioImages, addPortfolioImage, deletePortfolioImage, scheduleBooking } from "../lib/queries";
 import { SERVICE_CATEGORIES, ALL_SERVICE_NAMES } from "../lib/services";
 
 // Parse "Mon DD, YYYY" → { month (0-indexed), day, year }
@@ -57,7 +57,29 @@ function mergeMessages(existing = [], incoming = []) {
 
 // ── Booking detail + chat panel ─────────────────────────────────────────────
 // Defined at module level so React never remounts it when parent state changes
-function BookingDetailPanel({ selectedBooking, messagesMap, chatInput, setChatInput, quoteInput, setQuoteInput, sendQuoteOffer, sendCompanyMessage, chatEndRef, updateBookingStatus, setSelectedBooking, backLabel }) {
+function BookingDetailPanel({ selectedBooking, messagesMap, chatInput, setChatInput, quoteInput, setQuoteInput, sendQuoteOffer, sendCompanyMessage, chatEndRef, updateBookingStatus, setSelectedBooking, backLabel, onScheduled, shopUserId }) {
+  const [schedDate, setSchedDate] = useState("");
+  const [schedTime, setSchedTime] = useState("");
+  const [schedSaving, setSchedSaving] = useState(false);
+  const [schedSaved, setSchedSaved] = useState(false);
+
+  const handleSchedule = async () => {
+    if (!schedDate || !schedTime || !selectedBooking) return;
+    setSchedSaving(true);
+    const { data } = await scheduleBooking(selectedBooking.id, schedDate, schedTime);
+    if (data) {
+      // Format the date nicely for the message
+      const dateForMsg = (() => { try { const d = new Date(`${schedDate}T12:00:00`); return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }); } catch { return schedDate; } })();
+      if (shopUserId) {
+        await dbSendMessage({ bookingId: selectedBooking.id, senderId: shopUserId, senderRole: 'shop', text: `📅 Great news! Your appointment has been confirmed for ${dateForMsg} at ${schedTime}. See you then!` });
+      }
+      setSchedSaved(true);
+      onScheduled && onScheduled(selectedBooking.id, schedDate, schedTime);
+      setTimeout(() => setSchedSaved(false), 3000);
+    }
+    setSchedSaving(false);
+  };
+
   if (!selectedBooking) return null;
   const b = selectedBooking;
   const messages = messagesMap[b.id] || [];
@@ -72,7 +94,7 @@ function BookingDetailPanel({ selectedBooking, messagesMap, chatInput, setChatIn
           <div style={{ background: "#111", border: "1px solid rgba(255,255,255,0.07)", padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
             <div>
               <div style={{ fontSize: 20, letterSpacing: 1 }}>#{String(b.id).slice(0,8)} — {b.customer}</div>
-              <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)" }}>{b.service} · {b.date} at {b.time_slot}</div>
+              <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)" }}>{b.service}{b.date ? ` · ${b.date}${b.time_slot ? ` at ${b.time_slot}` : ""}` : " · Awaiting schedule"}</div>
             </div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               {b.status === "pending" && (
@@ -98,7 +120,7 @@ function BookingDetailPanel({ selectedBooking, messagesMap, chatInput, setChatIn
             ))}
             <div ref={chatEndRef} />
           </div>
-          {b.status === "pending" && (
+          {(b.status === "pending" || (b.status === "confirmed" && !b.amount)) && (
             <div style={{ display: "flex", gap: 8, border: "1px solid rgba(255,255,255,0.07)", borderTop: "none", padding: 12, background: "#111" }}>
               <input
                 type="number"
@@ -125,17 +147,76 @@ function BookingDetailPanel({ selectedBooking, messagesMap, chatInput, setChatIn
         </div>
         <div style={{ background: "#111", border: "1px solid rgba(255,255,255,0.07)", padding: 20 }}>
           <div style={{ fontSize: 18, letterSpacing: 1, marginBottom: 16 }}>REQUEST DETAILS</div>
-          {[["Customer", b.customer],["Service", b.service],["Date", b.date],["Time", b.time_slot],["Vehicle", b.vehicle || "—"],["Design", b.design_option || "—"]].map(([l, v]) => (
+          {[["Customer", b.customer], ["Service", b.service], ["Vehicle", b.vehicle || "—"], ["Design", b.design_option || "—"]].map(([l, v]) => (
             <div key={l} style={{ marginBottom: 12 }}>
               <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)", letterSpacing: 1, marginBottom: 2 }}>{l.toUpperCase()}</div>
               <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#fff" }}>{v}</div>
             </div>
           ))}
+          {/* Customer preferred dates */}
+          {b.preferred_dates && (() => {
+            let prefs;
+            try { prefs = JSON.parse(b.preferred_dates); } catch { return null; }
+            if (!prefs || !prefs.length) return null;
+            return (
+              <div style={{ marginBottom: 12, padding: "10px 12px", background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.2)" }}>
+                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "#10B981", letterSpacing: 1, marginBottom: 8 }}>CUSTOMER'S PREFERRED DATES</div>
+                {prefs.map((p, i) => (
+                  <div key={i} style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: i === 0 ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.55)", marginBottom: 4, display: "flex", alignItems: "center", gap: 6 }}>
+                    <span>{i + 1}. {p.date} — {p.time}</span>
+                    {i === 0 && <span style={{ fontSize: 10, color: "#10B981", border: "1px solid rgba(16,185,129,0.4)", padding: "1px 6px" }}>TOP CHOICE</span>}
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+          {b.date && (
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)", letterSpacing: 1, marginBottom: 2 }}>SCHEDULED DATE</div>
+              <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#10B981" }}>{b.date}{b.time_slot ? ` at ${b.time_slot}` : ""}</div>
+            </div>
+          )}
           <div style={{ height: 1, background: "rgba(255,255,255,0.06)", margin: "14px 0" }} />
           <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)", letterSpacing: 1, marginBottom: 6 }}>STATUS</div>
           <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: b.status === "confirmed" ? "#10B981" : b.status === "pending" ? "#F59E0B" : b.status === "cancelled" ? "#EF4444" : "rgba(255,255,255,0.5)" }}>
             ● {b.status?.charAt(0).toUpperCase() + b.status?.slice(1)}
           </div>
+
+          {/* ── Schedule appointment ── */}
+          {b.status === "confirmed" && (
+            <div style={{ marginTop: 20, paddingTop: 16, borderTop: "1px solid rgba(255,255,255,0.07)" }}>
+              <div style={{ fontSize: 16, letterSpacing: 1, marginBottom: 12 }}>CONFIRM APPOINTMENT DATE</div>
+              <div style={{ marginBottom: 8 }}>
+                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)", letterSpacing: 1, marginBottom: 4 }}>DATE</div>
+                <input
+                  type="date"
+                  value={schedDate || (b.date ? new Date(b.date).toISOString().split('T')[0] : "")}
+                  onChange={e => setSchedDate(e.target.value)}
+                  style={{ width: "100%", background: "#1A1A1A", border: "1px solid rgba(255,255,255,0.12)", padding: "8px 10px", color: "#fff", fontFamily: "'DM Sans', sans-serif", fontSize: 13, outline: "none", colorScheme: "dark" }}
+                />
+              </div>
+              <div style={{ marginBottom: 10 }}>
+                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)", letterSpacing: 1, marginBottom: 4 }}>TIME</div>
+                <select
+                  value={schedTime || b.time_slot || ""}
+                  onChange={e => setSchedTime(e.target.value)}
+                  style={{ width: "100%", background: "#1A1A1A", border: "1px solid rgba(255,255,255,0.12)", padding: "8px 10px", color: "#fff", fontFamily: "'DM Sans', sans-serif", fontSize: 13, outline: "none" }}
+                >
+                  <option value="">Select time</option>
+                  {["8:00 AM","9:00 AM","10:00 AM","11:00 AM","12:00 PM","1:00 PM","2:00 PM","3:00 PM","4:00 PM","5:00 PM"].map(t => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
+              </div>
+              <button
+                onClick={handleSchedule}
+                disabled={schedSaving || (!schedDate && !b.date) || (!schedTime && !b.time_slot)}
+                style={{ width: "100%", background: schedSaved ? "#10B981" : "#FF4D00", color: "#fff", border: "none", padding: "9px", fontFamily: "'Bebas Neue', cursive", fontSize: 14, letterSpacing: 1, cursor: "pointer", opacity: schedSaving ? 0.6 : 1 }}
+              >
+                {schedSaving ? "Saving..." : schedSaved ? "✓ Scheduled!" : "Confirm Schedule"}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -167,6 +248,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
   const [portfolioImages, setPortfolioImages] = useState([]);
   const [portfolioUploading, setPortfolioUploading] = useState(false);
   const [portfolioError, setPortfolioError] = useState("");
+  const [isListed, setIsListed] = useState(false);
   const today = new Date();
   const [calYear, setCalYear] = useState(today.getFullYear());
   const [calMonth, setCalMonth] = useState(today.getMonth());
@@ -183,6 +265,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
     });
     setSelectedServices((shop.tags || []).filter(t => ALL_SERVICE_NAMES.includes(t)));
     setProfilePhotoUrl(shop.banner_url || "");
+    setIsListed(!!shop.is_listed);
   };
 
   useEffect(() => {
@@ -281,12 +364,12 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
   };
 
   const sendQuoteOffer = async () => {
-    if (!selectedBooking || selectedBooking.status !== "pending") return;
+    if (!selectedBooking || !["pending", "confirmed"].includes(selectedBooking.status)) return;
     const amount = Number(quoteInput);
     if (!Number.isFinite(amount) || amount <= 0) return;
 
     const marker = `QUOTE_OFFER::${amount.toFixed(2)}`;
-    const result = await dbSendMessage({ bookingId: selectedBooking.id, senderId: currentUser.id, senderRole: "company", text: marker });
+    const result = await dbSendMessage({ bookingId: selectedBooking.id, senderId: currentUser.id, senderRole: "shop", text: marker });
     if (!result) return;
 
     const time = new Date(result.sent_at || Date.now()).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
@@ -343,6 +426,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
       price_from: profileForm.price_from ? parseFloat(profileForm.price_from) : 0,
       tags: selectedServices,
       banner_url: profilePhotoUrl || userShop.banner_url || "",
+      is_listed: isListed,
     };
     const updated = await updateShop(userShop.id, updates);
     if (updated) {
@@ -407,6 +491,13 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
     const { data: { publicUrl } } = supabase.storage.from('shop-images').getPublicUrl(path);
     setProfilePhotoUrl(publicUrl);
     setPhotoUploading(false);
+  };
+
+  const handleScheduled = (bookingId, date, timeSlot) => {
+    setDashboardBookings(prev => prev.map(b =>
+      b.id === bookingId ? { ...b, date, time_slot: timeSlot } : b
+    ));
+    setSelectedBooking(prev => prev && prev.id === bookingId ? { ...prev, date, time_slot: timeSlot } : prev);
   };
 
   const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -504,9 +595,17 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
             {!profilePhotoUrl && (
               <div
                 onClick={() => setDashTab("profile")}
-                style={{ background: "rgba(255,77,0,0.08)", border: "1px solid rgba(255,77,0,0.3)", padding: "14px 20px", marginBottom: 24, fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.7)", lineHeight: 1.6, cursor: "pointer" }}
+                style={{ background: "rgba(255,77,0,0.08)", border: "1px solid rgba(255,77,0,0.3)", padding: "14px 20px", marginBottom: 16, fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.7)", lineHeight: 1.6, cursor: "pointer" }}
               >
                 🔒 <strong style={{ color: "#FF4D00" }}>Your listing is hidden from customers.</strong> Add a profile photo to appear in search results. <span style={{ color: "#FF4D00", textDecoration: "underline" }}>Go to Profile →</span>
+              </div>
+            )}
+            {!isListed && (
+              <div
+                onClick={() => setDashTab("profile")}
+                style={{ background: "rgba(245,158,11,0.07)", border: "1px solid rgba(245,158,11,0.3)", padding: "14px 20px", marginBottom: 24, fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.7)", lineHeight: 1.6, cursor: "pointer" }}
+              >
+                💳 <strong style={{ color: "#F59E0B" }}>Your shop is not listed.</strong> Activate your monthly listing to be discoverable by customers. <span style={{ color: "#F59E0B", textDecoration: "underline" }}>Go to Profile →</span>
               </div>
             )}
             <div className="stats-4" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 32 }}>
@@ -577,7 +676,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
         {dashTab === "requests" && (
           <div>
             {selectedBooking ? (
-              <BookingDetailPanel selectedBooking={selectedBooking} messagesMap={messagesMap} chatInput={chatInput} setChatInput={setChatInput} quoteInput={quoteInput} setQuoteInput={setQuoteInput} sendQuoteOffer={sendQuoteOffer} sendCompanyMessage={sendCompanyMessage} chatEndRef={chatEndRef} updateBookingStatus={updateBookingStatus} setSelectedBooking={setSelectedBooking} backLabel="← Back to booking requests" />
+              <BookingDetailPanel selectedBooking={selectedBooking} messagesMap={messagesMap} chatInput={chatInput} setChatInput={setChatInput} quoteInput={quoteInput} setQuoteInput={setQuoteInput} sendQuoteOffer={sendQuoteOffer} sendCompanyMessage={sendCompanyMessage} chatEndRef={chatEndRef} updateBookingStatus={updateBookingStatus} setSelectedBooking={setSelectedBooking} backLabel="← Back to booking requests" onScheduled={handleScheduled} shopUserId={currentUser?.id} />
             ) : (
               <div>
                 <div style={{ marginBottom: 28 }}>
@@ -621,7 +720,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
 
         {dashTab === "bookings" && (
           <div>
-            {selectedBooking && <BookingDetailPanel selectedBooking={selectedBooking} messagesMap={messagesMap} chatInput={chatInput} setChatInput={setChatInput} quoteInput={quoteInput} setQuoteInput={setQuoteInput} sendQuoteOffer={sendQuoteOffer} sendCompanyMessage={sendCompanyMessage} chatEndRef={chatEndRef} updateBookingStatus={updateBookingStatus} setSelectedBooking={setSelectedBooking} backLabel="← Back to all bookings" />}
+            {selectedBooking && <BookingDetailPanel selectedBooking={selectedBooking} messagesMap={messagesMap} chatInput={chatInput} setChatInput={setChatInput} quoteInput={quoteInput} setQuoteInput={setQuoteInput} sendQuoteOffer={sendQuoteOffer} sendCompanyMessage={sendCompanyMessage} chatEndRef={chatEndRef} updateBookingStatus={updateBookingStatus} setSelectedBooking={setSelectedBooking} backLabel="← Back to all bookings" onScheduled={handleScheduled} shopUserId={currentUser?.id} />}
 
             {/* Header + toggle */}
             {!selectedBooking && (
@@ -836,8 +935,13 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
             )}
             <div style={{ fontSize: 40, letterSpacing: 2, marginBottom: 32 }}>BUSINESS PROFILE</div>
             {!profilePhotoUrl && (
-              <div style={{ background: "rgba(255,77,0,0.08)", border: "1px solid rgba(255,77,0,0.3)", padding: "14px 20px", marginBottom: 24, fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.7)", lineHeight: 1.6 }}>
+              <div style={{ background: "rgba(255,77,0,0.08)", border: "1px solid rgba(255,77,0,0.3)", padding: "14px 20px", marginBottom: 16, fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.7)", lineHeight: 1.6 }}>
                 🔒 <strong style={{ color: "#FF4D00" }}>Your listing is hidden from customers.</strong> Upload a profile photo to make your shop discoverable in search results.
+              </div>
+            )}
+            {!isListed && (
+              <div style={{ background: "rgba(245,158,11,0.07)", border: "1px solid rgba(245,158,11,0.3)", padding: "14px 20px", marginBottom: 24, fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.7)", lineHeight: 1.6 }}>
+                💳 <strong style={{ color: "#F59E0B" }}>Your shop is not listed.</strong> Toggle listing status below to be discoverable by customers.
               </div>
             )}
             <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
@@ -933,6 +1037,24 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
                   rows={4}
                   style={{ width: "100%", background: "#1A1A1A", border: "1px solid rgba(255,255,255,0.1)", padding: "12px 16px", color: "#fff", fontFamily: "'DM Sans', sans-serif", fontSize: 14, outline: "none", resize: "vertical" }}
                 />
+              </div>
+
+              <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)", paddingTop: 28 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                  <div>
+                    <div style={{ fontSize: 26, letterSpacing: 2 }}>LISTING STATUS</div>
+                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.35)", marginTop: 4 }}>Controls whether your shop appears in customer search results</div>
+                  </div>
+                  <div
+                    onClick={() => setIsListed(v => !v)}
+                    style={{ width: 52, height: 28, background: isListed ? "#10B981" : "rgba(255,255,255,0.1)", borderRadius: 14, position: "relative", cursor: "pointer", transition: "background 0.2s", flexShrink: 0 }}
+                  >
+                    <div style={{ position: "absolute", top: 3, left: isListed ? 27 : 3, width: 22, height: 22, background: "#fff", borderRadius: "50%", transition: "left 0.2s", boxShadow: "0 1px 4px rgba(0,0,0,0.4)" }} />
+                  </div>
+                </div>
+                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: isListed ? "#10B981" : "rgba(245,158,11,0.9)", display: "flex", alignItems: "center", gap: 8 }}>
+                  {isListed ? "● Listed — Visible to customers" : "● Not listed — Hidden from search results"}
+                </div>
               </div>
 
               {/* ── Portfolio Images ── */}

@@ -268,7 +268,7 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
                   <div style={{ width: 40, height: 40, background: b.shopColor, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{b.shopAvatar}</div>
                   <div>
                     <div style={{ fontSize: 22, letterSpacing: 1 }}>{b.shop}</div>
-                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)" }}>Booking #{b.id} · {b.service}</div>
+                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)" }}>{b.service} · {b.date ? `${b.date}${b.time ? ` at ${b.time}` : ""}` : "Awaiting schedule"}</div>
                   </div>
                   <div style={{ marginLeft: "auto", fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: b.status === "confirmed" ? "#10B981" : "rgba(255,255,255,0.4)" }}>
                     ● {b.status.charAt(0).toUpperCase() + b.status.slice(1)}
@@ -334,8 +334,8 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
               {[
                 ["Booking ID", b.id],
                 ["Service", b.service],
-                ["Date", b.date],
-                ["Time", b.time],
+                ["Date", b.date || "Awaiting confirmation from shop"],
+                ["Time", b.time || b.time_slot || "Awaiting confirmation from shop"],
                 ["Vehicle", b.vehicle],
                 ["Shop", b.shop],
                 ["Shop Phone", b.shopPhone],
@@ -345,6 +345,23 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
                   <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "#fff" }}>{val}</div>
                 </div>
               ))}
+              {/* Show customer's preferred dates while awaiting confirmation */}
+              {b.preferred_dates && !b.date && (() => {
+                let prefs;
+                try { prefs = JSON.parse(b.preferred_dates); } catch { return null; }
+                if (!prefs || !prefs.length) return null;
+                return (
+                  <div style={{ marginBottom: 14, padding: "10px 12px", background: "rgba(255,77,0,0.05)", border: "1px solid rgba(255,77,0,0.15)" }}>
+                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)", letterSpacing: 1, marginBottom: 8 }}>YOUR PREFERRED DATES</div>
+                    {prefs.map((p, i) => (
+                      <div key={i} style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 4 }}>
+                        {i + 1}. {p.date} — {p.time}
+                      </div>
+                    ))}
+                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.3)", marginTop: 8 }}>The shop will confirm a date based on your preferences.</div>
+                  </div>
+                );
+              })()}
               <div style={{ height: 1, background: "rgba(255,255,255,0.06)", margin: "16px 0" }} />
               <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "'DM Sans', sans-serif", fontSize: 13, marginBottom: 8 }}>
                 <span style={{ color: "rgba(255,255,255,0.4)" }}>Service</span><span>${b.amount.toLocaleString()}.00</span>
@@ -429,7 +446,7 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
                 <div style={{ width: 44, height: 44, background: b.shopColor, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{b.shopAvatar}</div>
                 <div>
                   <div style={{ fontSize: 20, letterSpacing: 1 }}>{b.shop}</div>
-                  <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)" }}>{b.service} · {b.date} at {b.time}</div>
+                  <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)" }}>{b.service} · {b.date ? `${b.date} at ${b.time}` : "Awaiting schedule"}</div>
                 </div>
               </div>
               <div className="booking-row-right" style={{ display: "flex", gap: 20, alignItems: "center" }}>

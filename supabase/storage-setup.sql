@@ -26,3 +26,9 @@ USING (
   bucket_id = 'shop-images'
   AND auth.uid()::text = (storage.foldername(name))[1]
 );
+
+-- 5. Add listing status column to shops table
+ALTER TABLE shops ADD COLUMN IF NOT EXISTS is_listed boolean DEFAULT false;
+
+-- 6. Add preferred_dates column to bookings table (stores JSON array of customer's preferred dates/times)
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS preferred_dates text;
