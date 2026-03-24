@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "../lib/supabase";
-import { fetchUserShop, fetchCompanyBookings, createShop, updateShop, fetchMessages, sendMessage as dbSendMessage, subscribeToMessages, subscribeToShopBookings, fetchPortfolioImages, addPortfolioImage, deletePortfolioImage, scheduleBooking } from "../lib/queries";
+import { fetchUserShop, fetchCompanyBookings, createShop, updateShop, fetchMessages, sendMessage as dbSendMessage, subscribeToMessages, subscribeToShopBookings, fetchPortfolioImages, addPortfolioImage, deletePortfolioImage, setHeroPortfolioImage, scheduleBooking } from "../lib/queries";
 import { SERVICE_CATEGORIES, ALL_SERVICE_NAMES } from "../lib/services";
 
 // Parse "Mon DD, YYYY" → { month (0-indexed), day, year }
@@ -248,6 +248,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
   const [portfolioImages, setPortfolioImages] = useState([]);
   const [portfolioUploading, setPortfolioUploading] = useState(false);
   const [portfolioError, setPortfolioError] = useState("");
+  const [dragOver, setDragOver] = useState(false);
   const [isListed, setIsListed] = useState(false);
   const today = new Date();
   const [calYear, setCalYear] = useState(today.getFullYear());
@@ -441,6 +442,11 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
 
   const handlePortfolioUpload = async (e) => {
     const files = Array.from(e.target.files || []);
+    e.target.value = "";
+    await uploadPortfolioFiles(files);
+  };
+
+  const uploadPortfolioFiles = async (files) => {
     if (!files.length) return;
     setPortfolioUploading(true);
     setPortfolioError("");
@@ -448,6 +454,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
     const uploaded = [];
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
+      if (!file.type.startsWith('image/')) continue;
       const ext = file.name.split('.').pop();
       const path = `${currentUser.id}/portfolio/${Date.now()}_${i}.${ext}`;
       const { error: upErr } = await supabase.storage
@@ -463,7 +470,6 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
     }
     setPortfolioImages(prev => [...prev, ...uploaded]);
     setPortfolioUploading(false);
-    e.target.value = "";
   };
 
   const handlePortfolioDelete = async (img) => {
@@ -471,6 +477,15 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
     if (!error) {
       setPortfolioImages(prev => prev.filter(p => p.id !== img.id));
     }
+  };
+
+  const handleSetHero = async (img) => {
+    if (!userShop) return;
+    await setHeroPortfolioImage(img.id, userShop.id);
+    setPortfolioImages(prev =>
+      prev.map(p => ({ ...p, display_order: p.id === img.id ? -1 : (p.display_order === -1 ? 0 : p.display_order) }))
+        .sort((a, b) => a.display_order - b.display_order)
+    );
   };
 
   const handlePhotoUpload = async (e) => {
@@ -1062,17 +1077,12 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
                   <div>
                     <div style={{ fontSize: 26, letterSpacing: 2 }}>PORTFOLIO</div>
-                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.35)", marginTop: 4 }}>These photos appear on your public shop page</div>
+                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.35)", marginTop: 4 }}>
+                      Drag & drop photos here · Click ★ to set the hero (first) image
+                    </div>
                   </div>
                   <div>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      ref={portfolioInputRef}
-                      onChange={handlePortfolioUpload}
-                      style={{ display: "none" }}
-                    />
+                    <input type="file" accept="image/*" multiple ref={portfolioInputRef} onChange={handlePortfolioUpload} style={{ display: "none" }} />
                     <button
                       type="button"
                       onClick={() => portfolioInputRef.current?.click()}
@@ -1087,32 +1097,69 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
                 {portfolioImages.length === 0 ? (
                   <div
                     onClick={() => portfolioInputRef.current?.click()}
-                    style={{ border: "2px dashed rgba(255,255,255,0.1)", padding: "40px 20px", textAlign: "center", cursor: "pointer" }}
+                    onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                    onDragLeave={() => setDragOver(false)}
+                    onDrop={(e) => { e.preventDefault(); setDragOver(false); uploadPortfolioFiles(Array.from(e.dataTransfer.files)); }}
+                    style={{ border: `2px dashed ${dragOver ? "#FF4D00" : "rgba(255,255,255,0.1)"}`, background: dragOver ? "rgba(255,77,0,0.05)" : "transparent", padding: "48px 20px", textAlign: "center", cursor: "pointer", transition: "all 0.15s" }}
                   >
-                    <div style={{ fontSize: 32, marginBottom: 8, opacity: 0.3 }}>🖼</div>
-                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.25)" }}>No portfolio photos yet. Click to upload.</div>
+                    <div style={{ fontSize: 36, marginBottom: 10, opacity: dragOver ? 0.8 : 0.3 }}>🖼</div>
+                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: dragOver ? "rgba(255,77,0,0.8)" : "rgba(255,255,255,0.25)" }}>
+                      {dragOver ? "Drop photos to upload" : "Drag & drop photos here, or click to browse"}
+                    </div>
+                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.15)", marginTop: 6 }}>JPG, PNG, WEBP · Multiple files supported</div>
                   </div>
                 ) : (
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
-                    {portfolioImages.map(img => (
-                      <div key={img.id} style={{ position: "relative", aspectRatio: "4/3", background: "#1A1A1A", overflow: "hidden" }}>
-                        <img src={img.url} alt="Portfolio" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-                        <button
-                          onClick={() => handlePortfolioDelete(img)}
-                          style={{ position: "absolute", top: 6, right: 6, background: "rgba(0,0,0,0.75)", border: "none", color: "#fff", width: 26, height: 26, borderRadius: 2, cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}
-                          title="Remove photo"
-                        >
-                          ✕
-                        </button>
+                  <div
+                    onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                    onDragLeave={() => setDragOver(false)}
+                    onDrop={(e) => { e.preventDefault(); setDragOver(false); uploadPortfolioFiles(Array.from(e.dataTransfer.files)); }}
+                    style={{ outline: dragOver ? "2px dashed #FF4D00" : "2px dashed transparent", outlineOffset: 4, borderRadius: 2, transition: "outline 0.15s" }}
+                  >
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+                      {portfolioImages.map((img, idx) => {
+                        const isHero = img.display_order === -1;
+                        return (
+                          <div key={img.id} style={{ position: "relative", aspectRatio: "4/3", background: "#1A1A1A", overflow: "hidden" }}>
+                            <img src={img.url} alt="Portfolio" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                            {/* Hero badge */}
+                            {isHero && (
+                              <div style={{ position: "absolute", top: 6, left: 6, background: "#FF4D00", padding: "2px 8px", fontFamily: "'Bebas Neue', cursive", fontSize: 11, letterSpacing: 1, color: "#fff", lineHeight: 1.6 }}>
+                                ★ HERO
+                              </div>
+                            )}
+                            {/* Set hero button */}
+                            <button
+                              onClick={() => handleSetHero(img)}
+                              title={isHero ? "Already hero image" : "Set as hero (shown first)"}
+                              style={{ position: "absolute", bottom: 6, left: 6, background: isHero ? "#FF4D00" : "rgba(0,0,0,0.7)", border: isHero ? "none" : "1px solid rgba(255,255,255,0.3)", color: isHero ? "#fff" : "rgba(255,255,255,0.7)", width: 28, height: 28, borderRadius: 2, cursor: isHero ? "default" : "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center" }}
+                            >
+                              ★
+                            </button>
+                            {/* Delete button */}
+                            <button
+                              onClick={() => handlePortfolioDelete(img)}
+                              style={{ position: "absolute", top: 6, right: 6, background: "rgba(0,0,0,0.75)", border: "none", color: "#fff", width: 26, height: 26, borderRadius: 2, cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}
+                              title="Remove photo"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        );
+                      })}
+                      {/* Add more tile */}
+                      <div
+                        onClick={() => portfolioInputRef.current?.click()}
+                        style={{ aspectRatio: "4/3", border: `2px dashed ${dragOver ? "#FF4D00" : "rgba(255,255,255,0.1)"}`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexDirection: "column", gap: 6, transition: "border-color 0.15s" }}
+                      >
+                        <div style={{ fontSize: 22, opacity: 0.3 }}>+</div>
+                        <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.2)", letterSpacing: 1 }}>ADD</div>
                       </div>
-                    ))}
-                    <div
-                      onClick={() => portfolioInputRef.current?.click()}
-                      style={{ aspectRatio: "4/3", border: "2px dashed rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexDirection: "column", gap: 6 }}
-                    >
-                      <div style={{ fontSize: 22, opacity: 0.3 }}>+</div>
-                      <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.2)", letterSpacing: 1 }}>ADD</div>
                     </div>
+                    {dragOver && (
+                      <div style={{ marginTop: 8, fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,77,0,0.7)", textAlign: "center" }}>
+                        Drop to add photos
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

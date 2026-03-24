@@ -31,6 +31,22 @@ export async function deletePortfolioImage(id) {
   return { error: null }
 }
 
+export async function setHeroPortfolioImage(imageId, shopId) {
+  // Reset existing hero back to 0
+  await supabase
+    .from('portfolio_images')
+    .update({ display_order: 0 })
+    .eq('shop_id', shopId)
+    .eq('display_order', -1)
+  // Set new hero to -1 (sorts first)
+  const { error } = await supabase
+    .from('portfolio_images')
+    .update({ display_order: -1 })
+    .eq('id', imageId)
+  if (error) { console.error('setHeroPortfolioImage:', error) }
+  return { error }
+}
+
 // ── SHOPS ────────────────────────────────────────────────────────────────────
 
 export async function fetchShops() {
