@@ -1,8 +1,16 @@
-// @ts-nocheck — Deno edge function
+// @ts-nocheck
+// Deno edge function - no special unicode in comments to avoid dashboard editor encoding bugs
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+function jsonResp(body, status) {
+  return new Response(JSON.stringify(body), {
+    status: status || 200,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -10,49 +18,40 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { shopId, returnUrl, refreshUrl } = await req.json();
+    const body = await req.json().catch(() => ({}));
+    const { shopId, returnUrl, refreshUrl } = body;
+
+    if (!shopId) return jsonResp({ error: "shopId is required" });
 
     const stripeKey       = Deno.env.get("STRIPE_SECRET_KEY");
     const supabaseUrl     = Deno.env.get("SUPABASE_URL");
     const supabaseService = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-    if (!stripeKey || !supabaseUrl || !supabaseService) {
-      return new Response(
-        JSON.stringify({ error: "Server configuration error." }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    if (!stripeKey)       return jsonResp({ error: "STRIPE_SECRET_KEY not configured" });
+    if (!supabaseUrl)     return jsonResp({ error: "SUPABASE_URL not configured" });
+    if (!supabaseService) return jsonResp({ error: "SUPABASE_SERVICE_ROLE_KEY not configured" });
 
-    // ── Verify the requesting user owns this shop ─────────────────────────
+    // Verify the requesting user via their JWT
     const authHeader = req.headers.get("Authorization") || "";
-    const userRes = await fetch(`${supabaseUrl}/auth/v1/user`, {
+    const userRes = await fetch(supabaseUrl + "/auth/v1/user", {
       headers: { apikey: supabaseService, Authorization: authHeader },
     });
-    const userData = await userRes.json();
-    const userId = userData?.id;
-    if (!userId) {
-      return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    const userData = await userRes.json().catch(() => ({}));
+    const userId = userData && userData.id;
+    if (!userId) return jsonResp({ error: "Unauthorized - invalid or missing JWT" });
 
-    // ── Fetch shop row ────────────────────────────────────────────────────
+    // Fetch the shop row
     const shopRes = await fetch(
-      `${supabaseUrl}/rest/v1/shops?id=eq.${shopId}&select=id,owner_id,stripe_account_id`,
-      { headers: { apikey: supabaseService, Authorization: `Bearer ${supabaseService}` } }
+      supabaseUrl + "/rest/v1/shops?id=eq." + shopId + "&select=id,owner_id,stripe_account_id",
+      { headers: { apikey: supabaseService, Authorization: "Bearer " + supabaseService } }
     );
-    const shops = await shopRes.json();
-    const shop  = shops?.[0];
+    const shops = await shopRes.json().catch(() => []);
+    const shop = shops && shops[0];
 
-    if (!shop || shop.owner_id !== userId) {
-      return new Response(
-        JSON.stringify({ error: "Shop not found or unauthorized." }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    if (!shop)                    return jsonResp({ error: "Shop not found" });
+    if (shop.owner_id !== userId) return jsonResp({ error: "Not authorized for this shop" });
 
-    // ── Create a Stripe Express account if one doesn't already exist ──────
+    // Create or reuse Stripe Express account
     let accountId = shop.stripe_account_id;
     if (!accountId) {
       const accParams = new URLSearchParams();
@@ -64,26 +63,23 @@ Deno.serve(async (req) => {
       const accRes = await fetch("https://api.stripe.com/v1/accounts", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${stripeKey}`,
+          Authorization: "Bearer " + stripeKey,
           "Content-Type": "application/x-www-form-urlencoded",
         },
         body: accParams.toString(),
       });
-      const account = await accRes.json();
+      const account = await accRes.json().catch(() => ({}));
       if (!accRes.ok || !account.id) {
-        return new Response(
-          JSON.stringify({ error: account.error?.message || "Failed to create Stripe account." }),
-          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        return jsonResp({ error: (account.error && account.error.message) || "Failed to create Stripe account" });
       }
       accountId = account.id;
 
-      // Persist the new account ID to the shops row
-      await fetch(`${supabaseUrl}/rest/v1/shops?id=eq.${shopId}`, {
+      // Save account ID to the shops row
+      await fetch(supabaseUrl + "/rest/v1/shops?id=eq." + shopId, {
         method: "PATCH",
         headers: {
           apikey: supabaseService,
-          Authorization: `Bearer ${supabaseService}`,
+          Authorization: "Bearer " + supabaseService,
           "Content-Type": "application/json",
           Prefer: "return=minimal",
         },
@@ -91,38 +87,28 @@ Deno.serve(async (req) => {
       });
     }
 
-    // ── Create a fresh account-onboarding link ────────────────────────────
+    // Create account onboarding link
     const linkParams = new URLSearchParams();
     linkParams.append("account", accountId);
-    linkParams.append("refresh_url", refreshUrl);
+    linkParams.append("refresh_url", refreshUrl || returnUrl);
     linkParams.append("return_url", returnUrl);
     linkParams.append("type", "account_onboarding");
 
     const linkRes = await fetch("https://api.stripe.com/v1/account_links", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${stripeKey}`,
+        Authorization: "Bearer " + stripeKey,
         "Content-Type": "application/x-www-form-urlencoded",
       },
       body: linkParams.toString(),
     });
-    const link = await linkRes.json();
-
+    const link = await linkRes.json().catch(() => ({}));
     if (!linkRes.ok || !link.url) {
-      return new Response(
-        JSON.stringify({ error: link.error?.message || "Failed to create onboarding link." }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return jsonResp({ error: (link.error && link.error.message) || "Failed to create onboarding link" });
     }
 
-    return new Response(
-      JSON.stringify({ url: link.url, accountId }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return jsonResp({ url: link.url, accountId: accountId });
   } catch (err) {
-    return new Response(
-      JSON.stringify({ error: err.message }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return jsonResp({ error: err && err.message ? err.message : String(err) });
   }
 });
