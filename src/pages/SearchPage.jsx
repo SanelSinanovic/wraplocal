@@ -10,6 +10,8 @@ export default function SearchPage({ nav, shops: liveShops, searchQuery, setSear
   const [userCoords, setUserCoords] = useState(null);      // { lat, lon }
   const [locationStatus, setLocationStatus] = useState("idle"); // idle | loading | ok | denied
   const [sortByDistance, setSortByDistance] = useState(true);
+  const PAGE_SIZE = 10;
+  const [page, setPage] = useState(0);
 
   // Request geolocation on mount
   useEffect(() => {
@@ -29,6 +31,9 @@ export default function SearchPage({ nav, shops: liveShops, searchQuery, setSear
       setServiceFilter(null);
     }
   }, [serviceFilter, setServiceFilter]);
+
+  // Reset to first page whenever filter/query/sort changes
+  useEffect(() => { setPage(0); }, [searchQuery, activeService, sortByDistance]);
 
   const q = searchQuery.trim().toLowerCase();
   const filteredShops = allShops.filter(shop => {
@@ -58,6 +63,9 @@ export default function SearchPage({ nav, shops: liveShops, searchQuery, setSear
         return a._distanceMi - b._distanceMi;
       })
     : shopsWithDistance;
+
+  const totalPages = Math.ceil(shops.length / PAGE_SIZE);
+  const pagedShops = shops.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
   return (
     <div style={{ fontFamily: "'Bebas Neue', cursive", background: "#0A0A0A", minHeight: "100vh", color: "#fff" }}>
@@ -115,6 +123,7 @@ export default function SearchPage({ nav, shops: liveShops, searchQuery, setSear
               ? <><b style={{ color: "#fff" }}>{shops.length} shop{shops.length !== 1 ? "s" : ""}</b> offering <b style={{ color: "#FF4D00" }}>{activeService}</b></>
               : <><b style={{ color: "#fff" }}>{shops.length} shop{shops.length !== 1 ? "s" : ""}</b></>
             }
+            {totalPages > 1 && <span style={{ marginLeft: 8 }}>· Page {page + 1} of {totalPages}</span>}
           </span>
           {locationStatus === "ok" && (
             <button
@@ -128,13 +137,21 @@ export default function SearchPage({ nav, shops: liveShops, searchQuery, setSear
           {locationStatus === "denied" && <span style={{ fontSize: 12, color: "rgba(255,255,255,0.25)" }}>📍 Location unavailable — enable in browser to sort by distance</span>}
         </div>
         {shops.length === 0 && (
-          <div style={{ textAlign: "center", padding: "64px 0", fontFamily: "'DM Sans', sans-serif", color: "rgba(255,255,255,0.3)", fontSize: 15 }}>
-            No shops found{activeService ? ` offering "${activeService}"` : ""}.<br />
-            <span style={{ fontSize: 13, marginTop: 8, display: "block" }}>Try a different service or <span style={{ color: "#FF4D00", cursor: "pointer" }} onClick={() => { setActiveService(null); setSearchQuery(""); }}>clear all filters</span>.</span>
+          <div style={{ background: "#111", border: "1px solid rgba(255,255,255,0.06)", padding: "64px 32px", display: "flex", flexDirection: "column", alignItems: "center", gap: 16, textAlign: "center" }}>
+            <div style={{ fontSize: 56 }}>🔍</div>
+            <div style={{ fontFamily: "'Bebas Neue', cursive", fontSize: 36, letterSpacing: 2 }}>NO SHOPS FOUND</div>
+            <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.4)", maxWidth: 340 }}>
+              {activeService ? `No shops offer "${activeService}" in this area yet.` : "No shops match your search."} Try a different filter or clear your search.
+            </div>
+            {(activeService || searchQuery) && (
+              <button style={{ background: "#FF4D00", color: "#fff", border: "none", padding: "10px 24px", fontFamily: "'Bebas Neue', cursive", fontSize: 16, letterSpacing: 2, cursor: "pointer", marginTop: 4 }} onClick={() => { setActiveService(null); setSearchQuery(""); }}>
+                Clear Filters
+              </button>
+            )}
           </div>
         )}
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          {shops.map((shop, i) => (
+          {pagedShops.map((shop, i) => (
             <div key={shop.id} className="card-hover shop-card-anim" onClick={() => { setSelectedShop(shop); nav("shop"); }}
               style={{ background: "#111", border: "1px solid rgba(255,255,255,0.06)", overflow: "hidden", animationDelay: `${Math.min(i * 0.07, 0.42)}s` }}>
               <div className="shop-card-inner" style={{ display: "flex" }}>
@@ -161,6 +178,34 @@ export default function SearchPage({ nav, shops: liveShops, searchQuery, setSear
             </div>
           ))}
         </div>
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 10, marginTop: 32, fontFamily: "'DM Sans', sans-serif" }}>
+            <button
+              onClick={() => { setPage(p => p - 1); window.scrollTo(0, 0); }}
+              disabled={page === 0}
+              style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.15)", color: page === 0 ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.6)", padding: "8px 18px", cursor: page === 0 ? "default" : "pointer", fontFamily: "'DM Sans', sans-serif", fontSize: 13 }}
+            >
+              ← Prev
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => (
+              <button
+                key={i}
+                onClick={() => { setPage(i); window.scrollTo(0, 0); }}
+                style={{ background: i === page ? "#FF4D00" : "transparent", border: `1px solid ${i === page ? "#FF4D00" : "rgba(255,255,255,0.15)"}`, color: i === page ? "#fff" : "rgba(255,255,255,0.4)", padding: "8px 14px", cursor: "pointer", fontFamily: "'Bebas Neue', cursive", fontSize: 15, letterSpacing: 1, minWidth: 36 }}
+              >
+                {i + 1}
+              </button>
+            ))}
+            <button
+              onClick={() => { setPage(p => p + 1); window.scrollTo(0, 0); }}
+              disabled={page === totalPages - 1}
+              style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.15)", color: page === totalPages - 1 ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.6)", padding: "8px 18px", cursor: page === totalPages - 1 ? "default" : "pointer", fontFamily: "'DM Sans', sans-serif", fontSize: 13 }}
+            >
+              Next →
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

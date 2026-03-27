@@ -275,6 +275,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
   const [saveStatus, setSaveStatus] = useState("");
   const [shopError, setShopError] = useState("");
   const [bookingsError, setBookingsError] = useState("");
+  const [bookingsLoaded, setBookingsLoaded] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [selectedBookingSource, setSelectedBookingSource] = useState("bookings");
   const [messagesMap, setMessagesMap] = useState({});
@@ -357,6 +358,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
       } else {
         setDashboardBookings(bookingsData || []);
       }
+      setBookingsLoaded(true);
 
       // Realtime: refresh bookings list whenever anything changes on this shop
       bookingsChannel = subscribeToShopBookings(shop.id, async () => {
@@ -624,7 +626,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
 
   return (
     <div className="company-wrap" style={{ fontFamily: "'Bebas Neue', cursive", background: "#090909", minHeight: "100vh", color: "#fff", display: "flex" }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap'); * { box-sizing: border-box; } .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 16px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 14px; color: rgba(255,255,255,0.5); border-radius: 4px; transition: all 0.2s; } .nav-item:hover, .nav-item.active { background: rgba(255,77,0,0.1); color: #FF4D00; } .stat-card { background: #111; border: 1px solid rgba(255,255,255,0.06); padding: 24px; } .cal-day { min-height: 80px; background: #111; border: 1px solid rgba(255,255,255,0.05); padding: 8px; cursor: default; transition: border-color 0.15s; vertical-align: top; } .cal-day.has-booking { cursor: pointer; } .cal-day.has-booking:hover { border-color: rgba(255,77,0,0.4); } .cal-day.selected { border-color: #FF4D00 !important; background: rgba(255,77,0,0.07); } .cal-day.today-cell { border-color: rgba(255,255,255,0.18); } .view-toggle { display: flex; border: 1px solid rgba(255,255,255,0.1); overflow: hidden; } .view-toggle button { background: transparent; border: none; padding: 8px 18px; font-family: 'Bebas Neue', cursive; font-size: 15px; letter-spacing: 1px; color: rgba(255,255,255,0.4); cursor: pointer; transition: all 0.2s; } .view-toggle button.active { background: #FF4D00; color: #fff; } @media (max-width: 768px) { .company-wrap { flex-direction: column !important; } .company-sidebar { width: 100% !important; flex-direction: row !important; flex-shrink: unset !important; flex-wrap: wrap; border-right: none !important; border-bottom: 1px solid rgba(255,255,255,0.06) !important; padding: 8px !important; } .sidebar-logo { display: none !important; } .sidebar-sub { display: none !important; } .sidebar-footer { display: none !important; } .nav-item { flex: 0 0 auto; padding: 8px 12px !important; font-size: 12px !important; } .company-main { padding: 16px !important; } .stats-4 { grid-template-columns: repeat(2, 1fr) !important; } .stats-2 { grid-template-columns: 1fr !important; } .stats-3 { grid-template-columns: 1fr !important; } .cal-day { min-height: 52px !important; padding: 4px !important; } .bookings-header { flex-direction: column !important; align-items: flex-start !important; gap: 12px; } }`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap'); * { box-sizing: border-box; } .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 16px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 14px; color: rgba(255,255,255,0.5); border-radius: 4px; transition: all 0.2s; } .nav-item:hover, .nav-item.active { background: rgba(255,77,0,0.1); color: #FF4D00; } .stat-card { background: #111; border: 1px solid rgba(255,255,255,0.06); padding: 24px; } .cal-day { min-height: 80px; background: #111; border: 1px solid rgba(255,255,255,0.05); padding: 8px; cursor: default; transition: border-color 0.15s; vertical-align: top; } .cal-day.has-booking { cursor: pointer; } .cal-day.has-booking:hover { border-color: rgba(255,77,0,0.4); } .cal-day.selected { border-color: #FF4D00 !important; background: rgba(255,77,0,0.07); } .cal-day.today-cell { border-color: rgba(255,255,255,0.18); } .view-toggle { display: flex; border: 1px solid rgba(255,255,255,0.1); overflow: hidden; } .view-toggle button { background: transparent; border: none; padding: 8px 18px; font-family: 'Bebas Neue', cursive; font-size: 15px; letter-spacing: 1px; color: rgba(255,255,255,0.4); cursor: pointer; transition: all 0.2s; } .view-toggle button.active { background: #FF4D00; color: #fff; } @media (max-width: 768px) { .company-wrap { flex-direction: column !important; } .company-sidebar { width: 100% !important; flex-direction: row !important; flex-shrink: unset !important; flex-wrap: wrap; border-right: none !important; border-bottom: 1px solid rgba(255,255,255,0.06) !important; padding: 8px !important; } .sidebar-logo { display: none !important; } .sidebar-sub { display: none !important; } .sidebar-footer { display: none !important; } .nav-item { flex: 0 0 auto; padding: 8px 12px !important; font-size: 12px !important; } .company-main { padding: 16px !important; } .stats-4 { grid-template-columns: repeat(2, 1fr) !important; } .stats-2 { grid-template-columns: 1fr !important; } .stats-3 { grid-template-columns: 1fr !important; } .cal-day { min-height: 52px !important; padding: 4px !important; } .bookings-header { flex-direction: column !important; align-items: flex-start !important; gap: 12px; } } @keyframes skelPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }`}</style>
 
       {/* Sidebar */}
       <div className="company-sidebar" style={{ width: 220, background: "#0D0D0D", borderRight: "1px solid rgba(255,255,255,0.06)", padding: "24px 16px", display: "flex", flexDirection: "column", flexShrink: 0 }}>
@@ -834,21 +836,33 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
                     </tr>
                   </thead>
                   <tbody>
-                    {activeBookings.length === 0 && (
-                      <tr><td colSpan={6} style={{ padding: "24px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.3)" }}>No active bookings — new and confirmed jobs will appear here.</td></tr>
+                    {!bookingsLoaded ? (
+                      [1,2,3].map(i => (
+                        <tr key={i}>
+                          {["52%","38%","28%","42%","26%","16%"].map((w, j) => (
+                            <td key={j} style={{ padding: "14px 12px" }}><div style={{ height: 11, width: w, background: "rgba(255,255,255,0.06)", animation: "skelPulse 1.5s ease-in-out infinite", animationDelay: `${i * 0.1}s` }} /></td>
+                          ))}
+                        </tr>
+                      ))
+                    ) : (
+                      <>
+                        {activeBookings.length === 0 && (
+                          <tr><td colSpan={6} style={{ padding: "24px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.3)" }}>No active bookings — new and confirmed jobs will appear here.</td></tr>
+                        )}
+                        {activeBookings.map(b => (
+                          <tr key={b.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)", cursor: "pointer" }} onClick={() => { setSelectedBooking(b); setChatInput(""); setQuoteInput(""); }}>
+                            <td style={{ padding: "14px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 500 }}>{b.customer}</td>
+                            <td style={{ padding: "14px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.6)" }}>{b.service}</td>
+                            <td style={{ padding: "14px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.6)" }}>{b.date}</td>
+                            <td style={{ padding: "14px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.5)" }}>{b.vehicle || "—"}</td>
+                            <td style={{ padding: "14px 12px" }}>
+                              <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: b.status === "confirmed" ? "#10B981" : b.status === "pending" ? "#F59E0B" : "rgba(255,255,255,0.4)" }}>● {b.status}</span>
+                            </td>
+                            <td style={{ padding: "14px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#FF4D00" }}>Open →</td>
+                          </tr>
+                        ))}
+                      </>
                     )}
-                    {activeBookings.map(b => (
-                      <tr key={b.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)", cursor: "pointer" }} onClick={() => { setSelectedBooking(b); setChatInput(""); setQuoteInput(""); }}>
-                        <td style={{ padding: "14px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 500 }}>{b.customer}</td>
-                        <td style={{ padding: "14px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.6)" }}>{b.service}</td>
-                        <td style={{ padding: "14px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.6)" }}>{b.date}</td>
-                        <td style={{ padding: "14px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.5)" }}>{b.vehicle || "—"}</td>
-                        <td style={{ padding: "14px 12px" }}>
-                          <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: b.status === "confirmed" ? "#10B981" : b.status === "pending" ? "#F59E0B" : "rgba(255,255,255,0.4)" }}>● {b.status}</span>
-                        </td>
-                        <td style={{ padding: "14px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#FF4D00" }}>Open →</td>
-                      </tr>
-                    ))}
                   </tbody>
                 </table>
 

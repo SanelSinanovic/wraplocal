@@ -518,15 +518,36 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
   // ── BOOKINGS LIST VIEW ──────────────────────────────────────────────────────
   return (
     <div style={{ fontFamily: "'Bebas Neue', cursive", background: "#0A0A0A", minHeight: "100vh", color: "#fff" }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap'); * { box-sizing: border-box; } .btn-main { background: #FF4D00; color: #fff; border: none; padding: 10px 20px; font-family: 'Bebas Neue', cursive; font-size: 14px; letter-spacing: 2px; cursor: pointer; } .booking-row:hover { border-color: rgba(255,77,0,0.3) !important; background: #161616 !important; } @media (max-width: 768px) { .dash-pad { padding: 20px !important; } .booking-row-meta { display: none !important; } .booking-row-right { flex-wrap: wrap; gap: 10px !important; } }`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap'); * { box-sizing: border-box; } .btn-main { background: #FF4D00; color: #fff; border: none; padding: 10px 20px; font-family: 'Bebas Neue', cursive; font-size: 14px; letter-spacing: 2px; cursor: pointer; } .booking-row:hover { border-color: rgba(255,77,0,0.3) !important; background: #161616 !important; } @media (max-width: 768px) { .dash-pad { padding: 20px !important; } .booking-row-meta { display: none !important; } .booking-row-right { flex-wrap: wrap; gap: 10px !important; } } @keyframes skelPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }`}</style>
       <Navbar />
       <div className="dash-pad" style={{ padding: "40px" }}>
         <div style={{ fontSize: 48, letterSpacing: 2, marginBottom: 8 }}>MY BOOKINGS</div>
         <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.4)", marginBottom: 32 }}>Click a booking to view details and chat with the shop</div>
         {!bookingsLoaded ? (
-          <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.4)" }}>Loading...</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            {[1,2,3].map(i => (
+              <div key={i} style={{ background: "#111", border: "1px solid rgba(255,255,255,0.06)", padding: "20px 24px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
+                  <div style={{ width: 44, height: 44, background: "rgba(255,255,255,0.06)", flexShrink: 0, animation: "skelPulse 1.5s ease-in-out infinite", animationDelay: `${i * 0.15}s` }} />
+                  <div>
+                    <div style={{ width: 140, height: 14, background: "rgba(255,255,255,0.06)", marginBottom: 8, animation: "skelPulse 1.5s ease-in-out infinite", animationDelay: `${i * 0.15}s` }} />
+                    <div style={{ width: 200, height: 11, background: "rgba(255,255,255,0.04)", animation: "skelPulse 1.5s ease-in-out infinite", animationDelay: `${i * 0.15}s` }} />
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: 20, alignItems: "center" }}>
+                  <div style={{ width: 60, height: 12, background: "rgba(255,255,255,0.05)", animation: "skelPulse 1.5s ease-in-out infinite" }} />
+                  <div style={{ width: 72, height: 22, background: "rgba(255,255,255,0.05)", animation: "skelPulse 1.5s ease-in-out infinite" }} />
+                </div>
+              </div>
+            ))}
+          </div>
         ) : bookings.length === 0 ? (
-          <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.4)" }}>No bookings yet. <span style={{ color: "#FF4D00", cursor: "pointer" }} onClick={() => nav("search")}>Book your first appointment →</span></div>
+          <div style={{ background: "#111", border: "1px solid rgba(255,255,255,0.06)", padding: "56px 32px", display: "flex", flexDirection: "column", alignItems: "center", gap: 16, textAlign: "center" }}>
+            <div style={{ fontSize: 56 }}>🗓️</div>
+            <div style={{ fontSize: 32, letterSpacing: 2 }}>NO BOOKINGS YET</div>
+            <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.4)", maxWidth: 320 }}>Find a shop near you and get your vehicle wrapped, tinted, or detailed.</div>
+            <button className="btn-main" style={{ marginTop: 8, fontSize: 16 }} onClick={() => nav("search")}>Find a Shop →</button>
+          </div>
         ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {bookings.map(b => (
