@@ -1,11 +1,26 @@
 import { useState, useEffect } from "react";
 import { SHOPS as STATIC_SHOPS } from "../data/data";
 import { SERVICE_CATEGORIES } from "../lib/services";
+import { haversineDistance } from "../lib/queries";
 
 export default function SearchPage({ nav, shops: liveShops, searchQuery, setSearchQuery, serviceFilter, setServiceFilter, setSelectedShop, setBookingShop, currentUser, currentProfile, onLogout }) {
   const role = currentUser ? (currentProfile?.role || currentUser?.user_metadata?.role || "customer") : null;
   const allShops = liveShops && liveShops.length > 0 ? liveShops : STATIC_SHOPS;
   const [activeService, setActiveService] = useState(null);
+  const [userCoords, setUserCoords] = useState(null);      // { lat, lon }
+  const [locationStatus, setLocationStatus] = useState("idle"); // idle | loading | ok | denied
+  const [sortByDistance, setSortByDistance] = useState(true);
+
+  // Request geolocation on mount
+  useEffect(() => {
+    if (!navigator.geolocation) { setLocationStatus("unsupported"); return; }
+    setLocationStatus("loading");
+    navigator.geolocation.getCurrentPosition(
+      pos => { setUserCoords({ lat: pos.coords.latitude, lon: pos.coords.longitude }); setLocationStatus("ok"); },
+      () => setLocationStatus("denied"),
+      { timeout: 8000 }
+    );
+  }, []);
 
   // Consume a service filter set from LandingPage
   useEffect(() => {
@@ -16,14 +31,33 @@ export default function SearchPage({ nav, shops: liveShops, searchQuery, setSear
   }, [serviceFilter, setServiceFilter]);
 
   const q = searchQuery.trim().toLowerCase();
-  const shops = allShops.filter(shop => {
+  const filteredShops = allShops.filter(shop => {
     const matchesText = !q ||
       (shop.name || "").toLowerCase().includes(q) ||
       (shop.city || shop.location || "").toLowerCase().includes(q) ||
+      (shop.state || "").toLowerCase().includes(q) ||
       (shop.zip || "").includes(q);
     const matchesService = !activeService || (shop.tags || []).includes(activeService);
     return matchesText && matchesService;
   });
+
+  // Attach computed distance and sort
+  const shopsWithDistance = filteredShops.map(shop => {
+    if (userCoords && shop.latitude && shop.longitude) {
+      const dist = haversineDistance(userCoords.lat, userCoords.lon, shop.latitude, shop.longitude);
+      return { ...shop, _distanceMi: dist };
+    }
+    return { ...shop, _distanceMi: null };
+  });
+
+  const shops = sortByDistance && userCoords
+    ? [...shopsWithDistance].sort((a, b) => {
+        if (a._distanceMi == null && b._distanceMi == null) return 0;
+        if (a._distanceMi == null) return 1;
+        if (b._distanceMi == null) return -1;
+        return a._distanceMi - b._distanceMi;
+      })
+    : shopsWithDistance;
 
   return (
     <div style={{ fontFamily: "'Bebas Neue', cursive", background: "#0A0A0A", minHeight: "100vh", color: "#fff" }}>
@@ -75,11 +109,23 @@ export default function SearchPage({ nav, shops: liveShops, searchQuery, setSear
       </div>
 
       <div className="search-pad" style={{ padding: "30px 40px" }}>
-        <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)", marginBottom: 20 }}>
-          {activeService
-            ? <>Showing <b style={{ color: "#fff" }}>{shops.length} shop{shops.length !== 1 ? "s" : ""}</b> offering <b style={{ color: "#FF4D00" }}>{activeService}</b></>
-            : <>Showing <b style={{ color: "#fff" }}>{shops.length} shop{shops.length !== 1 ? "s" : ""}</b> near Alpharetta, GA</>
-          }
+        <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)", marginBottom: 20, display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+          <span>
+            {activeService
+              ? <><b style={{ color: "#fff" }}>{shops.length} shop{shops.length !== 1 ? "s" : ""}</b> offering <b style={{ color: "#FF4D00" }}>{activeService}</b></>
+              : <><b style={{ color: "#fff" }}>{shops.length} shop{shops.length !== 1 ? "s" : ""}</b></>
+            }
+          </span>
+          {locationStatus === "ok" && (
+            <button
+              onClick={() => setSortByDistance(v => !v)}
+              style={{ background: sortByDistance ? "rgba(255,77,0,0.12)" : "transparent", border: `1px solid ${sortByDistance ? "#FF4D00" : "rgba(255,255,255,0.15)"}`, color: sortByDistance ? "#FF4D00" : "rgba(255,255,255,0.4)", padding: "4px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}
+            >
+              📍 {sortByDistance ? "Nearest first" : "Sort by distance"}
+            </button>
+          )}
+          {locationStatus === "loading" && <span style={{ fontSize: 12, color: "rgba(255,255,255,0.25)" }}>📍 Detecting location…</span>}
+          {locationStatus === "denied" && <span style={{ fontSize: 12, color: "rgba(255,255,255,0.25)" }}>📍 Location unavailable — enable in browser to sort by distance</span>}
         </div>
         {shops.length === 0 && (
           <div style={{ textAlign: "center", padding: "64px 0", fontFamily: "'DM Sans', sans-serif", color: "rgba(255,255,255,0.3)", fontSize: 15 }}>
@@ -97,7 +143,8 @@ export default function SearchPage({ nav, shops: liveShops, searchQuery, setSear
                   <div>
                     <div style={{ fontSize: 26, letterSpacing: 1, marginBottom: 4 }}>{shop.name}</div>
                     <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)", marginBottom: 10 }}>
-                      ★ {shop.rating} ({shop.reviews ?? shop.review_count ?? 0} reviews) · {shop.location || shop.city}{shop.distance ? ` · ${shop.distance}` : ''}
+                      ★ {shop.rating} ({shop.reviews ?? shop.review_count ?? 0} reviews) · {shop.location || [shop.city, shop.state].filter(Boolean).join(", ") || ""}
+                      {shop._distanceMi != null && <span style={{ color: "#FF4D00", marginLeft: 6 }}>· {shop._distanceMi < 10 ? shop._distanceMi.toFixed(1) : Math.round(shop._distanceMi)} mi away</span>}
                     </div>
                     <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                       {(shop.tags || []).map(t => <span key={t} style={{ padding: "2px 10px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.5)" }}>{t}</span>)}

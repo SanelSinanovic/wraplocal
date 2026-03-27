@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { BOOKINGS } from "../data/data";
 import { supabase } from "../lib/supabase";
-import { fetchCustomerBookings, fetchMessages, sendMessage as dbSendMessage, subscribeToMessages, submitReview, fetchBookingReview } from "../lib/queries";
+import { fetchCustomerBookings, fetchMessages, sendMessage as dbSendMessage, subscribeToMessages, submitReview, fetchBookingReview, uploadChatFile } from "../lib/queries";
 
 function mergeMessages(existing = [], incoming = []) {
   const list = Array.isArray(incoming) ? incoming : [incoming];
@@ -31,6 +31,8 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [existingReview, setExistingReview] = useState(null);
   const chatEndRef = useRef(null);
+  const chatFileRef = useRef(null);
+  const [chatFileUploading, setChatFileUploading] = useState(false);
 
   // ── Payment modal state ──────────────────────────────────
   const [paymentBooking, setPaymentBooking] = useState(null); // { booking, amount }
@@ -90,11 +92,8 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
     if (selectedBooking) chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messagesMap, selectedBooking]);
 
-  const sendMessage = async () => {
-    const text = chatInput.trim();
+  const sendMessageText = async (text) => {
     if (!text || !selectedBooking) return;
-    setChatInput("");
-    // Persist to Supabase if logged in
     if (currentUser) {
       const result = await dbSendMessage({ bookingId: selectedBooking.id, senderId: currentUser.id, senderRole: "customer", text });
       if (result) {
@@ -111,7 +110,6 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
         ...prev,
         [selectedBooking.id]: mergeMessages(prev[selectedBooking.id] || [], { from: "me", text, time: now }),
       }));
-      // Demo: simulate shop reply
       if (selectedBooking.status === "confirmed") {
         setTimeout(() => {
           const replies = [
@@ -129,6 +127,21 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
         }, 1500);
       }
     }
+  };
+
+  const sendMessage = async () => {
+    const text = chatInput.trim();
+    if (!text) return;
+    setChatInput("");
+    await sendMessageText(text);
+  };
+
+  const sendChatFile = async (file) => {
+    if (!file || !selectedBooking || !currentUser) return;
+    setChatFileUploading(true);
+    const result = await uploadChatFile(file, selectedBooking.id);
+    setChatFileUploading(false);
+    if (result) await sendMessageText(`FILE::${result.url}::${result.name}`);
   };
 
   const handleQuoteDecision = async (decision, amount) => {
@@ -311,7 +324,17 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
                       lineHeight: 1.5,
                       borderRadius: msg.from === "me" ? "12px 12px 2px 12px" : "12px 12px 12px 2px",
                     }}>
-                      {msg.text}
+                      {(() => {
+                        if (msg.text?.startsWith('FILE::')) {
+                          const idx = msg.text.lastIndexOf('::');
+                          const url = msg.text.slice(6, idx);
+                          const name = msg.text.slice(idx + 2);
+                          const isImage = /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(name);
+                          if (isImage) return <img src={url} alt={name} style={{ maxWidth: '100%', maxHeight: 200, borderRadius: 4, display: 'block' }} />;
+                          return <a href={url} target="_blank" rel="noreferrer" style={{ color: '#fff', textDecoration: 'underline' }}>📄 {name}</a>;
+                        }
+                        return msg.text;
+                      })()}
                     </div>
                   </div>
                 ))}
@@ -332,16 +355,25 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
               )}
 
               <div style={{ display: "flex", gap: 0, border: "1px solid rgba(255,255,255,0.07)", borderTop: "none" }}>
+                <input type="file" ref={chatFileRef} style={{ display: "none" }} accept="image/jpeg,image/png,image/gif,image/webp,.pdf" onChange={e => { const f = e.target.files[0]; if (f) { sendChatFile(f); e.target.value = ""; } }} />
                 <input
                   className="chat-input"
-                  placeholder={b.status === "confirmed" ? `Message ${b.shop}…` : "This booking is completed — chat is read-only"}
+                  placeholder={
+                    b.status === "confirmed" ? `Message ${b.shop}…` :
+                    b.status === "pending" ? `Request sent — awaiting ${b.shop} approval` :
+                    b.status === "cancelled" ? "This booking has been cancelled" :
+                    "This booking is completed — chat is read-only"
+                  }
                   value={chatInput}
                   disabled={b.status !== "confirmed"}
                   onChange={e => setChatInput(e.target.value)}
                   onKeyDown={e => e.key === "Enter" && sendMessage()}
                 />
                 {b.status === "confirmed" && (
-                  <button className="send-btn" onClick={sendMessage}>Send</button>
+                  <>
+                    <button onClick={() => chatFileRef.current?.click()} disabled={chatFileUploading} style={{ background: "#1A1A1A", border: "none", borderLeft: "1px solid rgba(255,255,255,0.07)", padding: "0 14px", color: chatFileUploading ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.55)", cursor: chatFileUploading ? "not-allowed" : "pointer", fontSize: 18 }} title="Attach image or PDF">📎</button>
+                    <button className="send-btn" onClick={sendMessage}>Send</button>
+                  </>
                 )}
               </div>
             </div>

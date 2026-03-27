@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "../lib/supabase";
-import { fetchUserShop, fetchCompanyBookings, createShop, updateShop, fetchMessages, sendMessage as dbSendMessage, subscribeToMessages, subscribeToShopBookings, fetchPortfolioImages, addPortfolioImage, deletePortfolioImage, setHeroPortfolioImage, scheduleBooking } from "../lib/queries";
+import { fetchUserShop, fetchCompanyBookings, createShop, updateShop, fetchMessages, sendMessage as dbSendMessage, subscribeToMessages, subscribeToShopBookings, fetchPortfolioImages, addPortfolioImage, deletePortfolioImage, setHeroPortfolioImage, scheduleBooking, uploadChatFile, geocodeCityState } from "../lib/queries";
 import { SERVICE_CATEGORIES, ALL_SERVICE_NAMES } from "../lib/services";
 
 // Parse "Mon DD, YYYY" → { month (0-indexed), day, year }
@@ -57,11 +57,22 @@ function mergeMessages(existing = [], incoming = []) {
 
 // ── Booking detail + chat panel ─────────────────────────────────────────────
 // Defined at module level so React never remounts it when parent state changes
-function BookingDetailPanel({ selectedBooking, messagesMap, chatInput, setChatInput, quoteInput, setQuoteInput, sendQuoteOffer, sendCompanyMessage, chatEndRef, updateBookingStatus, setSelectedBooking, backLabel, onScheduled, shopUserId }) {
+function BookingDetailPanel({ selectedBooking, messagesMap, chatInput, setChatInput, quoteInput, setQuoteInput, sendQuoteOffer, sendCompanyMessage, sendCompanyFileMessage, chatEndRef, updateBookingStatus, setSelectedBooking, backLabel, onScheduled, shopUserId }) {
+  const [cancelConfirm, setCancelConfirm] = useState(false);
   const [schedDate, setSchedDate] = useState("");
   const [schedTime, setSchedTime] = useState("");
   const [schedSaving, setSchedSaving] = useState(false);
   const [schedSaved, setSchedSaved] = useState(false);
+  const companyFileRef = useRef(null);
+  const [companyFileUploading, setCompanyFileUploading] = useState(false);
+
+  const handleCompanyFileAttach = async (file) => {
+    if (!file || !sendCompanyFileMessage) return;
+    setCompanyFileUploading(true);
+    const result = await uploadChatFile(file, selectedBooking.id);
+    setCompanyFileUploading(false);
+    if (result) sendCompanyFileMessage(`FILE::${result.url}::${result.name}`);
+  };
 
   const handleSchedule = async () => {
     if (!schedDate || !schedTime || !selectedBooking) return;
@@ -96,15 +107,30 @@ function BookingDetailPanel({ selectedBooking, messagesMap, chatInput, setChatIn
               <div style={{ fontSize: 20, letterSpacing: 1 }}>#{String(b.id).slice(0,8)} — {b.customer}</div>
               <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)" }}>{b.service}{b.date ? ` · ${b.date}${b.time_slot ? ` at ${b.time_slot}` : ""}` : " · Awaiting schedule"}</div>
             </div>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
               {b.status === "pending" && (
                 <button onClick={() => updateBookingStatus(b.id, "confirmed")} style={{ background: "#10B981", color: "#fff", border: "none", padding: "8px 16px", fontFamily: "'Bebas Neue', cursive", fontSize: 14, letterSpacing: 1, cursor: "pointer" }}>✓ Confirm</button>
               )}
-              {b.status !== "completed" && b.status !== "cancelled" && (
-                <button onClick={() => updateBookingStatus(b.id, "completed")} style={{ background: "transparent", color: "rgba(255,255,255,0.4)", border: "1px solid rgba(255,255,255,0.15)", padding: "8px 16px", fontFamily: "'Bebas Neue', cursive", fontSize: 14, letterSpacing: 1, cursor: "pointer" }}>Complete</button>
+              {b.status !== "completed" && b.status !== "cancelled" && (() => {
+                const canComplete = b.status === "confirmed" && Number(b.amount) > 0;
+                return (
+                  <button
+                    onClick={() => canComplete && updateBookingStatus(b.id, "completed")}
+                    title={!canComplete ? "Only available after a quote has been sent and accepted" : ""}
+                    style={{ background: "transparent", color: canComplete ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.15)", border: `1px solid ${canComplete ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.07)"}`, padding: "8px 16px", fontFamily: "'Bebas Neue', cursive", fontSize: 14, letterSpacing: 1, cursor: canComplete ? "pointer" : "not-allowed" }}>
+                    Complete
+                  </button>
+                );
+              })()}
+              {b.status !== "cancelled" && !cancelConfirm && (
+                <button onClick={() => setCancelConfirm(true)} style={{ background: "transparent", color: "rgba(255,77,0,0.6)", border: "1px solid rgba(255,77,0,0.2)", padding: "8px 16px", fontFamily: "'Bebas Neue', cursive", fontSize: 14, letterSpacing: 1, cursor: "pointer" }}>Cancel</button>
               )}
-              {b.status !== "cancelled" && (
-                <button onClick={() => updateBookingStatus(b.id, "cancelled")} style={{ background: "transparent", color: "rgba(255,77,0,0.6)", border: "1px solid rgba(255,77,0,0.2)", padding: "8px 16px", fontFamily: "'Bebas Neue', cursive", fontSize: 14, letterSpacing: 1, cursor: "pointer" }}>Cancel</button>
+              {cancelConfirm && (
+                <div style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(255,77,0,0.08)", border: "1px solid rgba(255,77,0,0.3)", padding: "8px 14px" }}>
+                  <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.7)" }}>Cancel this booking?</span>
+                  <button onClick={() => { updateBookingStatus(b.id, "cancelled"); setCancelConfirm(false); }} style={{ background: "#FF4D00", color: "#fff", border: "none", padding: "6px 14px", fontFamily: "'Bebas Neue', cursive", fontSize: 13, letterSpacing: 1, cursor: "pointer" }}>Yes, Cancel</button>
+                  <button onClick={() => setCancelConfirm(false)} style={{ background: "transparent", color: "rgba(255,255,255,0.4)", border: "1px solid rgba(255,255,255,0.1)", padding: "6px 14px", fontFamily: "'Bebas Neue', cursive", fontSize: 13, letterSpacing: 1, cursor: "pointer" }}>Keep</button>
+                </div>
               )}
             </div>
           </div>
@@ -115,7 +141,19 @@ function BookingDetailPanel({ selectedBooking, messagesMap, chatInput, setChatIn
             {messages.map((msg, i) => (
               <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: msg.from === "shop" ? "flex-end" : "flex-start" }}>
                 <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.25)", marginBottom: 4 }}>{msg.from === "shop" ? "You" : b.customer} · {msg.time}</div>
-                <div style={{ maxWidth: "72%", background: msg.from === "shop" ? "#FF4D00" : "#1A1A1A", color: "#fff", padding: "10px 14px", fontFamily: "'DM Sans', sans-serif", fontSize: 14, lineHeight: 1.5, borderRadius: msg.from === "shop" ? "12px 12px 2px 12px" : "12px 12px 12px 2px" }}>{msg.text}</div>
+                <div style={{ maxWidth: "72%", background: msg.from === "shop" ? "#FF4D00" : "#1A1A1A", color: "#fff", padding: "10px 14px", fontFamily: "'DM Sans', sans-serif", fontSize: 14, lineHeight: 1.5, borderRadius: msg.from === "shop" ? "12px 12px 2px 12px" : "12px 12px 12px 2px" }}>
+                  {(() => {
+                    if (msg.text?.startsWith('FILE::')) {
+                      const idx = msg.text.lastIndexOf('::');
+                      const url = msg.text.slice(6, idx);
+                      const name = msg.text.slice(idx + 2);
+                      const isImage = /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(name);
+                      if (isImage) return <img src={url} alt={name} style={{ maxWidth: '100%', maxHeight: 200, borderRadius: 4, display: 'block' }} />;
+                      return <a href={url} target="_blank" rel="noreferrer" style={{ color: '#fff', textDecoration: 'underline' }}>📄 {name}</a>;
+                    }
+                    return msg.text;
+                  })()}
+                </div>
               </div>
             ))}
             <div ref={chatEndRef} />
@@ -135,6 +173,7 @@ function BookingDetailPanel({ selectedBooking, messagesMap, chatInput, setChatIn
             </div>
           )}
           <div style={{ display: "flex", border: "1px solid rgba(255,255,255,0.07)", borderTop: "none" }}>
+            <input type="file" ref={companyFileRef} style={{ display: "none" }} accept="image/jpeg,image/png,image/gif,image/webp,.pdf" onChange={e => { const f = e.target.files[0]; if (f) { handleCompanyFileAttach(f); e.target.value = ""; } }} />
             <input
               style={{ flex: 1, background: "#1A1A1A", border: "none", padding: "12px 16px", color: "#fff", fontFamily: "'DM Sans', sans-serif", fontSize: 14, outline: "none" }}
               placeholder={`Message ${b.customer}… send a quote, confirm details, etc.`}
@@ -142,6 +181,7 @@ function BookingDetailPanel({ selectedBooking, messagesMap, chatInput, setChatIn
               onChange={e => setChatInput(e.target.value)}
               onKeyDown={e => e.key === "Enter" && sendCompanyMessage()}
             />
+            <button onClick={() => companyFileRef.current?.click()} disabled={companyFileUploading} style={{ background: "#1A1A1A", border: "none", borderLeft: "1px solid rgba(255,255,255,0.07)", padding: "0 14px", color: companyFileUploading ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.55)", cursor: companyFileUploading ? "not-allowed" : "pointer", fontSize: 18 }} title="Attach image or PDF">📎</button>
             <button onClick={sendCompanyMessage} style={{ background: "#FF4D00", color: "#fff", border: "none", padding: "12px 24px", fontFamily: "'Bebas Neue', cursive", fontSize: 16, letterSpacing: 2, cursor: "pointer" }}>Send</button>
           </div>
         </div>
@@ -229,7 +269,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
   const [dashboardBookings, setDashboardBookings] = useState([]);
   const [userShop, setUserShop] = useState(null);
   const [isNewShop, setIsNewShop] = useState(false);
-  const [profileForm, setProfileForm] = useState({ name: "", city: "", phone: "", website: "", bio: "", price_from: "" });
+  const [profileForm, setProfileForm] = useState({ name: "", city: "", state: "", zip: "", phone: "", website: "", bio: "", price_from: "" });
   const [selectedServices, setSelectedServices] = useState([]);
   const [saveStatus, setSaveStatus] = useState("");
   const [shopError, setShopError] = useState("");
@@ -259,6 +299,8 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
     setProfileForm({
       name: shop.name || "",
       city: shop.city || "",
+      state: shop.state || "",
+      zip: shop.zip || "",
       phone: shop.phone || "",
       website: shop.website || "",
       bio: shop.bio || "",
@@ -349,12 +391,9 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
     if (selectedBooking) chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messagesMap, selectedBooking]);
 
-  const sendCompanyMessage = async () => {
-    const text = chatInput.trim();
+  const sendCompanyMessageText = async (text) => {
     if (!text || !selectedBooking) return;
-    setChatInput("");
     const result = await dbSendMessage({ bookingId: selectedBooking.id, senderId: currentUser.id, senderRole: "company", text });
-    // Supabase postgres_changes doesn't echo back to the sender, so add locally
     if (result) {
       const time = new Date(result.sent_at || Date.now()).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
       setMessagesMap(prev => ({
@@ -362,6 +401,13 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
         [selectedBooking.id]: mergeMessages(prev[selectedBooking.id] || [], { id: result.id, from: "shop", text, time }),
       }));
     }
+  };
+
+  const sendCompanyMessage = async () => {
+    const text = chatInput.trim();
+    if (!text) return;
+    setChatInput("");
+    await sendCompanyMessageText(text);
   };
 
   const sendQuoteOffer = async () => {
@@ -418,9 +464,19 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
   const handleSaveProfile = async () => {
     if (!userShop) return;
     setSaveStatus("saving");
+    const city = profileForm.city.trim();
+    const state = profileForm.state.trim();
+    // Geocode whenever city or state changes
+    let geoUpdates = {};
+    if (city || state) {
+      const geo = await geocodeCityState(city, state);
+      if (geo) geoUpdates = { latitude: geo.lat, longitude: geo.lon };
+    }
     const updates = {
       name: profileForm.name.trim() || userShop.name,
-      city: profileForm.city.trim(),
+      city,
+      state,
+      zip: profileForm.zip.trim(),
       phone: profileForm.phone.trim(),
       website: profileForm.website.trim(),
       bio: profileForm.bio.trim(),
@@ -428,6 +484,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
       tags: selectedServices,
       banner_url: profilePhotoUrl || userShop.banner_url || "",
       is_listed: isListed,
+      ...geoUpdates,
     };
     const updated = await updateShop(userShop.id, updates);
     if (updated) {
@@ -691,7 +748,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
         {dashTab === "requests" && (
           <div>
             {selectedBooking ? (
-              <BookingDetailPanel selectedBooking={selectedBooking} messagesMap={messagesMap} chatInput={chatInput} setChatInput={setChatInput} quoteInput={quoteInput} setQuoteInput={setQuoteInput} sendQuoteOffer={sendQuoteOffer} sendCompanyMessage={sendCompanyMessage} chatEndRef={chatEndRef} updateBookingStatus={updateBookingStatus} setSelectedBooking={setSelectedBooking} backLabel="← Back to booking requests" onScheduled={handleScheduled} shopUserId={currentUser?.id} />
+              <BookingDetailPanel selectedBooking={selectedBooking} messagesMap={messagesMap} chatInput={chatInput} setChatInput={setChatInput} quoteInput={quoteInput} setQuoteInput={setQuoteInput} sendQuoteOffer={sendQuoteOffer} sendCompanyMessage={sendCompanyMessage} sendCompanyFileMessage={sendCompanyMessageText} chatEndRef={chatEndRef} updateBookingStatus={updateBookingStatus} setSelectedBooking={setSelectedBooking} backLabel="← Back to booking requests" onScheduled={handleScheduled} shopUserId={currentUser?.id} />
             ) : (
               <div>
                 <div style={{ marginBottom: 28 }}>
@@ -735,7 +792,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
 
         {dashTab === "bookings" && (
           <div>
-            {selectedBooking && <BookingDetailPanel selectedBooking={selectedBooking} messagesMap={messagesMap} chatInput={chatInput} setChatInput={setChatInput} quoteInput={quoteInput} setQuoteInput={setQuoteInput} sendQuoteOffer={sendQuoteOffer} sendCompanyMessage={sendCompanyMessage} chatEndRef={chatEndRef} updateBookingStatus={updateBookingStatus} setSelectedBooking={setSelectedBooking} backLabel="← Back to all bookings" onScheduled={handleScheduled} shopUserId={currentUser?.id} />}
+            {selectedBooking && <BookingDetailPanel selectedBooking={selectedBooking} messagesMap={messagesMap} chatInput={chatInput} setChatInput={setChatInput} quoteInput={quoteInput} setQuoteInput={setQuoteInput} sendQuoteOffer={sendQuoteOffer} sendCompanyMessage={sendCompanyMessage} sendCompanyFileMessage={sendCompanyMessageText} chatEndRef={chatEndRef} updateBookingStatus={updateBookingStatus} setSelectedBooking={setSelectedBooking} backLabel="← Back to all bookings" onScheduled={handleScheduled} shopUserId={currentUser?.id} />}
 
             {/* Header + toggle */}
             {!selectedBooking && (
@@ -999,11 +1056,10 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
                   </div>
                 </div>
               </div>
-              {[  
+              {[
                 ["Business Name", "name", "text", "e.g. Chrome Kings Wraps"],
                 ["Phone", "phone", "tel", "e.g. (404) 555-0123"],
                 ["Website", "website", "text", "e.g. chromekingswraps.com"],
-                ["City", "city", "text", "e.g. Atlanta"],
                 ["Starting Price ($)", "price_from", "number", "e.g. 500"],
               ].map(([label, key, type, placeholder]) => (
                 <div key={key}>
@@ -1017,6 +1073,16 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
                   />
                 </div>
               ))}
+              {/* City / State / Zip on one row */}
+              <div>
+                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", letterSpacing: 1, marginBottom: 6 }}>LOCATION</div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 80px 120px", gap: 8 }}>
+                  <input placeholder="City  (e.g. Atlanta)" value={profileForm.city} onChange={e => setProfileForm(f => ({ ...f, city: e.target.value }))} style={{ background: "#1A1A1A", border: "1px solid rgba(255,255,255,0.1)", padding: "12px 16px", color: "#fff", fontFamily: "'DM Sans', sans-serif", fontSize: 14, outline: "none" }} />
+                  <input placeholder="State" maxLength={2} value={profileForm.state} onChange={e => setProfileForm(f => ({ ...f, state: e.target.value.toUpperCase() }))} style={{ background: "#1A1A1A", border: "1px solid rgba(255,255,255,0.1)", padding: "12px 16px", color: "#fff", fontFamily: "'DM Sans', sans-serif", fontSize: 14, outline: "none", textTransform: "uppercase" }} />
+                  <input placeholder="Zip code" value={profileForm.zip} onChange={e => setProfileForm(f => ({ ...f, zip: e.target.value }))} style={{ background: "#1A1A1A", border: "1px solid rgba(255,255,255,0.1)", padding: "12px 16px", color: "#fff", fontFamily: "'DM Sans', sans-serif", fontSize: 14, outline: "none" }} />
+                </div>
+                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.25)", marginTop: 5 }}>Used to show your shop to nearby customers. Save your profile to update.</div>
+              </div>
               <div>
                 <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", letterSpacing: 1, marginBottom: 10 }}>SERVICES OFFERED</div>
                 {SERVICE_CATEGORIES.map(({ category, services }) => (

@@ -1,5 +1,34 @@
 import { supabase } from './supabase'
 
+// ── GEO HELPERS ──────────────────────────────────────────────────────────────
+
+/** Great-circle distance in miles between two lat/lng pairs */
+export function haversineDistance(lat1, lon1, lat2, lon2) {
+  const R = 3958.8; // Earth radius in miles
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+/** Geocode a city + state string via Nominatim (free, no API key).
+ *  Returns { lat, lon } or null on failure. */
+export async function geocodeCityState(city, state) {
+  if (!city && !state) return null;
+  const q = encodeURIComponent([city, state].filter(Boolean).join(', ') + ', USA');
+  try {
+    const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1`, {
+      headers: { 'User-Agent': 'Kidor/1.0' },
+    });
+    const data = await res.json();
+    if (!data.length) return null;
+    return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
+  } catch {
+    return null;
+  }
+}
+
 // ── PORTFOLIO IMAGES ─────────────────────────────────────────────────────────
 
 export async function fetchPortfolioImages(shopId) {
@@ -306,6 +335,24 @@ export async function sendMessage({ bookingId, senderId, senderRole, text }) {
     .single()
   if (error) { console.error('sendMessage:', error); return null }
   return data
+}
+
+export async function uploadChatFile(file, bookingId) {
+  const ext = file.name.split('.').pop().toLowerCase();
+  const path = `chat/${bookingId}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+  const { error } = await supabase.storage.from('shop-images').upload(path, file, { upsert: true });
+  if (error) { console.error('uploadChatFile:', error); return null; }
+  const { data } = supabase.storage.from('shop-images').getPublicUrl(path);
+  return { url: data.publicUrl, name: file.name };
+}
+
+export async function uploadDesignFile(file) {
+  const ext = file.name.split('.').pop().toLowerCase();
+  const path = `booking-designs/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+  const { error } = await supabase.storage.from('shop-images').upload(path, file, { upsert: true });
+  if (error) { console.error('uploadDesignFile:', error); return null; }
+  const { data } = supabase.storage.from('shop-images').getPublicUrl(path);
+  return { url: data.publicUrl, name: file.name };
 }
 
 export function subscribeToMessages(bookingId, callback) {

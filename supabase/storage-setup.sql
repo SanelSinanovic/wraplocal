@@ -71,3 +71,10 @@ DROP TRIGGER IF EXISTS on_review_inserted ON reviews;
 CREATE TRIGGER on_review_inserted
   AFTER INSERT ON reviews
   FOR EACH ROW EXECUTE FUNCTION update_shop_rating();
+
+-- 9. Add state, zip, lat/lng columns to shops table
+ALTER TABLE shops ADD COLUMN IF NOT EXISTS state text DEFAULT '';
+ALTER TABLE shops ADD COLUMN IF NOT EXISTS zip   text DEFAULT '';
+ALTER TABLE shops ADD COLUMN IF NOT EXISTS latitude  double precision;
+ALTER TABLE shops ADD COLUMN IF NOT EXISTS longitude double precision;
+

@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { createBooking, sendMessage } from "../lib/queries";
+import { useState, useRef, useEffect } from "react";
+import { createBooking, sendMessage, uploadDesignFile } from "../lib/queries";
 import { supabase } from "../lib/supabase";
 import { SERVICE_CATEGORIES } from "../lib/services";
 
@@ -9,8 +9,16 @@ export default function BookingFlow({
   bookingConfirmed, setBookingConfirmed, currentUser,
 }) {
   const [designOption, setDesignOption] = useState(null);
+  const [designFileUrl, setDesignFileUrl] = useState("");
+  const [designFileName, setDesignFileName] = useState("");
+  const [designFileUploading, setDesignFileUploading] = useState(false);
+  const [designLinkInput, setDesignLinkInput] = useState("");
+  const designFileRef = useRef(null);
   const [selectedService, setSelectedService] = useState(null);
   const [vehicleType, setVehicleType] = useState("");
+  const [isFleet, setIsFleet] = useState(false);
+  const [fleetQuantity, setFleetQuantity] = useState(2);
+  const [vehicleOwnership, setVehicleOwnership] = useState("personal");
   const [shopMessage, setShopMessage] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -59,6 +67,14 @@ export default function BookingFlow({
           name: `${firstName} ${lastName}`.trim() || currentUser.user_metadata?.name || 'Customer',
         }, { onConflict: 'id' });
 
+        const vehicleString = isVehicleService
+          ? [
+              vehicleType,
+              isFleet ? `Fleet ×${fleetQuantity} vehicles` : null,
+              vehicleOwnership === "company" ? "(Company vehicle)" : "(Personal vehicle)",
+            ].filter(Boolean).join(" — ")
+          : vehicleType;
+
         const { data: booking, error: bookingError } = await createBooking({
           shopId: bookingShop.id,
           customerId: currentUser.id,
@@ -66,15 +82,21 @@ export default function BookingFlow({
           date: selectedDate,
           timeSlot: selectedSlot,
           preferredDates: preferredDates.length > 0 ? JSON.stringify(preferredDates) : null,
-          vehicle: vehicleType,
+          vehicle: vehicleString,
           designOption,
-          designFileUrl: null,
+          designFileUrl: designFileUrl || designLinkInput || null,
           amount: 0,
         });
         if (bookingError || !booking) {
           setSubmitError(bookingError?.message || bookingError?.details || JSON.stringify(bookingError) || "Could not save your request.");
           setIsSubmitting(false);
           return;
+        }
+        // Send design file into chat so the shop can see it immediately
+        if (designFileUrl) {
+          await sendMessage({ bookingId: booking.id, senderId: currentUser.id, senderRole: "customer", text: `FILE::${designFileUrl}::${designFileName || "design-file"}` });
+        } else if (designLinkInput.trim()) {
+          await sendMessage({ bookingId: booking.id, senderId: currentUser.id, senderRole: "customer", text: `🎨 My design: ${designLinkInput.trim()}` });
         }
         // Send initial message if customer left one
         if (shopMessage.trim()) {
@@ -157,7 +179,7 @@ export default function BookingFlow({
                   ))}
                   {isVehicleService && (
                   <div style={{ marginTop: 24, marginBottom: 6 }}>
-                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 8, letterSpacing: 1 }}>YOUR VEHICLE</div>
+                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 8, letterSpacing: 1 }}>VEHICLE TYPE</div>
                     <input
                       placeholder="e.g. 2023 BMW M4 Competition, 2021 Ford F-150..."
                       value={vehicleType}
@@ -165,6 +187,41 @@ export default function BookingFlow({
                     />
                     <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.25)", marginTop: 6 }}>
                       Helps the shop give you an accurate quote
+                    </div>
+                    {/* Fleet toggle */}
+                    <div style={{ marginTop: 14, display: "flex", alignItems: "center", gap: 12 }}>
+                      <div
+                        onClick={() => setIsFleet(v => !v)}
+                        style={{ width: 18, height: 18, border: `2px solid ${isFleet ? "#FF4D00" : "rgba(255,255,255,0.25)"}`, background: isFleet ? "#FF4D00" : "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all 0.15s" }}
+                      >
+                        {isFleet && <span style={{ color: "#fff", fontSize: 11, lineHeight: 1 }}>✓</span>}
+                      </div>
+                      <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.65)", cursor: "pointer" }} onClick={() => setIsFleet(v => !v)}>
+                        This is a fleet booking (multiple vehicles)
+                      </span>
+                    </div>
+                    {isFleet && (
+                      <div style={{ marginTop: 10 }}>
+                        <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 6, letterSpacing: 1 }}>NUMBER OF VEHICLES</div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 0, width: "fit-content" }}>
+                          <button type="button" onClick={() => setFleetQuantity(q => Math.max(2, q - 1))} style={{ width: 36, height: 40, background: "#1A1A1A", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", borderRight: "none" }}>−</button>
+                          <div style={{ width: 56, height: 40, background: "#1A1A1A", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Sans', sans-serif", fontSize: 16, color: "#FF4D00", fontWeight: 600 }}>{fleetQuantity}</div>
+                          <button type="button" onClick={() => setFleetQuantity(q => Math.min(500, q + 1))} style={{ width: 36, height: 40, background: "#1A1A1A", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", borderLeft: "none" }}>+</button>
+                        </div>
+                      </div>
+                    )}
+                    {/* Personal / Company */}
+                    <div style={{ marginTop: 14 }}>
+                      <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 8, letterSpacing: 1 }}>VEHICLE OWNERSHIP</div>
+                      <div style={{ display: "flex", gap: 10 }}>
+                        {["personal", "company"].map(v => (
+                          <div key={v} onClick={() => setVehicleOwnership(v)}
+                            style={{ flex: 1, padding: "10px 14px", border: `1px solid ${vehicleOwnership === v ? "#FF4D00" : "rgba(255,255,255,0.1)"}`, background: vehicleOwnership === v ? "rgba(255,77,0,0.08)" : "#111", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, transition: "all 0.15s" }}>
+                            <div style={{ width: 16, height: 16, borderRadius: "50%", border: `2px solid ${vehicleOwnership === v ? "#FF4D00" : "rgba(255,255,255,0.25)"}`, background: vehicleOwnership === v ? "#FF4D00" : "transparent", flexShrink: 0, transition: "all 0.15s" }} />
+                            <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: vehicleOwnership === v ? "#FF4D00" : "rgba(255,255,255,0.55)", textTransform: "capitalize" }}>{v} vehicle</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                   )}
@@ -190,8 +247,38 @@ export default function BookingFlow({
                   <div style={{ marginBottom: 14 }}><div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>PHONE</div><input placeholder="(404) 555-0100" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} /></div>
                   {isVehicleService && (
                   <div style={{ marginBottom: 14 }}>
-                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>VEHICLE</div>
+                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>VEHICLE TYPE</div>
                     <input placeholder="2023 BMW M4 Competition" value={vehicleType} onChange={e => setVehicleType(e.target.value)} />
+                    {/* Fleet */}
+                    <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 12 }}>
+                      <div onClick={() => setIsFleet(v => !v)} style={{ width: 18, height: 18, border: `2px solid ${isFleet ? "#FF4D00" : "rgba(255,255,255,0.25)"}`, background: isFleet ? "#FF4D00" : "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all 0.15s" }}>
+                        {isFleet && <span style={{ color: "#fff", fontSize: 11, lineHeight: 1 }}>✓</span>}
+                      </div>
+                      <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.65)", cursor: "pointer" }} onClick={() => setIsFleet(v => !v)}>Fleet booking (multiple vehicles)</span>
+                    </div>
+                    {isFleet && (
+                      <div style={{ marginTop: 10 }}>
+                        <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 6, letterSpacing: 1 }}>NUMBER OF VEHICLES</div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 0, width: "fit-content" }}>
+                          <button type="button" onClick={() => setFleetQuantity(q => Math.max(2, q - 1))} style={{ width: 36, height: 40, background: "#1A1A1A", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", borderRight: "none" }}>−</button>
+                          <div style={{ width: 56, height: 40, background: "#1A1A1A", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Sans', sans-serif", fontSize: 16, color: "#FF4D00", fontWeight: 600 }}>{fleetQuantity}</div>
+                          <button type="button" onClick={() => setFleetQuantity(q => Math.min(500, q + 1))} style={{ width: 36, height: 40, background: "#1A1A1A", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", borderLeft: "none" }}>+</button>
+                        </div>
+                      </div>
+                    )}
+                    {/* Personal / Company */}
+                    <div style={{ marginTop: 12 }}>
+                      <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 8, letterSpacing: 1 }}>VEHICLE OWNERSHIP</div>
+                      <div style={{ display: "flex", gap: 10 }}>
+                        {["personal", "company"].map(v => (
+                          <div key={v} onClick={() => setVehicleOwnership(v)}
+                            style={{ flex: 1, padding: "10px 14px", border: `1px solid ${vehicleOwnership === v ? "#FF4D00" : "rgba(255,255,255,0.1)"}`, background: vehicleOwnership === v ? "rgba(255,77,0,0.08)" : "#111", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, transition: "all 0.15s" }}>
+                            <div style={{ width: 16, height: 16, borderRadius: "50%", border: `2px solid ${vehicleOwnership === v ? "#FF4D00" : "rgba(255,255,255,0.25)"}`, background: vehicleOwnership === v ? "#FF4D00" : "transparent", flexShrink: 0 }} />
+                            <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: vehicleOwnership === v ? "#FF4D00" : "rgba(255,255,255,0.55)", textTransform: "capitalize" }}>{v} vehicle</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                   )}                  {/* Preferred dates */}
                   <div style={{ marginBottom: 20 }}>
@@ -245,7 +332,40 @@ export default function BookingFlow({
                     </div>
                     {designOption === "own" && (
                       <div style={{ marginTop: 10 }}>
-                        <input placeholder="Link to your design file (Google Drive, Dropbox, etc.)" />
+                        <input type="file" ref={designFileRef} style={{ display: "none" }} accept="image/jpeg,image/png,image/gif,image/webp,.pdf" onChange={async e => {
+                          const f = e.target.files[0];
+                          if (!f) return;
+                          setDesignFileUploading(true);
+                          const result = await uploadDesignFile(f);
+                          setDesignFileUploading(false);
+                          if (result) { setDesignFileUrl(result.url); setDesignFileName(result.name); setDesignLinkInput(""); }
+                          e.target.value = "";
+                        }} />
+                        <div
+                          onClick={() => designFileRef.current?.click()}
+                          style={{ border: `1px dashed ${designFileUrl ? "rgba(16,185,129,0.5)" : "rgba(255,255,255,0.15)"}`, background: designFileUrl ? "rgba(16,185,129,0.06)" : "transparent", padding: "18px 16px", textAlign: "center", cursor: designFileUploading ? "not-allowed" : "pointer", borderRadius: 2 }}
+                        >
+                          {designFileUploading ? (
+                            <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)" }}>Uploading…</div>
+                          ) : designFileUrl ? (
+                            <>
+                              <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#10B981" }}>✓ {designFileName}</div>
+                              <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 4 }}>Click to replace</div>
+                            </>
+                          ) : (
+                            <>
+                              <div style={{ fontSize: 26, marginBottom: 6 }}>📁</div>
+                              <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.6)" }}>Click to upload your design file</div>
+                              <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 4 }}>JPG, PNG, PDF accepted</div>
+                            </>
+                          )}
+                        </div>
+                        <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.25)", textAlign: "center", margin: "8px 0" }}>— or paste a link —</div>
+                        <input
+                          placeholder="Google Drive, Dropbox, Figma link, etc."
+                          value={designLinkInput}
+                          onChange={e => { setDesignLinkInput(e.target.value); if (e.target.value) { setDesignFileUrl(""); setDesignFileName(""); } }}
+                        />
                       </div>
                     )}
                   </div>
@@ -283,9 +403,11 @@ export default function BookingFlow({
                 </div>
               </div>
               <div style={{ height: 1, background: "rgba(255,255,255,0.06)", marginBottom: 16 }} />
-              {[
-                ["Service", selectedService || "—"],
+              {[[
+                "Service", selectedService || "—"],
                 ...(isVehicleService ? [["Vehicle", vehicleType || "—"]] : []),
+                ...(isVehicleService && isFleet ? [["Fleet size", `${fleetQuantity} vehicles`]] : []),
+                ...(isVehicleService ? [["Ownership", vehicleOwnership === "company" ? "Company" : "Personal"]] : []),
               ].map(([k, v]) => (
                 <div key={k} style={{ display: "flex", justifyContent: "space-between", fontFamily: "'DM Sans', sans-serif", fontSize: 13, marginBottom: 10, gap: 8 }}>
                   <span style={{ color: "rgba(255,255,255,0.4)", flexShrink: 0 }}>{k}</span>
