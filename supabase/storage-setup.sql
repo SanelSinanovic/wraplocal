@@ -107,3 +107,6 @@ CREATE POLICY "Shop owner delete blocked dates"
     EXISTS (SELECT 1 FROM shops WHERE id = shop_id AND owner_id = auth.uid())
   );
 
+-- 11. Stripe Connect: store each shop's connected account ID
+ALTER TABLE shops ADD COLUMN IF NOT EXISTS stripe_account_id text;
+

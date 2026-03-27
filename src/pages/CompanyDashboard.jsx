@@ -305,6 +305,11 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
   const [availCalMonth, setAvailCalMonth] = useState(today.getMonth());
   const [availCalYear, setAvailCalYear] = useState(today.getFullYear());
 
+  // ── Stripe Connect state ─────────────────────────────────────────────────
+  const [stripeAccountId, setStripeAccountId] = useState("");
+  const [connectLoading, setConnectLoading] = useState(false);
+  const [connectError, setConnectError] = useState("");
+
   const syncProfileForm = (shop) => {
     setProfileForm({
       name: shop.name || "",
@@ -319,6 +324,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
     setSelectedServices((shop.tags || []).filter(t => ALL_SERVICE_NAMES.includes(t)));
     setProfilePhotoUrl(shop.banner_url || "");
     setIsListed(!!shop.is_listed);
+    setStripeAccountId(shop.stripe_account_id || "");
   };
 
   useEffect(() => {
@@ -411,6 +417,20 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
       setAvailLoaded(true);
     });
   }, [dashTab, userShop?.id, availLoaded]);
+
+  // Refresh stripe_account_id whenever the payments tab is opened
+  // (handles the return from Stripe onboarding)
+  useEffect(() => {
+    if (dashTab !== "payments" || !userShop?.id) return;
+    supabase
+      .from("shops")
+      .select("stripe_account_id")
+      .eq("id", userShop.id)
+      .single()
+      .then(({ data }) => {
+        if (data?.stripe_account_id) setStripeAccountId(data.stripe_account_id);
+      });
+  }, [dashTab, userShop?.id]);
 
   const sendCompanyMessageText = async (text) => {
     if (!text || !selectedBooking) return;
@@ -1008,10 +1028,47 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
           const netPayout = Math.round((totalRevenue - totalFee) * 100) / 100;
           const now = new Date();
           const monthLabel = now.toLocaleString("en-US", { month: "long", year: "numeric" }).toUpperCase();
+
+          const handleConnectStripe = async () => {
+            setConnectLoading(true);
+            setConnectError("");
+            try {
+              const returnUrl = window.location.origin + window.location.pathname + "#company-dash?tab=payments";
+              const { data, error } = await supabase.functions.invoke("create-connect-onboarding", {
+                body: { shopId: userShop.id, returnUrl, refreshUrl: returnUrl },
+              });
+              if (error || !data?.url) throw new Error(error?.message || data?.error || "Could not create Stripe link");
+              window.location.href = data.url;
+            } catch (e) {
+              setConnectError(e.message);
+              setConnectLoading(false);
+            }
+          };
+
           return (
           <div>
             <div style={{ fontSize: 40, letterSpacing: 2, marginBottom: 8 }}>PAYMENTS & PAYOUTS</div>
             <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.4)", marginBottom: 32 }}>Kidor retains 7% of all bookings as a platform fee</div>
+
+            {/* ── Stripe Connect payout setup ── */}
+            <div style={{ marginBottom: 32, border: stripeAccountId ? "1px solid rgba(16,185,129,0.3)" : "1px solid rgba(245,158,11,0.3)", background: stripeAccountId ? "rgba(16,185,129,0.05)" : "rgba(245,158,11,0.05)", padding: "20px 24px" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+                <div>
+                  <div style={{ fontSize: 18, letterSpacing: 1, marginBottom: 4, color: stripeAccountId ? "#10B981" : "#F59E0B" }}>{stripeAccountId ? "✓ STRIPE CONNECTED" : "⚠ STRIPE PAYOUT SETUP REQUIRED"}</div>
+                  <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.45)" }}>
+                    {stripeAccountId
+                      ? <>Your Stripe account <span style={{ fontFamily: "monospace", color: "rgba(255,255,255,0.7)" }}>{stripeAccountId.slice(0, 18)}…</span> receives 93% of each payment automatically.</>  
+                      : "Connect a Stripe account so you receive 93% of each booking payment directly to your bank."}
+                  </div>
+                </div>
+                {stripeAccountId ? (
+                  <a href="https://dashboard.stripe.com/" target="_blank" rel="noreferrer" style={{ padding: "9px 20px", background: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.4)", color: "#10B981", fontFamily: "'DM Sans', sans-serif", fontSize: 13, textDecoration: "none", whiteSpace: "nowrap" }}>Manage on Stripe →</a>
+                ) : (
+                  <button onClick={handleConnectStripe} disabled={connectLoading} style={{ padding: "10px 22px", background: "#F59E0B", border: "none", color: "#000", fontFamily: "'Bebas Neue', cursive", fontSize: 15, letterSpacing: 1, cursor: connectLoading ? "not-allowed" : "pointer", opacity: connectLoading ? 0.6 : 1 }}>{connectLoading ? "REDIRECTING…" : "CONNECT STRIPE ACCOUNT"}</button>
+                )}
+              </div>
+              {connectError && <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#F87171", marginTop: 10 }}>{connectError}</div>}
+            </div>
             <div className="stats-3" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 40 }}>
               <div className="stat-card">
                 <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 8 }}>TOTAL REVENUE</div>
