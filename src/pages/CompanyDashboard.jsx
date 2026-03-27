@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { supabase } from "../lib/supabase";
 import { fetchUserShop, fetchCompanyBookings, createShop, updateShop, fetchMessages, sendMessage as dbSendMessage, subscribeToMessages, subscribeToShopBookings, fetchPortfolioImages, addPortfolioImage, deletePortfolioImage, setHeroPortfolioImage, scheduleBooking, uploadChatFile, geocodeCityState } from "../lib/queries";
 import { SERVICE_CATEGORIES, ALL_SERVICE_NAMES } from "../lib/services";
+import CompanyOnboarding from "./CompanyOnboarding";
 
 // Parse "Mon DD, YYYY" → { month (0-indexed), day, year }
 function parseDate(str) {
@@ -573,6 +574,19 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
   };
 
   const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+  // ── Onboarding complete handler ────────────────────────────────────────────
+  const handleOnboardingComplete = (updatedShop) => {
+    setUserShop(updatedShop);
+    syncProfileForm(updatedShop);
+    setIsNewShop(false);
+    setDashTab("overview");
+  };
+
+  // Show onboarding wizard for brand-new shops
+  if (isNewShop && userShop) {
+    return <CompanyOnboarding currentUser={currentUser} userShop={userShop} onComplete={handleOnboardingComplete} nav={nav} />;
+  }
 
   const DAY_NAMES = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 
