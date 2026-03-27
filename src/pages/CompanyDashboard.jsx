@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "../lib/supabase";
-import { fetchUserShop, fetchCompanyBookings, createShop, updateShop, fetchMessages, sendMessage as dbSendMessage, subscribeToMessages, subscribeToShopBookings, fetchPortfolioImages, addPortfolioImage, deletePortfolioImage, setHeroPortfolioImage, scheduleBooking, uploadChatFile, geocodeCityState } from "../lib/queries";
+import { fetchUserShop, fetchCompanyBookings, createShop, updateShop, fetchMessages, sendMessage as dbSendMessage, subscribeToMessages, subscribeToShopBookings, fetchPortfolioImages, addPortfolioImage, deletePortfolioImage, setHeroPortfolioImage, scheduleBooking, uploadChatFile, geocodeCityState, fetchShopAvailability, saveShopAvailability } from "../lib/queries";
 import { SERVICE_CATEGORIES, ALL_SERVICE_NAMES } from "../lib/services";
 import CompanyOnboarding from "./CompanyOnboarding";
 
@@ -297,6 +297,14 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
   const [calMonth, setCalMonth] = useState(today.getMonth());
   const [selectedDay, setSelectedDay] = useState(null);
 
+  // ── Availability tab state ────────────────────────────────────────────────
+  const [availWorkingDays, setAvailWorkingDays] = useState([1, 2, 3, 4, 5, 6]);
+  const [availBlockedDates, setAvailBlockedDates] = useState([]);
+  const [availSaving, setAvailSaving] = useState(false);
+  const [availLoaded, setAvailLoaded] = useState(false);
+  const [availCalMonth, setAvailCalMonth] = useState(today.getMonth());
+  const [availCalYear, setAvailCalYear] = useState(today.getFullYear());
+
   const syncProfileForm = (shop) => {
     setProfileForm({
       name: shop.name || "",
@@ -393,6 +401,16 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
   useEffect(() => {
     if (selectedBooking) chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messagesMap, selectedBooking]);
+
+  // Load availability lazily when the tab is first opened
+  useEffect(() => {
+    if (dashTab !== "availability" || !userShop?.id || availLoaded) return;
+    fetchShopAvailability(userShop.id).then(avail => {
+      setAvailWorkingDays(avail.workingDays);
+      setAvailBlockedDates(avail.blockedDates);
+      setAvailLoaded(true);
+    });
+  }, [dashTab, userShop?.id, availLoaded]);
 
   const sendCompanyMessageText = async (text) => {
     if (!text || !selectedBooking) return;
@@ -632,7 +650,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
       <div className="company-sidebar" style={{ width: 220, background: "#0D0D0D", borderRight: "1px solid rgba(255,255,255,0.06)", padding: "24px 16px", display: "flex", flexDirection: "column", flexShrink: 0 }}>
         <div className="sidebar-logo" style={{ fontSize: 20, letterSpacing: 4, color: "#FF4D00", marginBottom: 32, padding: "0 4px", cursor: "pointer" }} onClick={() => nav("landing")}>KI<span style={{ color: "#fff" }}>DOR</span></div>
         <div className="sidebar-sub" style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.2)", letterSpacing: 2, marginBottom: 8, padding: "0 4px" }}>{userShop?.name?.toUpperCase() || "MY SHOP"}</div>
-        {[["overview", "📊 Overview"], ["requests", "📬 Requests"], ["bookings", "📅 Bookings"], ["profile", "✏️ Profile"], ["payments", "💰 Payments"], ["settings", "⚙️ Settings"]].map(([k, l]) => (
+        {[["overview", "📊 Overview"], ["requests", "📬 Requests"], ["bookings", "📅 Bookings"], ["availability", "🗓️ Availability"], ["profile", "✏️ Profile"], ["payments", "💰 Payments"], ["settings", "⚙️ Settings"]].map(([k, l]) => (
           <div key={k} className={`nav-item${dashTab === k ? " active" : ""}`} onClick={() => { setDashTab(k); setSelectedBooking(null); }} style={{ justifyContent: "space-between" }}>
             <span>{l}</span>
             {k === "requests" && pendingCount > 0 && (
@@ -1022,6 +1040,115 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
           </div>
           );
         })()}
+
+        {dashTab === "availability" && (
+          <div style={{ maxWidth: 660 }}>
+            <div style={{ fontSize: 40, letterSpacing: 2, marginBottom: 8 }}>AVAILABILITY</div>
+            <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.4)", marginBottom: 32 }}>Set your working days and block specific dates — customers only see when you're available.</div>
+
+            {/* Working days */}
+            <div style={{ background: "#111", border: "1px solid rgba(255,255,255,0.06)", padding: "24px", marginBottom: 20 }}>
+              <div style={{ fontSize: 22, letterSpacing: 1, marginBottom: 4 }}>WORKING DAYS</div>
+              <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.35)", marginBottom: 16 }}>Tick every day your shop is normally open.</div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {[["Sun", 0], ["Mon", 1], ["Tue", 2], ["Wed", 3], ["Thu", 4], ["Fri", 5], ["Sat", 6]].map(([label, dow]) => {
+                  const active = availWorkingDays.includes(dow);
+                  return (
+                    <div key={dow}
+                      onClick={() => setAvailWorkingDays(prev => active ? prev.filter(d => d !== dow) : [...prev, dow].sort((a, b) => a - b))}
+                      style={{ padding: "9px 16px", border: `1px solid ${active ? "#FF4D00" : "rgba(255,255,255,0.1)"}`, background: active ? "rgba(255,77,0,0.1)" : "#1A1A1A", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: active ? "#FF4D00" : "rgba(255,255,255,0.4)", transition: "all 0.15s", userSelect: "none" }}>
+                      {label}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Block specific dates */}
+            <div style={{ background: "#111", border: "1px solid rgba(255,255,255,0.06)", padding: "24px", marginBottom: 24 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                <div style={{ fontSize: 22, letterSpacing: 1 }}>BLOCK SPECIFIC DATES</div>
+                {availBlockedDates.length > 0 && <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#F59E0B" }}>{availBlockedDates.length} date{availBlockedDates.length !== 1 ? "s" : ""} blocked</div>}
+              </div>
+              <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.35)", marginBottom: 16 }}>Click any future date to toggle it blocked. Blocked dates show as unavailable to customers.</div>
+
+              {/* Month nav */}
+              <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 14 }}>
+                <button onClick={() => { const d = new Date(availCalYear, availCalMonth - 1, 1); setAvailCalMonth(d.getMonth()); setAvailCalYear(d.getFullYear()); }} style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)", padding: "5px 12px", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", fontSize: 16 }}>‹</button>
+                <div style={{ fontSize: 22, letterSpacing: 2, minWidth: 164, textAlign: "center" }}>{new Date(availCalYear, availCalMonth).toLocaleString("en-US", { month: "long" }).toUpperCase()} {availCalYear}</div>
+                <button onClick={() => { const d = new Date(availCalYear, availCalMonth + 1, 1); setAvailCalMonth(d.getMonth()); setAvailCalYear(d.getFullYear()); }} style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)", padding: "5px 12px", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", fontSize: 16 }}>›</button>
+              </div>
+
+              {/* Day-of-week headers */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 3, marginBottom: 3 }}>
+                {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map(d => (
+                  <div key={d} style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.25)", textAlign: "center", padding: "3px 0", letterSpacing: 1 }}>{d}</div>
+                ))}
+              </div>
+
+              {/* Calendar grid */}
+              {(() => {
+                const daysInMonth = new Date(availCalYear, availCalMonth + 1, 0).getDate();
+                const firstDow = new Date(availCalYear, availCalMonth, 1).getDay();
+                const todayIso = new Date().toISOString().slice(0, 10);
+                const cells = [];
+                for (let i = 0; i < firstDow; i++) cells.push(<div key={`e${i}`} />);
+                for (let day = 1; day <= daysInMonth; day++) {
+                  const iso = `${availCalYear}-${String(availCalMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+                  const isPast = iso <= todayIso;
+                  const isBlocked = availBlockedDates.includes(iso);
+                  const isWorkDay = availWorkingDays.includes(new Date(availCalYear, availCalMonth, day).getDay());
+                  cells.push(
+                    <div key={day}
+                      title={isBlocked ? "Click to unblock" : isPast ? "" : "Click to block"}
+                      onClick={() => { if (isPast) return; setAvailBlockedDates(prev => isBlocked ? prev.filter(d => d !== iso) : [...prev, iso]); }}
+                      style={{
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        height: 38, border: "1px solid",
+                        borderColor: isBlocked ? "rgba(239,68,68,0.5)" : isWorkDay ? "rgba(255,255,255,0.07)" : "rgba(255,255,255,0.03)",
+                        background: isBlocked ? "rgba(239,68,68,0.12)" : !isWorkDay ? "rgba(0,0,0,0.2)" : "#1E1E1E",
+                        cursor: isPast ? "default" : "pointer",
+                        opacity: isPast ? 0.28 : 1,
+                        fontFamily: "'DM Sans', sans-serif", fontSize: 13,
+                        color: isBlocked ? "#EF4444" : isWorkDay ? "rgba(255,255,255,0.75)" : "rgba(255,255,255,0.2)",
+                        transition: "border-color 0.12s, background 0.12s",
+                      }}
+                    >
+                      {day}
+                    </div>
+                  );
+                }
+                return <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 3 }}>{cells}</div>;
+              })()}
+
+              {/* Legend */}
+              <div style={{ display: "flex", gap: 20, marginTop: 14, fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.3)" }}>
+                <span style={{ display: "flex", alignItems: "center", gap: 6 }}><span style={{ width: 12, height: 12, background: "#1E1E1E", border: "1px solid rgba(255,255,255,0.07)", display: "inline-block" }} /> Open</span>
+                <span style={{ display: "flex", alignItems: "center", gap: 6 }}><span style={{ width: 12, height: 12, background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.5)", display: "inline-block" }} /> Blocked</span>
+                <span style={{ display: "flex", alignItems: "center", gap: 6 }}><span style={{ width: 12, height: 12, background: "rgba(0,0,0,0.2)", border: "1px solid rgba(255,255,255,0.03)", display: "inline-block" }} /> Non-working day</span>
+              </div>
+            </div>
+
+            {/* Save */}
+            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+              <button
+                onClick={async () => {
+                  if (!userShop?.id) return;
+                  setAvailSaving(true);
+                  await saveShopAvailability(userShop.id, availWorkingDays, availBlockedDates);
+                  setAvailSaving(false);
+                  setSaveStatus("avail_saved");
+                  setTimeout(() => setSaveStatus(""), 2500);
+                }}
+                disabled={availSaving}
+                style={{ background: availSaving ? "#555" : "#FF4D00", color: "#fff", border: "none", padding: "14px 32px", fontFamily: "'Bebas Neue', cursive", fontSize: 20, letterSpacing: 2, cursor: availSaving ? "default" : "pointer", opacity: availSaving ? 0.7 : 1 }}
+              >
+                {availSaving ? "Saving…" : "Save Availability"}
+              </button>
+              {saveStatus === "avail_saved" && <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#10B981" }}>✓ Saved</span>}
+            </div>
+          </div>
+        )}
 
         {dashTab === "profile" && (
           <div style={{ maxWidth: 600 }}>

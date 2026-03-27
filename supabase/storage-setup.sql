@@ -78,3 +78,32 @@ ALTER TABLE shops ADD COLUMN IF NOT EXISTS zip   text DEFAULT '';
 ALTER TABLE shops ADD COLUMN IF NOT EXISTS latitude  double precision;
 ALTER TABLE shops ADD COLUMN IF NOT EXISTS longitude double precision;
 
+-- 10. Shop availability: working days config + blocked date management
+ALTER TABLE shops ADD COLUMN IF NOT EXISTS working_days text DEFAULT '1,2,3,4,5,6';
+
+CREATE TABLE IF NOT EXISTS shop_blocked_dates (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  shop_id     uuid NOT NULL REFERENCES shops(id) ON DELETE CASCADE,
+  blocked_date date NOT NULL,
+  UNIQUE (shop_id, blocked_date)
+);
+
+ALTER TABLE shop_blocked_dates ENABLE ROW LEVEL SECURITY;
+
+-- Anyone (including customers in BookingFlow) can read blocked dates
+CREATE POLICY "Public read shop blocked dates"
+  ON shop_blocked_dates FOR SELECT USING (true);
+
+-- Only the shop owner can insert/update/delete their blocked dates
+CREATE POLICY "Shop owner insert blocked dates"
+  ON shop_blocked_dates FOR INSERT
+  WITH CHECK (
+    EXISTS (SELECT 1 FROM shops WHERE id = shop_id AND owner_id = auth.uid())
+  );
+
+CREATE POLICY "Shop owner delete blocked dates"
+  ON shop_blocked_dates FOR DELETE
+  USING (
+    EXISTS (SELECT 1 FROM shops WHERE id = shop_id AND owner_id = auth.uid())
+  );
+

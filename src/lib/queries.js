@@ -403,3 +403,36 @@ export async function fetchShopReviews(shopId) {
     customerName: r.customer?.name || 'Customer',
   }))
 }
+
+// ── SHOP AVAILABILITY ─────────────────────────────────────────────────────────
+
+/**
+ * Fetch a shop's working days and blocked dates.
+ * Returns { workingDays: number[], blockedDates: string[] }
+ * workingDays uses JS day-of-week numbers (0=Sun, 1=Mon … 6=Sat).
+ * blockedDates are ISO strings: "YYYY-MM-DD".
+ */
+export async function fetchShopAvailability(shopId) {
+  const [{ data: shop }, { data: blocked }] = await Promise.all([
+    supabase.from('shops').select('working_days').eq('id', shopId).single(),
+    supabase.from('shop_blocked_dates').select('blocked_date').eq('shop_id', shopId),
+  ])
+  return {
+    workingDays: (shop?.working_days || '1,2,3,4,5,6').split(',').map(Number),
+    blockedDates: (blocked || []).map(r => r.blocked_date),
+  }
+}
+
+/**
+ * Overwrite a shop's working-days configuration and its full set of blocked dates.
+ * Blocked dates is a full replacement (delete-all + re-insert).
+ */
+export async function saveShopAvailability(shopId, workingDays, blockedDates) {
+  await supabase.from('shops').update({ working_days: workingDays.join(',') }).eq('id', shopId)
+  await supabase.from('shop_blocked_dates').delete().eq('shop_id', shopId)
+  if (blockedDates.length > 0) {
+    await supabase.from('shop_blocked_dates').insert(
+      blockedDates.map(d => ({ shop_id: shopId, blocked_date: d }))
+    )
+  }
+}

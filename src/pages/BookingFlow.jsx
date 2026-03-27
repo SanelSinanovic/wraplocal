@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { createBooking, sendMessage, uploadDesignFile } from "../lib/queries";
+import { createBooking, sendMessage, uploadDesignFile, fetchShopAvailability } from "../lib/queries";
 import { supabase } from "../lib/supabase";
 import { SERVICE_CATEGORIES } from "../lib/services";
 
@@ -28,23 +28,23 @@ export default function BookingFlow({
   const [submitError, setSubmitError] = useState("");
   const [preferredDates, setPreferredDates] = useState([]);
 
-  // Derived: does the selected service require vehicle info?
-  const vehicleCategory = SERVICE_CATEGORIES.find(c => c.category === "Vehicle Wraps");
-  const isVehicleService = !!vehicleCategory?.services.find(s => s.name === selectedService);
+  // ── Availability calendar ────────────────────────────────────────────────
+  const initDate = new Date();
+  const [bookingCalYear, setBookingCalYear] = useState(initDate.getFullYear());
+  const [bookingCalMonth, setBookingCalMonth] = useState(initDate.getMonth());
+  const [shopAvail, setShopAvail] = useState({ workingDays: [1, 2, 3, 4, 5, 6], blockedDates: [] });
 
-  // Only show services that this specific shop offers
-  const shopTags = bookingShop?.tags || [];
-  const shopServiceCategories = SERVICE_CATEGORIES
-    .map(cat => ({ ...cat, services: cat.services.filter(s => shopTags.includes(s.name)) }))
-    .filter(cat => cat.services.length > 0);
-
-  // Upcoming 10 dates (excluding Sundays)
-  const upcomingDates = Array.from({ length: 14 }, (_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() + i + 1);
-    if (d.getDay() === 0) return null;
+  // Format ISO date "YYYY-MM-DD" → "Mon, Apr 7"
+  const fmtDate = (iso) => {
+    const d = new Date(iso + "T00:00:00");
     return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
-  }).filter(Boolean).slice(0, 10);
+  };
+
+  // Fetch shop's availability when booking flow opens
+  useEffect(() => {
+    if (!bookingShop?.id || typeof bookingShop.id !== "string") return;
+    fetchShopAvailability(bookingShop.id).then(avail => setShopAvail(avail));
+  }, [bookingShop?.id]);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -54,6 +54,16 @@ export default function BookingFlow({
     setLastName(parts.slice(1).join(" ") || "");
     setCustomerEmail(currentUser.email || "");
   }, [currentUser]);
+
+  // Derived: does the selected service require a vehicle?
+  const vehicleCategory = SERVICE_CATEGORIES.find(c => c.category === "Vehicle Wraps");
+  const isVehicleService = !!vehicleCategory?.services.find(s => s.name === selectedService);
+
+  // Only show services that this shop offers (filter by shop tags)
+  const shopTags = bookingShop?.tags || [];
+  const shopServiceCategories = SERVICE_CATEGORIES
+    .map(cat => ({ ...cat, services: cat.services.filter(s => shopTags.includes(s.name)) }))
+    .filter(cat => cat.services.length > 0);
 
   const handleSubmit = async () => {
     setSubmitError("");
@@ -280,31 +290,83 @@ export default function BookingFlow({
                       </div>
                     </div>
                   </div>
-                  )}                  {/* Preferred dates */}
+                  )}                  {/* Preferred dates — calendar picker */}
                   <div style={{ marginBottom: 20 }}>
                     <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", letterSpacing: 1, marginBottom: 4 }}>PREFERRED DATES <span style={{ color: "rgba(255,255,255,0.2)", fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(pick up to 3 — optional)</span></div>
-                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.25)", marginBottom: 12 }}>Tell the shop when works best for you — they'll confirm a date that fits.</div>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
-                      {upcomingDates.map(label => {
-                        const sel = preferredDates.find(p => p.date === label);
-                        const maxed = preferredDates.length >= 3;
-                        return (
-                          <div key={label}
+                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.25)", marginBottom: 12 }}>Select dates that work for you — the shop will confirm a time that fits.</div>
+
+                    {/* Month navigation */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
+                      <button type="button" onClick={() => { const d = new Date(bookingCalYear, bookingCalMonth - 1, 1); setBookingCalMonth(d.getMonth()); setBookingCalYear(d.getFullYear()); }} style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)", padding: "4px 10px", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", fontSize: 15 }}>‹</button>
+                      <div style={{ fontFamily: "'Bebas Neue', cursive", fontSize: 18, letterSpacing: 2, minWidth: 150, textAlign: "center" }}>{new Date(bookingCalYear, bookingCalMonth).toLocaleString("en-US", { month: "long" }).toUpperCase()} {bookingCalYear}</div>
+                      <button type="button" onClick={() => { const d = new Date(bookingCalYear, bookingCalMonth + 1, 1); setBookingCalMonth(d.getMonth()); setBookingCalYear(d.getFullYear()); }} style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)", padding: "4px 10px", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", fontSize: 15 }}>›</button>
+                    </div>
+
+                    {/* Day headers */}
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 3, marginBottom: 3 }}>
+                      {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map(d => (
+                        <div key={d} style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.22)", textAlign: "center", padding: "3px 0", letterSpacing: 1 }}>{d}</div>
+                      ))}
+                    </div>
+
+                    {/* Calendar grid */}
+                    {(() => {
+                      const daysInMonth = new Date(bookingCalYear, bookingCalMonth + 1, 0).getDate();
+                      const firstDow = new Date(bookingCalYear, bookingCalMonth, 1).getDay();
+                      const todayIso = new Date().toISOString().slice(0, 10);
+                      const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+                      const tomorrowIso = tomorrow.toISOString().slice(0, 10);
+                      const cells = [];
+                      for (let i = 0; i < firstDow; i++) cells.push(<div key={`e${i}`} />);
+                      for (let day = 1; day <= daysInMonth; day++) {
+                        const iso = `${bookingCalYear}-${String(bookingCalMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+                        const isPast = iso < tomorrowIso;
+                        const isBlocked = shopAvail.blockedDates.includes(iso);
+                        const isWorkDay = shopAvail.workingDays.includes(new Date(iso + "T00:00:00").getDay());
+                        const unavailable = isPast || isBlocked || !isWorkDay;
+                        const isSelected = preferredDates.some(p => p.date === iso);
+                        const maxed = preferredDates.length >= 3 && !isSelected;
+                        cells.push(
+                          <div key={day}
                             onClick={() => {
-                              if (sel) setPreferredDates(p => p.filter(x => x.date !== label));
-                              else if (!maxed) setPreferredDates(p => [...p, { date: label, time: "Flexible" }]);
+                              if (unavailable || maxed) return;
+                              if (isSelected) setPreferredDates(p => p.filter(x => x.date !== iso));
+                              else setPreferredDates(p => [...p, { date: iso, time: "Flexible" }]);
                             }}
-                            style={{ padding: "7px 12px", border: "1px solid", borderColor: sel ? "#FF4D00" : "rgba(255,255,255,0.1)", background: sel ? "rgba(255,77,0,0.1)" : "#1A1A1A", cursor: maxed && !sel ? "not-allowed" : "pointer", fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: sel ? "#FF4D00" : "rgba(255,255,255,0.55)", transition: "all 0.15s", opacity: maxed && !sel ? 0.4 : 1 }}>
-                            {label}{sel ? " ✓" : ""}
+                            title={isBlocked ? "Unavailable" : !isWorkDay && !isPast ? "Shop closed" : isSelected ? "Click to deselect" : unavailable ? "" : "Click to select"}
+                            style={{
+                              display: "flex", alignItems: "center", justifyContent: "center",
+                              height: 38, border: "1px solid",
+                              borderColor: isSelected ? "#FF4D00" : unavailable ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.09)",
+                              background: isSelected ? "rgba(255,77,0,0.15)" : unavailable ? "transparent" : "#1A1A1A",
+                              cursor: unavailable || maxed ? "default" : "pointer",
+                              opacity: unavailable ? 0.22 : maxed ? 0.45 : 1,
+                              fontFamily: "'DM Sans', sans-serif", fontSize: 13,
+                              color: isSelected ? "#FF4D00" : unavailable ? "rgba(255,255,255,0.3)" : "rgba(255,255,255,0.75)",
+                              fontWeight: isSelected ? 600 : 400,
+                              transition: "all 0.12s",
+                            }}
+                          >
+                            {day}
                           </div>
                         );
-                      })}
+                      }
+                      return <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 3 }}>{cells}</div>;
+                    })()}
+
+                    {/* Legend */}
+                    <div style={{ display: "flex", gap: 16, marginTop: 10, fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.28)" }}>
+                      <span style={{ display: "flex", alignItems: "center", gap: 5 }}><span style={{ width: 10, height: 10, background: "rgba(255,77,0,0.15)", border: "1px solid #FF4D00", display: "inline-block" }} /> Selected</span>
+                      <span style={{ display: "flex", alignItems: "center", gap: 5 }}><span style={{ width: 10, height: 10, background: "#1A1A1A", border: "1px solid rgba(255,255,255,0.09)", display: "inline-block" }} /> Available</span>
+                      <span style={{ display: "flex", alignItems: "center", gap: 5 }}><span style={{ width: 10, height: 10, background: "transparent", border: "1px solid rgba(255,255,255,0.03)", display: "inline-block" }} /> Unavailable</span>
                     </div>
+
+                    {/* Time preferences for selected dates */}
                     {preferredDates.length > 0 && (
-                      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                      <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 8 }}>
                         {preferredDates.map((p, i) => (
                           <div key={p.date} style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", padding: "10px 12px", background: "rgba(255,77,0,0.05)", border: "1px solid rgba(255,77,0,0.15)" }}>
-                            <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.8)", flexShrink: 0, minWidth: 120 }}>{i + 1}. {p.date}</span>
+                            <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.8)", flexShrink: 0, minWidth: 120 }}>{i + 1}. {fmtDate(p.date)}</span>
                             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                               {["Morning", "Afternoon", "Evening", "Flexible"].map(t => (
                                 <div key={t}
@@ -421,7 +483,7 @@ export default function BookingFlow({
                   <div>
                     <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.35)", marginBottom: 8, lineHeight: 1.5 }}>Your preferred dates:</div>
                     {preferredDates.map((p, i) => (
-                      <div key={p.date} style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.55)", marginBottom: 4 }}>{i + 1}. {p.date} — {p.time}</div>
+                      <div key={p.date} style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.55)", marginBottom: 4 }}>{i + 1}. {fmtDate(p.date)} — {p.time}</div>
                     ))}
                   </div>
                 ) : (
