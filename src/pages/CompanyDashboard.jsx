@@ -1034,10 +1034,29 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
             setConnectError("");
             try {
               const returnUrl = window.location.origin + window.location.pathname + "#company-dash?tab=payments";
-              const { data, error } = await supabase.functions.invoke("create-connect-onboarding", {
-                body: { shopId: userShop.id, returnUrl, refreshUrl: returnUrl },
-              });
-              if (error || !data?.url) throw new Error(error?.message || data?.error || "Could not create Stripe link");
+              // Get the session token explicitly so the edge function can verify the user
+              const { data: { session } } = await supabase.auth.getSession();
+              const accessToken = session?.access_token;
+              if (!accessToken) throw new Error("Not logged in");
+
+              const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN4bXpjdm92Z3p0cG5reG5vbXVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5ODQ1NjMsImV4cCI6MjA4ODU2MDU2M30.bEul8TJAuwlXGQusLVvLbvuauTan02IJm8ktwwqF7so";
+              const res = await fetch(
+                `https://cxmzcvovgztpnkxnomun.supabase.co/functions/v1/create-connect-onboarding`,
+                {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer " + ANON_KEY,
+                    "apikey": ANON_KEY,
+                    "x-user-token": accessToken,
+                  },
+                  body: JSON.stringify({ shopId: userShop.id, returnUrl, refreshUrl: returnUrl }),
+                }
+              );
+              const data = await res.json();
+              if (!res.ok || data.error || !data.url) {
+                throw new Error(data.error || ("HTTP " + res.status + ": " + JSON.stringify(data)));
+              }
               window.location.href = data.url;
             } catch (e) {
               setConnectError(e.message);
@@ -1062,7 +1081,25 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
                   </div>
                 </div>
                 {stripeAccountId ? (
-                  <a href="https://dashboard.stripe.com/" target="_blank" rel="noreferrer" style={{ padding: "9px 20px", background: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.4)", color: "#10B981", fontFamily: "'DM Sans', sans-serif", fontSize: 13, textDecoration: "none", whiteSpace: "nowrap" }}>Manage on Stripe →</a>
+                  <button
+                    onClick={async () => {
+                      try {
+                        const { data: { session } } = await supabase.auth.getSession();
+                        const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN4bXpjdm92Z3p0cG5reG5vbXVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5ODQ1NjMsImV4cCI6MjA4ODU2MDU2M30.bEul8TJAuwlXGQusLVvLbvuauTan02IJm8ktwwqF7so";
+                        const res = await fetch("https://cxmzcvovgztpnkxnomun.supabase.co/functions/v1/create-express-login", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json", "Authorization": "Bearer " + ANON_KEY, "apikey": ANON_KEY, "x-user-token": session?.access_token || "" },
+                          body: JSON.stringify({ shopId: userShop.id }),
+                        });
+                        const data = await res.json();
+                        if (data.url) window.open(data.url, "_blank");
+                        else setConnectError(data.error || "Could not open Stripe dashboard");
+                      } catch (e) {
+                        setConnectError(e.message);
+                      }
+                    }}
+                    style={{ padding: "9px 20px", background: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.4)", color: "#10B981", fontFamily: "'DM Sans', sans-serif", fontSize: 13, cursor: "pointer", whiteSpace: "nowrap" }}
+                  >Manage on Stripe →</button>
                 ) : (
                   <button onClick={handleConnectStripe} disabled={connectLoading} style={{ padding: "10px 22px", background: "#F59E0B", border: "none", color: "#000", fontFamily: "'Bebas Neue', cursive", fontSize: 15, letterSpacing: 1, cursor: connectLoading ? "not-allowed" : "pointer", opacity: connectLoading ? 0.6 : 1 }}>{connectLoading ? "REDIRECTING…" : "CONNECT STRIPE ACCOUNT"}</button>
                 )}

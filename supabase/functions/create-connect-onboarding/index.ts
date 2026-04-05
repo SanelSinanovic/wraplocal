@@ -2,7 +2,7 @@
 // Deno edge function - no special unicode in comments to avoid dashboard editor encoding bugs
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-user-token",
 };
 
 function jsonResp(body, status) {
@@ -32,7 +32,9 @@ Deno.serve(async (req) => {
     if (!supabaseService) return jsonResp({ error: "SUPABASE_SERVICE_ROLE_KEY not configured" });
 
     // Verify the requesting user via their JWT
-    const authHeader = req.headers.get("Authorization") || "";
+    // Accept token from x-user-token header (preferred) or Authorization header
+    const userToken = req.headers.get("x-user-token") || req.headers.get("Authorization") || "";
+    const authHeader = userToken.startsWith("Bearer ") ? userToken : "Bearer " + userToken;
     const userRes = await fetch(supabaseUrl + "/auth/v1/user", {
       headers: { apikey: supabaseService, Authorization: authHeader },
     });

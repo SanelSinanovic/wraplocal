@@ -416,12 +416,9 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
               <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "'DM Sans', sans-serif", fontSize: 13, marginBottom: 8 }}>
                 <span style={{ color: "rgba(255,255,255,0.4)" }}>Service</span><span>${b.amount.toLocaleString()}.00</span>
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "'DM Sans', sans-serif", fontSize: 13, marginBottom: 8 }}>
-                <span style={{ color: "rgba(255,255,255,0.4)" }}>Kidor fee (7%)</span><span>${b.fee.toFixed(2)}</span>
-              </div>
               <div style={{ height: 1, background: "rgba(255,255,255,0.06)", margin: "12px 0" }} />
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: 22, letterSpacing: 1 }}>
-                <span>TOTAL</span><span style={{ color: "#FF4D00" }}>${b.total.toFixed(2)}</span>
+                <span>TOTAL</span><span style={{ color: "#FF4D00" }}>${b.amount.toLocaleString()}.00</span>
               </div>
               {b.status === "confirmed" && (
                 <button style={{ marginTop: 20, width: "100%", background: "transparent", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.5)", padding: "10px", fontFamily: "'Bebas Neue', cursive", fontSize: 15, letterSpacing: 2, cursor: "pointer" }}>

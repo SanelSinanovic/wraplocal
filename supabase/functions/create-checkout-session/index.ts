@@ -64,13 +64,27 @@ Deno.serve(async (req) => {
     params.append("cancel_url", cancelUrl);
     params.append("metadata[booking_id]", String(bookingId));
 
-    // ── Route 93% to shop, keep 7% as platform application fee ───────────
+    // ── Route 93% to shop only if their account is fully enabled ──────────
+    let useConnect = false;
     if (shopStripeAccountId) {
+      try {
+        const acctRes = await fetch("https://api.stripe.com/v1/accounts/" + shopStripeAccountId, {
+          headers: { Authorization: `Bearer ${stripeKey}` },
+        });
+        const acct = await acctRes.json();
+        // Both charges_enabled AND payouts_enabled must be true for routing to work
+        useConnect = !!(acct?.charges_enabled && acct?.payouts_enabled);
+      } catch (_) {
+        // Non-fatal
+      }
+    }
+
+    if (useConnect) {
       params.append("payment_intent_data[application_fee_amount]", String(feeCents));
       params.append("payment_intent_data[transfer_data][destination]", shopStripeAccountId);
     }
 
-    const res = await fetch("https://api.stripe.com/v1/checkout/sessions", {
+    let res = await fetch("https://api.stripe.com/v1/checkout/sessions", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${stripeKey}`,
@@ -78,6 +92,20 @@ Deno.serve(async (req) => {
       },
       body: params.toString(),
     });
+
+    // If Connect routing caused an error, retry without it
+    if (!res.ok && useConnect) {
+      params.delete("payment_intent_data[application_fee_amount]");
+      params.delete("payment_intent_data[transfer_data][destination]");
+      res = await fetch("https://api.stripe.com/v1/checkout/sessions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${stripeKey}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: params.toString(),
+      });
+    }
 
     const session = await res.json();
     if (!res.ok) {
