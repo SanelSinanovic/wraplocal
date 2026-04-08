@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "../lib/supabase";
-import { fetchUserShop, fetchCompanyBookings, createShop, updateShop, fetchMessages, sendMessage as dbSendMessage, subscribeToMessages, subscribeToShopBookings, fetchPortfolioImages, addPortfolioImage, deletePortfolioImage, setHeroPortfolioImage, scheduleBooking, uploadChatFile, geocodeCityState, fetchShopAvailability, saveShopAvailability } from "../lib/queries";
+import { fetchUserShop, fetchCompanyBookings, createShop, updateShop, fetchMessages, sendMessage as dbSendMessage, subscribeToMessages, subscribeToShopBookings, fetchPortfolioImages, addPortfolioImage, deletePortfolioImage, setHeroPortfolioImage, scheduleBooking, uploadChatFile, geocodeCityState, fetchShopAvailability, saveShopAvailability, sendNotification } from "../lib/queries";
 import { SERVICE_CATEGORIES, ALL_SERVICE_NAMES } from "../lib/services";
 import CompanyOnboarding from "./CompanyOnboarding";
 
@@ -459,6 +459,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
     const marker = `QUOTE_OFFER::${amount.toFixed(2)}`;
     const result = await dbSendMessage({ bookingId: selectedBooking.id, senderId: currentUser.id, senderRole: "shop", text: marker });
     if (!result) return;
+    sendNotification("quote_sent", selectedBooking.id);
 
     const time = new Date(result.sent_at || Date.now()).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
     setMessagesMap(prev => ({
@@ -478,6 +479,8 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
   const updateBookingStatus = async (bookingId, status) => {
     const { error } = await supabase.from("bookings").update({ status }).eq("id", bookingId);
     if (!error) {
+      if (status === "confirmed") sendNotification("booking_confirmed", bookingId);
+      if (status === "cancelled") sendNotification("booking_cancelled", bookingId);
       let updatedBooking = null;
       setDashboardBookings(prev => prev.map(b => {
         if (b.id !== bookingId) return b;

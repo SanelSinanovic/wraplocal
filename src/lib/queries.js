@@ -436,3 +436,15 @@ export async function saveShopAvailability(shopId, workingDays, blockedDates) {
     )
   }
 }
+
+// ── EMAIL NOTIFICATIONS ───────────────────────────────────────────────────────
+// Fire-and-forget: errors are swallowed so they never block the booking flow.
+export async function sendNotification(type, bookingId) {
+  try {
+    await supabase.functions.invoke('send-notification', {
+      body: { type, bookingId },
+    });
+  } catch (e) {
+    console.warn('sendNotification failed:', e);
+  }
+}

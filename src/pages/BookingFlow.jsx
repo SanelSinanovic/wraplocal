@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { createBooking, sendMessage, uploadDesignFile, fetchShopAvailability } from "../lib/queries";
+import { createBooking, sendMessage, uploadDesignFile, fetchShopAvailability, sendNotification } from "../lib/queries";
 import { supabase } from "../lib/supabase";
 import { SERVICE_CATEGORIES } from "../lib/services";
 
@@ -102,6 +102,7 @@ export default function BookingFlow({
           setIsSubmitting(false);
           return;
         }
+        sendNotification("booking_created", booking.id);
         // Send design file into chat so the shop can see it immediately
         if (designFileUrl) {
           await sendMessage({ bookingId: booking.id, senderId: currentUser.id, senderRole: "customer", text: `FILE::${designFileUrl}::${designFileName || "design-file"}` });

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { BOOKINGS } from "../data/data";
 import { supabase } from "../lib/supabase";
-import { fetchCustomerBookings, fetchMessages, sendMessage as dbSendMessage, subscribeToMessages, submitReview, fetchBookingReview, uploadChatFile } from "../lib/queries";
+import { fetchCustomerBookings, fetchMessages, sendMessage as dbSendMessage, subscribeToMessages, submitReview, fetchBookingReview, uploadChatFile, sendNotification } from "../lib/queries";
 
 function mergeMessages(existing = [], incoming = []) {
   const list = Array.isArray(incoming) ? incoming : [incoming];
@@ -163,6 +163,7 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
       .eq("id", selectedBooking.id)
       .eq("customer_id", currentUser.id);
     if (error) return;
+    if (decision === "accepted") sendNotification("quote_accepted", selectedBooking.id);
 
     const marker = `QUOTE_RESPONSE::${decision}::${normalizedAmount.toFixed(2)}`;
     const result = await dbSendMessage({
