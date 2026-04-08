@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { SHOPS as STATIC_SHOPS } from "../data/data";
 import { SERVICE_CATEGORIES } from "../lib/services";
 
@@ -26,6 +26,9 @@ export default function LandingPage({ nav, shops: liveShops, setBookingShop, set
   const [menuOpen, setMenuOpen] = useState(false);
   const [hoveredService, setHoveredService] = useState(null);
   const [activeSlide, setActiveSlide] = useState(0);
+  const [counts, setCounts] = useState({ shops: 0, jobs: 0, rating: 0.0 });
+  const statsRef = useRef(null);
+  const countsDone = useRef(false);
 
   const SLIDES = [
     { label: "Full Color Change Wrap", category: "Vehicle Wraps", accent: "#FF4D00", img: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=800&q=85" },
@@ -40,6 +43,33 @@ export default function LandingPage({ nav, shops: liveShops, setBookingShop, set
   useEffect(() => {
     const t = setInterval(() => setActiveSlide(s => (s + 1) % SLIDES.length), 3500);
     return () => clearInterval(t);
+  }, []);
+
+  // Count-up animation for hero stats
+  useEffect(() => {
+    const el = statsRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting && !countsDone.current) {
+        countsDone.current = true;
+        const start = Date.now();
+        const duration = 1600;
+        const tick = () => {
+          const p = Math.min((Date.now() - start) / duration, 1);
+          const ease = 1 - Math.pow(1 - p, 3);
+          setCounts({
+            shops: Math.floor(ease * 500),
+            jobs: Math.floor(ease * 12000),
+            rating: (ease * 4.8).toFixed(1),
+          });
+          if (p < 1) requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+        observer.disconnect();
+      }
+    }, { threshold: 0.4 });
+    observer.observe(el);
+    return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
@@ -78,6 +108,23 @@ export default function LandingPage({ nav, shops: liveShops, setBookingShop, set
         @keyframes fadeInDown { from { opacity: 0; transform: translateY(-18px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes slideInRight { from { opacity: 0; transform: translateX(44px); } to { opacity: 1; transform: translateX(0); } }
         @keyframes pulse-dot { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.5); opacity: 0.6; } }
+        @keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+        @keyframes float-card { 0%,100% { transform: translateY(0px); } 50% { transform: translateY(-6px); } }
+        @keyframes mesh-move { 0%,100% { opacity: 0.04; transform: scale(1) rotate(0deg); } 50% { opacity: 0.07; transform: scale(1.05) rotate(1deg); } }
+        @keyframes glow-breathe { 0%,100% { opacity: 0.12; transform: scale(1); } 50% { opacity: 0.22; transform: scale(1.08); } }
+        @keyframes shimmer-slide { 0% { background-position: -200% center; } 100% { background-position: 200% center; } }
+        @keyframes spin-ring { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes beam-sweep { 0% { transform: translateX(-100%) skewX(-20deg); opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { transform: translateX(400%) skewX(-20deg); opacity: 0; } }
+        .ticker-wrap { overflow: hidden; border-top: 1px solid rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.05); background: #0D0D0D; padding: 10px 0; }
+        .ticker-track { display: flex; width: max-content; animation: ticker 28s linear infinite; }
+        .ticker-item { fontFamily: "'DM Sans', sans-serif"; font-size: 12px; letter-spacing: 3px; color: rgba(255,255,255,0.3); white-space: nowrap; padding: 0 32px; display: flex; align-items: center; gap: 12px; }
+        .ticker-dot { width: 4px; height: 4px; border-radius: 50%; background: #FF4D00; display: inline-block; }
+        .notif-float-1 { animation: slideInRight 0.55s cubic-bezier(0.22,1,0.36,1) 0.65s both, float-card 4s ease-in-out 1.2s infinite; }
+        .notif-float-2 { animation: slideInRight 0.55s cubic-bezier(0.22,1,0.36,1) 0.82s both, float-card 5s ease-in-out 1.5s infinite; }
+        .shimmer-text { background: linear-gradient(90deg, #fff 0%, #fff 40%, #FF6A20 50%, #fff 60%, #fff 100%); background-size: 200% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; animation: shimmer-slide 3s linear 1.5s infinite; }
+        .step-card { position: relative; overflow: hidden; transition: transform 0.3s, border-color 0.3s; }
+        .step-card:hover { transform: translateY(-4px); border-color: rgba(255,77,0,0.3) !important; }
+        .step-card::after { content: ''; position: absolute; top: 0; left: -100%; width: 60%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.03), transparent); animation: beam-sweep 4s ease-in-out infinite; }
         .hero-badge { animation: fadeInDown 0.5s cubic-bezier(0.22,1,0.36,1) both; }
         .hero-title { animation: fadeInUp 0.65s cubic-bezier(0.22,1,0.36,1) 0.12s both; }
         .hero-sub { animation: fadeInUp 0.6s cubic-bezier(0.22,1,0.36,1) 0.28s both; }
@@ -178,11 +225,27 @@ export default function LandingPage({ nav, shops: liveShops, setBookingShop, set
         </div>
       )}
 
+      {/* TICKER */}
+      <div className="ticker-wrap">
+        <div className="ticker-track">
+          {["Vehicle Wraps","Color Change","PPF","Monument Signs","Channel Letters","LED Displays","Window Graphics","Fleet Wraps","Banners","Boat Wraps","Custom Designs","Vinyl Graphics","Vehicle Wraps","Color Change","PPF","Monument Signs","Channel Letters","LED Displays","Window Graphics","Fleet Wraps","Banners","Boat Wraps","Custom Designs","Vinyl Graphics"].map((s, i) => (
+            <span key={i} className="ticker-item" style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, letterSpacing: 3, color: "rgba(255,255,255,0.28)", whiteSpace: "nowrap", padding: "0 28px", display: "flex", alignItems: "center", gap: 16, textTransform: "uppercase" }}>
+              <span style={{ width: 4, height: 4, borderRadius: "50%", background: i % 4 === 0 ? "#FF4D00" : "rgba(255,255,255,0.15)", display: "inline-block", flexShrink: 0 }} />
+              {s}
+            </span>
+          ))}
+        </div>
+      </div>
+
       {/* HERO */}
       <div className="hero-section" style={{ position: "relative", padding: "100px 60px 80px", overflow: "hidden" }}>
-        <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at 60% 50%, rgba(255,77,0,0.13) 0%, transparent 65%)", pointerEvents: "none" }} />
-        <div style={{ position: "absolute", top: -200, right: -200, width: 600, height: 600, border: "1px solid rgba(255,77,0,0.08)", borderRadius: "50%", pointerEvents: "none" }} />
-        <div style={{ position: "absolute", top: -100, right: -100, width: 400, height: 400, border: "1px solid rgba(255,77,0,0.06)", borderRadius: "50%", pointerEvents: "none" }} />
+        {/* Animated glow orb */}
+        <div style={{ position: "absolute", top: "10%", right: "5%", width: 700, height: 700, background: "radial-gradient(circle, rgba(255,77,0,0.18) 0%, transparent 70%)", borderRadius: "50%", pointerEvents: "none", animation: "glow-breathe 5s ease-in-out infinite" }} />
+        {/* Animated mesh grid */}
+        <div style={{ position: "absolute", inset: 0, pointerEvents: "none", animation: "mesh-move 8s ease-in-out infinite", backgroundImage: "linear-gradient(rgba(255,77,0,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,77,0,0.05) 1px, transparent 1px)", backgroundSize: "60px 60px", maskImage: "radial-gradient(ellipse at 70% 50%, black 30%, transparent 70%)" }} />
+        {/* Spinning ring */}
+        <div style={{ position: "absolute", top: -250, right: -250, width: 700, height: 700, border: "1px solid rgba(255,77,0,0.07)", borderRadius: "50%", pointerEvents: "none", animation: "spin-ring 40s linear infinite" }} />
+        <div style={{ position: "absolute", top: -120, right: -120, width: 440, height: 440, border: "1px solid rgba(255,77,0,0.05)", borderRadius: "50%", pointerEvents: "none", animation: "spin-ring 28s linear infinite reverse" }} />
 
         <div className="hero-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 60, alignItems: "center", position: "relative" }}>
           <div>
@@ -191,9 +254,9 @@ export default function LandingPage({ nav, shops: liveShops, setBookingShop, set
             </div>
             <h1 className="hero-title" style={{ fontSize: "clamp(54px, 6vw, 96px)", lineHeight: 0.95, letterSpacing: 3, marginBottom: 24 }}>
               YOUR<br />VISION.<br />
-              <span style={{ color: "#FF4D00", position: "relative" }}>
+              <span className="shimmer-text" style={{ position: "relative" }}>
                 BUILT BOLD.
-                <div style={{ position: "absolute", bottom: -4, left: 0, right: 0, height: 3, background: "#FF4D00" }} />
+                <div style={{ position: "absolute", bottom: -4, left: 0, right: 0, height: 3, background: "linear-gradient(90deg, #FF4D00, #FF8C00, #FF4D00)", backgroundSize: "200% auto", animation: "shimmer-slide 2s linear infinite" }} />
               </span>
             </h1>
             <p className="hero-sub" style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 17, color: "rgba(255,255,255,0.5)", maxWidth: 480, lineHeight: 1.65, marginTop: 20, marginBottom: 40, fontWeight: 300 }}>
@@ -203,10 +266,14 @@ export default function LandingPage({ nav, shops: liveShops, setBookingShop, set
               <button className="btn-main" style={{ fontSize: 20, padding: "16px 40px" }} onClick={() => nav("search")}>Find Shops Near Me →</button>
               <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.3)" }}>No account needed</span>
             </div>
-            <div className="hero-stats stats-row" style={{ display: "flex", gap: 48, marginTop: 64 }}>
-              {[["500+", "Shops Listed"], ["12K+", "Jobs Completed"], ["4.8★", "Avg Rating"]].map(([n, l]) => (
+            <div ref={statsRef} className="hero-stats stats-row" style={{ display: "flex", gap: 48, marginTop: 64 }}>
+              {[
+                [counts.shops > 0 ? counts.shops + "+" : "0", "Shops Listed"],
+                [counts.jobs > 0 ? (counts.jobs >= 1000 ? Math.floor(counts.jobs/1000) + "K+" : counts.jobs + "+") : "0", "Jobs Completed"],
+                [counts.rating > 0 ? counts.rating + "★" : "0★", "Avg Rating"],
+              ].map(([n, l]) => (
                 <div key={l}>
-                  <div className="stat-num" style={{ fontSize: 40, color: "#FF4D00" }}>{n}</div>
+                  <div className="stat-num" style={{ fontSize: 40, color: "#FF4D00", fontVariantNumeric: "tabular-nums", minWidth: 80, display: "inline-block" }}>{n}</div>
                   <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)", marginTop: 2 }}>{l}</div>
                 </div>
               ))}
@@ -256,7 +323,7 @@ export default function LandingPage({ nav, shops: liveShops, setBookingShop, set
                 </div>
               </div>
             </div>
-            <div className="hero-notif-1" style={{ background: "#0D0D0D", border: "1px solid rgba(255,255,255,0.07)", padding: "14px 18px", display: "flex", alignItems: "center", gap: 14, boxShadow: "0 8px 32px rgba(0,0,0,0.4)", zIndex: 1 }}>
+            <div className="notif-float-1" style={{ background: "#0D0D0D", border: "1px solid rgba(255,255,255,0.07)", padding: "14px 18px", display: "flex", alignItems: "center", gap: 14, boxShadow: "0 8px 32px rgba(0,0,0,0.4)", zIndex: 1 }}>
               <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#7C3AED", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 13, flexShrink: 0 }}>J</div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#fff" }}><b>Jordan M.</b> just booked <span style={{ color: "#FF4D00" }}>Phantom Wraps Studio</span></div>
@@ -267,7 +334,7 @@ export default function LandingPage({ nav, shops: liveShops, setBookingShop, set
                 <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 10, color: "#10B981" }}>LIVE</div>
               </div>
             </div>
-            <div className="hero-notif-2" style={{ background: "#0D0D0D", border: "1px solid rgba(255,255,255,0.07)", padding: "12px 18px", display: "flex", alignItems: "center", gap: 14, boxShadow: "0 8px 32px rgba(0,0,0,0.4)", zIndex: 1 }}>
+            <div className="notif-float-2" style={{ background: "#0D0D0D", border: "1px solid rgba(255,255,255,0.07)", padding: "12px 18px", display: "flex", alignItems: "center", gap: 14, boxShadow: "0 8px 32px rgba(0,0,0,0.4)", zIndex: 1 }}>
               <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#059669", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 13, flexShrink: 0 }}>A</div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#fff" }}><b>Aisha R.</b> left a <span style={{ color: "#FF4D00" }}>5-star review</span> for Chrome Kings</div>
@@ -382,7 +449,7 @@ export default function LandingPage({ nav, shops: liveShops, setBookingShop, set
             { n: "02", t: "Book Instantly", d: "Select your shop, choose a time slot, describe your project, and submit your request in under 2 minutes." },
             { n: "03", t: "Get a Quote & Confirm", d: "The shop reviews your request and sends a quote. Accept it to lock in your booking and get the job done." },
           ].map(s => (
-            <div key={s.n} style={{ padding: "40px", border: "1px solid rgba(255,255,255,0.06)", background: "#111", position: "relative", overflow: "hidden" }}>
+            <div key={s.n} className="step-card" style={{ padding: "40px", border: "1px solid rgba(255,255,255,0.06)", background: "#111", position: "relative", overflow: "hidden" }}>
               <div style={{ position: "absolute", top: -20, right: -10, fontSize: 120, color: "rgba(255,77,0,0.04)", fontFamily: "'Bebas Neue', cursive" }}>{s.n}</div>
               <div style={{ fontSize: 56, color: "#FF4D00", marginBottom: 16 }}>{s.n}</div>
               <div style={{ fontSize: 26, letterSpacing: 1, marginBottom: 12 }}>{s.t}</div>
