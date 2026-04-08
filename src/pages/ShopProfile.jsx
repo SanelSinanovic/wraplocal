@@ -76,6 +76,16 @@ export default function ShopProfile({ nav, selectedShop, setBookingShop, current
           .sp-nav { padding: 12px 16px !important; }
           .sp-main { padding: 0 16px 48px !important; }
           .sp-book-btn { width: 100%; }
+          .sp-tabs { overflow-x: auto !important; -webkit-overflow-scrolling: touch; gap: 20px !important; scrollbar-width: none; }
+          .sp-tabs::-webkit-scrollbar { display: none; }
+          .sp-tab { white-space: nowrap !important; letter-spacing: 1px !important; font-size: 14px !important; }
+          .sp-content-grid { gap: 20px !important; }
+          .sp-profile-row button { width: 100% !important; }
+        }
+        @media (max-width: 420px) {
+          .sp-hero { height: 180px !important; }
+          .sp-title { font-size: 28px !important; }
+          .sp-port-grid { grid-template-columns: repeat(2,1fr) !important; }
         }
       `}</style>
 
@@ -151,7 +161,7 @@ export default function ShopProfile({ nav, selectedShop, setBookingShop, current
         </div>
 
         {/* ── TABS ── */}
-        <div style={{ display: "flex", gap: 32, borderBottom: "1px solid rgba(255,255,255,0.08)", marginBottom: 36 }}>
+        <div className="sp-tabs" style={{ display: "flex", gap: 32, borderBottom: "1px solid rgba(255,255,255,0.08)", marginBottom: 36 }}>
           {[
             { id: "overview", label: "Overview" },
             { id: "portfolio", label: `Portfolio (${portfolio.length})` },

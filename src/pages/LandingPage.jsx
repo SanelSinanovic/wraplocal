@@ -167,6 +167,20 @@ export default function LandingPage({ nav, shops: liveShops, setBookingShop, set
           .biz-cta { flex-direction: column !important; gap: 20px !important; margin: 0 20px 60px !important; padding: 36px 24px !important; }
           .nav-pad { padding: 16px 20px !important; }
           .shops-header { flex-direction: column !important; align-items: flex-start !important; gap: 8px !important; }
+          .hero-cta { flex-wrap: wrap !important; gap: 12px !important; }
+          .stat-num { font-size: 28px !important; min-width: 52px !important; }
+          .svc-pill span:nth-child(2) { display: none !important; }
+          .biz-cta { margin-left: 0 !important; margin-right: 0 !important; }
+          .hero-badge { font-size: 10px !important; letter-spacing: 1px !important; padding: 5px 12px !important; }
+          .steps-grid { gap: 12px !important; }
+          .step-card { padding: 28px 20px !important; }
+        }
+        @media (max-width: 420px) {
+          .hero-section { padding: 40px 16px 28px !important; }
+          .section-pad { padding: 28px 16px !important; }
+          .biz-cta { padding: 28px 20px !important; flex-direction: column !important; gap: 16px !important; }
+          .stats-row { flex-wrap: wrap !important; gap: 20px !important; }
+          .shops-grid { grid-template-columns: 1fr !important; }
         }
       `}</style>
 
