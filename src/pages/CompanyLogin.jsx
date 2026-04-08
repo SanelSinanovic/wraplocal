@@ -24,7 +24,7 @@ export default function CompanyLogin({ nav, loginForm, setLoginForm, loginError,
     });
     setLoading(false);
     if (error) return setSignupError(error.message);
-    nav("company-dash");
+    setSignupSuccess(true);
   };
 
   const switchMode = (m) => { setMode(m); setSignupError(""); setLoginError(""); setSignupSuccess(false); };

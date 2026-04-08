@@ -23,7 +23,7 @@ export default function CustomerLogin({ nav, loginForm, setLoginForm, loginError
     });
     setLoading(false);
     if (error) return setSignupError(error.message);
-    nav("customer-dash");
+    setSignupSuccess(true);
   };
 
   const switchMode = (m) => { setMode(m); setSignupError(""); setLoginError(""); setSignupSuccess(false); };
