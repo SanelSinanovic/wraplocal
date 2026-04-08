@@ -667,7 +667,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
 
   return (
     <div className="company-wrap" style={{ fontFamily: "'Bebas Neue', cursive", background: "#090909", minHeight: "100vh", color: "#fff", display: "flex" }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap'); * { box-sizing: border-box; } .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 16px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 14px; color: rgba(255,255,255,0.5); border-radius: 4px; transition: all 0.2s; } .nav-item:hover, .nav-item.active { background: rgba(255,77,0,0.1); color: #FF4D00; } .stat-card { background: #111; border: 1px solid rgba(255,255,255,0.06); padding: 24px; } .cal-day { min-height: 80px; background: #111; border: 1px solid rgba(255,255,255,0.05); padding: 8px; cursor: default; transition: border-color 0.15s; vertical-align: top; } .cal-day.has-booking { cursor: pointer; } .cal-day.has-booking:hover { border-color: rgba(255,77,0,0.4); } .cal-day.selected { border-color: #FF4D00 !important; background: rgba(255,77,0,0.07); } .cal-day.today-cell { border-color: rgba(255,255,255,0.18); } .view-toggle { display: flex; border: 1px solid rgba(255,255,255,0.1); overflow: hidden; } .view-toggle button { background: transparent; border: none; padding: 8px 18px; font-family: 'Bebas Neue', cursive; font-size: 15px; letter-spacing: 1px; color: rgba(255,255,255,0.4); cursor: pointer; transition: all 0.2s; } .view-toggle button.active { background: #FF4D00; color: #fff; } @media (max-width: 768px) { .company-wrap { flex-direction: column !important; } .company-sidebar { width: 100% !important; flex-direction: row !important; flex-shrink: unset !important; flex-wrap: wrap; border-right: none !important; border-bottom: 1px solid rgba(255,255,255,0.06) !important; padding: 8px !important; } .sidebar-logo { display: none !important; } .sidebar-sub { display: none !important; } .sidebar-footer { display: none !important; } .nav-item { flex: 0 0 auto; padding: 8px 12px !important; font-size: 12px !important; } .company-main { padding: 16px !important; } .stats-4 { grid-template-columns: repeat(2, 1fr) !important; } .stats-2 { grid-template-columns: 1fr !important; } .stats-3 { grid-template-columns: 1fr !important; } .cal-day { min-height: 44px !important; padding: 3px !important; font-size: 11px !important; } .bookings-header { flex-direction: column !important; align-items: flex-start !important; gap: 12px; } .form-2col { grid-template-columns: 1fr !important; } .profile-actions { flex-direction: column !important; } .booking-detail-grid { grid-template-columns: 1fr !important; } .location-grid { grid-template-columns: 1fr !important; } } @media (max-width: 420px) { .company-main { padding: 10px !important; } .nav-item { padding: 6px 8px !important; font-size: 11px !important; } } @keyframes skelPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap'); * { box-sizing: border-box; } .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 16px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 14px; color: rgba(255,255,255,0.5); border-radius: 4px; transition: all 0.2s; } .nav-item:hover, .nav-item.active { background: rgba(255,77,0,0.1); color: #FF4D00; } .stat-card { background: #111; border: 1px solid rgba(255,255,255,0.06); padding: 24px; } .cal-day { min-height: 100px; background: #111; border: 1px solid rgba(255,255,255,0.05); padding: 10px 8px 8px; cursor: default; transition: all 0.15s; vertical-align: top; border-radius: 2px; } .cal-day.has-booking { cursor: pointer; } .cal-day:not(.empty-cell):hover { background: rgba(255,255,255,0.025); border-color: rgba(255,255,255,0.1); } .cal-day.has-booking:hover { border-color: rgba(255,77,0,0.4) !important; background: rgba(255,77,0,0.05) !important; } .cal-day.selected { border-color: #FF4D00 !important; background: rgba(255,77,0,0.09) !important; box-shadow: inset 0 0 0 1px rgba(255,77,0,0.25); } .cal-day.today-cell { border-color: rgba(255,255,255,0.22); } .cal-chip { display: flex; align-items: center; gap: 5px; background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.28); padding: 3px 6px 3px 4px; margin-bottom: 3px; border-radius: 2px; cursor: pointer; transition: background 0.12s; } .cal-chip:hover { background: rgba(16,185,129,0.24); } .cal-avatar { width: 16px; height: 16px; border-radius: 50%; background: linear-gradient(135deg,#FF4D00,#FF8C00); display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; color: #fff; flex-shrink: 0; font-family: 'DM Sans',sans-serif; letter-spacing: 0; } .cal-side { background: #0F0F0F; border: 1px solid rgba(255,77,0,0.2); border-radius: 2px; width: 272px; flex-shrink: 0; animation: sideIn 0.16s ease; overflow: hidden; } @keyframes sideIn { from { opacity:0; transform:translateX(10px); } to { opacity:1; transform:translateX(0); } } .view-toggle { display: flex; border: 1px solid rgba(255,255,255,0.1); overflow: hidden; } .view-toggle button { background: transparent; border: none; padding: 8px 18px; font-family: 'Bebas Neue', cursive; font-size: 15px; letter-spacing: 1px; color: rgba(255,255,255,0.4); cursor: pointer; transition: all 0.2s; } .view-toggle button.active { background: #FF4D00; color: #fff; } @media (max-width: 768px) { .company-wrap { flex-direction: column !important; } .company-sidebar { width: 100% !important; flex-direction: row !important; flex-shrink: unset !important; flex-wrap: wrap; border-right: none !important; border-bottom: 1px solid rgba(255,255,255,0.06) !important; padding: 8px !important; } .sidebar-logo { display: none !important; } .sidebar-sub { display: none !important; } .sidebar-footer { display: none !important; } .nav-item { flex: 0 0 auto; padding: 8px 12px !important; font-size: 12px !important; } .company-main { padding: 16px !important; } .stats-4 { grid-template-columns: repeat(2, 1fr) !important; } .stats-2 { grid-template-columns: 1fr !important; } .stats-3 { grid-template-columns: 1fr !important; } .cal-day { min-height: 44px !important; padding: 3px !important; font-size: 11px !important; } .bookings-header { flex-direction: column !important; align-items: flex-start !important; gap: 12px; } .form-2col { grid-template-columns: 1fr !important; } .profile-actions { flex-direction: column !important; } .booking-detail-grid { grid-template-columns: 1fr !important; } .location-grid { grid-template-columns: 1fr !important; } } @media (max-width: 420px) { .company-main { padding: 10px !important; } .nav-item { padding: 6px 8px !important; font-size: 11px !important; } } @keyframes skelPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }`}</style>
 
       {/* Sidebar */}
       <div className="company-sidebar" style={{ width: 220, background: "#0D0D0D", borderRight: "1px solid rgba(255,255,255,0.06)", padding: "24px 16px", display: "flex", flexDirection: "column", flexShrink: 0 }}>
@@ -950,78 +950,129 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
             )}
 
             {/* CALENDAR VIEW */}
-            {!selectedBooking && bookingsView === "calendar" && (
-              <div>
-                {/* Month nav */}
-                <div style={{ display: "flex", alignItems: "center", gap: 20, marginBottom: 20 }}>
-                  <button onClick={prevMonth} style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)", padding: "6px 14px", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", fontSize: 16 }}>‹</button>
-                  <div style={{ fontSize: 28, letterSpacing: 2 }}>{MONTH_NAMES[calMonth].toUpperCase()} {calYear}</div>
-                  <button onClick={nextMonth} style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)", padding: "6px 14px", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", fontSize: 16 }}>›</button>
-                  <div style={{ marginLeft: "auto", fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.3)" }}>
-                    {Object.values(bookingsByDay).flat().length} confirmed booking{Object.values(bookingsByDay).flat().length !== 1 ? "s" : ""} this month
+            {!selectedBooking && bookingsView === "calendar" && (() => {
+              const monthTotal = Object.values(bookingsByDay).flat();
+              const monthRevenue = monthTotal.reduce((s, b) => s + (b.amount || 0), 0);
+              const isCurrentMonth = calMonth === today.getMonth() && calYear === today.getFullYear();
+              return (
+                <div>
+                  {/* Header row */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
+                    <button onClick={prevMonth} style={{ background: "#1A1A1A", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.6)", width: 36, height: 36, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 2, transition: "all 0.15s", flexShrink: 0 }}>‹</button>
+                    <div style={{ fontSize: 30, letterSpacing: 3, minWidth: 220 }}>{MONTH_NAMES[calMonth].toUpperCase()} {calYear}</div>
+                    <button onClick={nextMonth} style={{ background: "#1A1A1A", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.6)", width: 36, height: 36, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 2, transition: "all 0.15s", flexShrink: 0 }}>›</button>
+                    {!isCurrentMonth && (
+                      <button onClick={() => { setCalMonth(today.getMonth()); setCalYear(today.getFullYear()); setSelectedDay(null); }} style={{ background: "transparent", border: "1px solid rgba(255,77,0,0.35)", color: "#FF4D00", padding: "6px 14px", cursor: "pointer", fontFamily: "'Bebas Neue',cursive", fontSize: 14, letterSpacing: 1, borderRadius: 2 }}>Today</button>
+                    )}
+                    <div style={{ marginLeft: "auto", display: "flex", gap: 20, alignItems: "center" }}>
+                      <div style={{ textAlign: "right" }}>
+                        <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 11, color: "rgba(255,255,255,0.25)", letterSpacing: 1, marginBottom: 2 }}>BOOKINGS</div>
+                        <div style={{ fontFamily: "'Bebas Neue',cursive", fontSize: 22, letterSpacing: 1, color: monthTotal.length ? "#fff" : "rgba(255,255,255,0.2)" }}>{monthTotal.length}</div>
+                      </div>
+                      <div style={{ width: 1, height: 32, background: "rgba(255,255,255,0.07)" }} />
+                      <div style={{ textAlign: "right" }}>
+                        <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 11, color: "rgba(255,255,255,0.25)", letterSpacing: 1, marginBottom: 2 }}>REVENUE</div>
+                        <div style={{ fontFamily: "'Bebas Neue',cursive", fontSize: 22, letterSpacing: 1, color: monthRevenue ? "#FF4D00" : "rgba(255,255,255,0.2)" }}>${monthRevenue.toFixed(0)}</div>
+                      </div>
+                    </div>
                   </div>
-                </div>
 
-                {/* Day-of-week headers */}
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4, marginBottom: 4 }}>
-                  {DAY_NAMES.map(d => (
-                    <div key={d} style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)", textAlign: "center", padding: "6px 0", letterSpacing: 1 }}>{d}</div>
-                  ))}
-                </div>
-
-                {/* Calendar grid */}
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4 }}>
-                  {/* Empty cells before first day */}
-                  {Array.from({ length: firstDow }).map((_, i) => (
-                    <div key={`empty-${i}`} style={{ minHeight: 80, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.03)" }} />
-                  ))}
-                  {/* Day cells */}
-                  {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(day => {
-                    const dayBookings = bookingsByDay[day] || [];
-                    const isToday = day === today.getDate() && calMonth === today.getMonth() && calYear === today.getFullYear();
-                    const isSelected = selectedDay === day;
-                    return (
-                      <div
-                        key={day}
-                        className={`cal-day${dayBookings.length ? " has-booking" : ""}${isSelected ? " selected" : ""}${isToday ? " today-cell" : ""}`}
-                        onClick={() => dayBookings.length && setSelectedDay(isSelected ? null : day)}
-                      >
-                        <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: isToday ? "#FF4D00" : "rgba(255,255,255,0.35)", marginBottom: 6, fontWeight: isToday ? 700 : 400 }}>{day}</div>
-                        {dayBookings.map((b, i) => (
-                          <div key={i} style={{ background: b.status === "confirmed" ? "rgba(16,185,129,0.2)" : "rgba(255,255,255,0.06)", border: `1px solid ${b.status === "confirmed" ? "rgba(16,185,129,0.4)" : "rgba(255,255,255,0.08)"}`, padding: "3px 6px", marginBottom: 3, borderRadius: 2 }}>
-                            <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: b.status === "confirmed" ? "#10B981" : "rgba(255,255,255,0.5)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{b.customer}</div>
-                            <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.3)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{b.service}</div>
-                          </div>
+                  <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                    {/* Grid side */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      {/* Day-of-week headers */}
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4, marginBottom: 4 }}>
+                        {DAY_NAMES.map(d => (
+                          <div key={d} style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 11, color: "rgba(255,255,255,0.25)", textAlign: "center", padding: "5px 0", letterSpacing: 1 }}>{d}</div>
                         ))}
                       </div>
-                    );
-                  })}
-                </div>
 
-                {/* Selected day detail */}
-                {selectedDay && bookingsByDay[selectedDay] && (
-                  <div style={{ marginTop: 24, background: "#111", border: "1px solid rgba(255,77,0,0.25)", padding: "20px 24px" }}>
-                    <div style={{ fontSize: 22, letterSpacing: 1, marginBottom: 16 }}>{MONTH_NAMES[calMonth].toUpperCase()} {selectedDay} — {bookingsByDay[selectedDay].length} BOOKING{bookingsByDay[selectedDay].length > 1 ? "S" : ""}</div>
-                    {bookingsByDay[selectedDay].map(b => (
-                      <div key={b.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                        <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
-                          <div style={{ width: 8, height: 8, borderRadius: "50%", background: b.status === "confirmed" ? "#10B981" : "rgba(255,255,255,0.3)", flexShrink: 0 }} />
+                      {/* Calendar grid */}
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4 }}>
+                        {Array.from({ length: firstDow }).map((_, i) => (
+                          <div key={`e${i}`} className="empty-cell" style={{ minHeight: 100, background: "rgba(255,255,255,0.01)", border: "1px solid rgba(255,255,255,0.025)", borderRadius: 2 }} />
+                        ))}
+                        {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(day => {
+                          const dayBookings = bookingsByDay[day] || [];
+                          const isToday = day === today.getDate() && calMonth === today.getMonth() && calYear === today.getFullYear();
+                          const isSelected = selectedDay === day;
+                          const MAX_CHIPS = 2;
+                          return (
+                            <div
+                              key={day}
+                              className={`cal-day${dayBookings.length ? " has-booking" : ""}${isSelected ? " selected" : ""}${isToday ? " today-cell" : ""}`}
+                              onClick={() => setSelectedDay(isSelected && !dayBookings.length ? null : isSelected ? null : day)}
+                            >
+                              {/* Day number */}
+                              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                                {isToday ? (
+                                  <div style={{ width: 22, height: 22, borderRadius: "50%", background: "#FF4D00", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Sans',sans-serif", fontSize: 12, fontWeight: 700, color: "#fff", flexShrink: 0 }}>{day}</div>
+                                ) : (
+                                  <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 12, color: "rgba(255,255,255,0.3)", fontWeight: 400 }}>{day}</div>
+                                )}
+                                {dayBookings.length > 0 && (
+                                  <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#10B981", flexShrink: 0 }} />
+                                )}
+                              </div>
+                              {/* Booking chips */}
+                              {dayBookings.slice(0, MAX_CHIPS).map((b, i) => (
+                                <div key={i} className="cal-chip" onClick={e => { e.stopPropagation(); setSelectedBooking(b); setSelectedDay(null); }}>
+                                  <div className="cal-avatar">{(b.customer || "?")[0].toUpperCase()}</div>
+                                  <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 10, color: "#10B981", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", lineHeight: 1.3 }}>{b.customer}</div>
+                                </div>
+                              ))}
+                              {dayBookings.length > MAX_CHIPS && (
+                                <div className="cal-more">+{dayBookings.length - MAX_CHIPS} more</div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Side panel */}
+                    {selectedDay !== null && (
+                      <div className="cal-side">
+                        <div style={{ background: "rgba(255,77,0,0.08)", borderBottom: "1px solid rgba(255,77,0,0.15)", padding: "14px 18px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                           <div>
-                            <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, fontWeight: 500 }}>{b.customer}</div>
-                            <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)" }}>{b.service} · #{b.id}</div>
+                            <div style={{ fontSize: 20, letterSpacing: 2 }}>{MONTH_NAMES[calMonth].slice(0,3).toUpperCase()} {selectedDay}</div>
+                            <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 12, color: "rgba(255,255,255,0.35)", marginTop: 2 }}>
+                              {(bookingsByDay[selectedDay] || []).length === 0 ? "No bookings" : `${(bookingsByDay[selectedDay] || []).length} booking${(bookingsByDay[selectedDay] || []).length > 1 ? "s" : ""}`}
+                            </div>
                           </div>
+                          <button onClick={() => setSelectedDay(null)} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.3)", cursor: "pointer", fontSize: 18, lineHeight: 1, padding: 4 }}>✕</button>
                         </div>
-                        <div style={{ display: "flex", gap: 24, alignItems: "center" }}>
-                          <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: b.status === "confirmed" ? "#10B981" : "rgba(255,255,255,0.4)" }}>● {b.status}</span>
-                          <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "#FF4D00" }}>${b.amount}</span>
-                          <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.3)" }}>Payout: <span style={{ color: "#10B981" }}>${b.payout.toFixed(2)}</span></span>
+                        <div style={{ padding: "12px 0", maxHeight: 520, overflowY: "auto" }}>
+                          {(bookingsByDay[selectedDay] || []).length === 0 ? (
+                            <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 13, color: "rgba(255,255,255,0.25)", textAlign: "center", padding: "32px 16px" }}>No bookings on this day</div>
+                          ) : (bookingsByDay[selectedDay] || []).map(b => (
+                            <div key={b.id}
+                              onClick={() => { setSelectedBooking(b); setSelectedDay(null); }}
+                              style={{ padding: "12px 18px", borderBottom: "1px solid rgba(255,255,255,0.04)", cursor: "pointer", transition: "background 0.12s" }}
+                              onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.04)"}
+                              onMouseLeave={e => e.currentTarget.style.background = ""}
+                            >
+                              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+                                <div style={{ width: 30, height: 30, borderRadius: "50%", background: "linear-gradient(135deg,#FF4D00,#FF8C00)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Sans',sans-serif", fontSize: 13, fontWeight: 700, color: "#fff", flexShrink: 0 }}>{(b.customer || "?")[0].toUpperCase()}</div>
+                                <div>
+                                  <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 13, fontWeight: 600 }}>{b.customer}</div>
+                                  <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 1 }}>{b.time_slot || b.time || "Time TBD"}</div>
+                                </div>
+                              </div>
+                              <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 12, color: "rgba(255,255,255,0.5)", marginBottom: 6, paddingLeft: 40 }}>{b.service}</div>
+                              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingLeft: 40 }}>
+                                <span style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 11, color: "#10B981" }}>● confirmed</span>
+                                <span style={{ fontFamily: "'Bebas Neue',cursive", fontSize: 16, letterSpacing: 1, color: "#FF4D00" }}>${b.amount}</span>
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       </div>
-                    ))}
+                    )}
                   </div>
-                )}
-              </div>
-            )}
+                </div>
+              );
+            })()}
           </div>
         )}
 
