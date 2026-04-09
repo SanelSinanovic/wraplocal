@@ -188,7 +188,7 @@ export default function BookingFlow({
                   ))}
                   {isVehicleService && (
                   <div style={{ marginTop: 24, marginBottom: 6 }}>
-                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 8, letterSpacing: 1 }}>VEHICLE TYPE</div>
+                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 8, letterSpacing: 1 }}>VEHICLE TYPE <span style={{ color: "#FF4D00" }}>*</span></div>
                     <input
                       placeholder="e.g. 2023 BMW M4 Competition, 2021 Ford F-150..."
                       value={vehicleType}
@@ -235,9 +235,12 @@ export default function BookingFlow({
                   </div>
                   )}
                   <div style={{ marginTop: 20 }}>
-                    <button className="btn-main" disabled={!selectedService} style={{ opacity: selectedService ? 1 : 0.4 }} onClick={() => setBookingStep(2)}>
+                    <button className="btn-main" disabled={!selectedService || (isVehicleService && !vehicleType.trim())} style={{ opacity: (selectedService && (!isVehicleService || vehicleType.trim())) ? 1 : 0.4 }} onClick={() => setBookingStep(2)}>
                       Continue →
                     </button>
+                    {isVehicleService && !vehicleType.trim() && selectedService && (
+                      <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,77,0,0.8)", marginTop: 8 }}>Please enter your vehicle type to continue.</div>
+                    )}
                   </div>
                 </div>
               )}

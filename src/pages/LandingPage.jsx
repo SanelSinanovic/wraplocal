@@ -31,10 +31,10 @@ export default function LandingPage({ nav, shops: liveShops, setBookingShop, set
   const countsDone = useRef(false);
 
   const SLIDES = [
-    { label: "Full Color Change Wrap", category: "Vehicle Wraps", accent: "#FF4D00", img: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=800&q=85" },
-    { label: "Monument Signs", category: "Signage", accent: "#3B82F6", img: "https://images.unsplash.com/photo-1486325212027-8081e485255e?w=800&q=85" },
-    { label: "Channel Letters", category: "Signage", accent: "#3B82F6", img: "https://images.unsplash.com/photo-1535957998253-26ae1ef29506?w=800&q=85" },
-    { label: "PPF Paint Protection Film", category: "Vehicle Wraps", accent: "#FF4D00", img: "https://images.unsplash.com/photo-1555215695-3004980ad54e?w=800&q=85" },
+    { label: "Full Color Change Wrap", category: "Vehicle Wraps", accent: "#FF4D00", img: "/color-change-wrap.jpg" },
+    { label: "Monument Signs", category: "Signage", accent: "#3B82F6", img: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=85" },
+    { label: "Channel Letters", category: "Signage", accent: "#3B82F6", img: "https://images.unsplash.com/photo-1567521464027-f127ff144326?w=800&q=85" },
+    { label: "PPF Paint Protection Film", category: "Vehicle Wraps", accent: "#FF4D00", img: "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=800&q=85" },
     { label: "LED Signs", category: "Signage", accent: "#3B82F6", img: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=85" },
     { label: "Custom Design Wrap", category: "Vehicle Wraps", accent: "#FF4D00", img: "https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=800&q=85" },
     { label: "Window Graphics", category: "Signage", accent: "#3B82F6", img: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800&q=85" },
@@ -242,8 +242,8 @@ export default function LandingPage({ nav, shops: liveShops, setBookingShop, set
       {/* TICKER */}
       <div className="ticker-wrap">
         <div className="ticker-track">
-          {["Vehicle Wraps","Color Change","PPF","Monument Signs","Channel Letters","LED Displays","Window Graphics","Fleet Wraps","Banners","Boat Wraps","Custom Designs","Vinyl Graphics","Vehicle Wraps","Color Change","PPF","Monument Signs","Channel Letters","LED Displays","Window Graphics","Fleet Wraps","Banners","Boat Wraps","Custom Designs","Vinyl Graphics"].map((s, i) => (
-            <span key={i} className="ticker-item" style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, letterSpacing: 3, color: "rgba(255,255,255,0.28)", whiteSpace: "nowrap", padding: "0 28px", display: "flex", alignItems: "center", gap: 16, textTransform: "uppercase" }}>
+          {["Vehicle Wraps","Color Change","PPF","Monument Signs","Channel Letters","LED Displays","Window Graphics","Window Tinting","Fleet Wraps","Banners","Boat Wraps","Custom Designs","Vinyl Graphics","Vehicle Wraps","Color Change","PPF","Monument Signs","Channel Letters","LED Displays","Window Graphics","Window Tinting","Fleet Wraps","Banners","Boat Wraps","Custom Designs","Vinyl Graphics"].map((s, i) => (
+            <span key={i} className="ticker-item" style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, letterSpacing: 3, color: "#FF4D00", whiteSpace: "nowrap", padding: "0 28px", display: "flex", alignItems: "center", gap: 16, textTransform: "uppercase" }}>
               <span style={{ width: 4, height: 4, borderRadius: "50%", background: i % 4 === 0 ? "#FF4D00" : "rgba(255,255,255,0.15)", display: "inline-block", flexShrink: 0 }} />
               {s}
             </span>

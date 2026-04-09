@@ -22,6 +22,7 @@ export const SERVICE_CATEGORIES = [
       { name: "LED Signs", description: "Illuminated LED cabinet and channel signs" },
       { name: "Channel Letters", description: "3D dimensional lettering for storefronts" },
       { name: "Window Graphics", description: "Storefront window decals and frosted film" },
+      { name: "Window Tinting", description: "Residential, commercial, and automotive window tint" },
     ],
   },
 ];
