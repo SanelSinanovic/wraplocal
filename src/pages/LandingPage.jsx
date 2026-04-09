@@ -117,7 +117,7 @@ export default function LandingPage({ nav, shops: liveShops, setBookingShop, set
         @keyframes beam-sweep { 0% { transform: translateX(-100%) skewX(-20deg); opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { transform: translateX(400%) skewX(-20deg); opacity: 0; } }
         .ticker-wrap { overflow: hidden; border-top: 1px solid rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.05); background: #0D0D0D; padding: 10px 0; }
         .ticker-track { display: flex; width: max-content; animation: ticker 28s linear infinite; }
-        .ticker-item { fontFamily: "'DM Sans', sans-serif"; font-size: 12px; letter-spacing: 3px; color: rgba(255,255,255,0.3); white-space: nowrap; padding: 0 32px; display: flex; align-items: center; gap: 12px; }
+        .ticker-item { fontFamily: "'DM Sans', sans-serif"; font-size: 12px; letter-spacing: 3px; color: #FF4D00; white-space: nowrap; padding: 0 32px; display: flex; align-items: center; gap: 12px; }
         .ticker-dot { width: 4px; height: 4px; border-radius: 50%; background: #FF4D00; display: inline-block; }
         .notif-float-1 { animation: slideInRight 0.55s cubic-bezier(0.22,1,0.36,1) 0.65s both, float-card 4s ease-in-out 1.2s infinite; }
         .notif-float-2 { animation: slideInRight 0.55s cubic-bezier(0.22,1,0.36,1) 0.82s both, float-card 5s ease-in-out 1.5s infinite; }

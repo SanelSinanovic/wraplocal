@@ -48,25 +48,33 @@ export default function ShopProfile({ nav, selectedShop, setBookingShop, current
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .sp-hero-anim { animation: fadeIn 0.5s ease both; }
+        .sp-profile-anim { animation: fadeUp 0.5s 0.1s cubic-bezier(0.22,1,0.36,1) both; }
+        .sp-content-anim { animation: fadeUp 0.5s 0.2s cubic-bezier(0.22,1,0.36,1) both; }
         .sp-btn { background: #FF4D00; color: #fff; border: none; padding: 14px 32px; font-family: 'Bebas Neue', cursive; font-size: 18px; letter-spacing: 2px; cursor: pointer; transition: all 0.2s; }
-        .sp-btn:hover { background: #FF6A20; transform: translateY(-1px); }
+        .sp-btn:hover { background: #FF6A20; transform: translateY(-1px); box-shadow: 0 8px 28px rgba(255,77,0,0.25); }
         .sp-tab { background: none; border: none; border-bottom: 2px solid transparent; color: rgba(255,255,255,0.4); font-family: 'Bebas Neue', cursive; font-size: 17px; letter-spacing: 2px; cursor: pointer; padding: 12px 0; transition: color 0.2s; }
         .sp-tab.active { color: #fff; border-bottom-color: #FF4D00; }
         .sp-tab:hover:not(.active) { color: rgba(255,255,255,0.75); }
-        .sp-port-item { position: relative; overflow: hidden; cursor: pointer; aspect-ratio: 4/3; background: #111; }
+        .sp-port-item { position: relative; overflow: hidden; cursor: pointer; aspect-ratio: 4/3; background: #111; border: 1px solid rgba(255,255,255,0.05); transition: border-color 0.2s; }
+        .sp-port-item:hover { border-color: rgba(255,77,0,0.3); }
         .sp-port-item img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s; display: block; }
         .sp-port-item:hover img { transform: scale(1.07); }
         .sp-port-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0); transition: background 0.3s; display: flex; align-items: center; justify-content: center; }
         .sp-port-item:hover .sp-port-overlay { background: rgba(0,0,0,0.48); }
         .sp-port-label { opacity: 0; transition: opacity 0.3s; font-family: 'DM Sans', sans-serif; font-size: 13px; color: #fff; letter-spacing: 2px; border: 1px solid rgba(255,255,255,0.5); padding: 6px 14px; }
         .sp-port-item:hover .sp-port-label { opacity: 1; }
-        .sp-info-row { display: flex; align-items: center; gap: 12px; padding: 13px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-family: 'DM Sans', sans-serif; font-size: 14px; }
+        .sp-info-row { display: flex; align-items: center; gap: 12px; padding: 13px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-family: 'DM Sans', sans-serif; font-size: 14px; transition: background 0.15s; }
         .sp-info-row:last-child { border-bottom: none; }
         .sp-icon { width: 34px; height: 34px; background: rgba(255,77,0,0.1); border: 1px solid rgba(255,77,0,0.2); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 15px; }
         .sp-slot { padding: 6px 14px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); font-family: 'DM Sans', sans-serif; font-size: 13px; color: rgba(255,255,255,0.6); cursor: pointer; transition: all 0.15s; }
-        .sp-slot:hover { border-color: #FF4D00; color: #FF4D00; background: rgba(255,77,0,0.08); }
+        .sp-slot:hover { border-color: #FF4D00; color: #FF4D00; background: rgba(255,77,0,0.08); transform: translateY(-1px); }
         .sp-lightbox { position: fixed; inset: 0; background: rgba(0,0,0,0.93); z-index: 1000; display: flex; align-items: center; justify-content: center; cursor: zoom-out; }
         .sp-lightbox img { max-width: 90vw; max-height: 88vh; object-fit: contain; box-shadow: 0 40px 100px rgba(0,0,0,0.8); }
+        .sp-review-card { background: #111; border: 1px solid rgba(255,255,255,0.07); padding: 20px; transition: border-color 0.2s, transform 0.2s; }
+        .sp-review-card:hover { border-color: rgba(255,255,255,0.13); transform: translateY(-2px); }
         @media (max-width: 768px) {
           .sp-hero { height: 220px !important; }
           .sp-profile-row { flex-direction: column !important; gap: 16px !important; align-items: flex-start !important; }
@@ -113,7 +121,7 @@ export default function ShopProfile({ nav, selectedShop, setBookingShop, current
       </nav>
 
       {/* ── HERO BANNER ── */}
-      <div className="sp-hero" style={{ position: "relative", height: 380, overflow: "hidden" }}>
+      <div className="sp-hero sp-hero-anim" style={{ position: "relative", height: 380, overflow: "hidden" }}>
         {bannerSrc ? (
           <img src={bannerSrc} alt={shop.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         ) : (
@@ -132,7 +140,7 @@ export default function ShopProfile({ nav, selectedShop, setBookingShop, current
 
       {/* ── PROFILE HEADER ── */}
       <div className="sp-main" style={{ padding: "0 60px 60px", maxWidth: 1200, margin: "0 auto" }}>
-        <div style={{ marginTop: -60, marginBottom: 32, position: "relative", zIndex: 2 }}>
+        <div style={{ marginTop: -60, marginBottom: 32, position: "relative", zIndex: 2 }} className="sp-profile-anim">
           <div className="sp-profile-row" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 24 }}>
             <div style={{ display: "flex", alignItems: "flex-end", gap: 22 }}>
               <div style={{ width: 90, height: 90, background: accentColor, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30, letterSpacing: 2, flexShrink: 0, border: "3px solid #0A0A0A", boxShadow: `0 8px 32px ${accentColor}44` }}>
@@ -161,7 +169,7 @@ export default function ShopProfile({ nav, selectedShop, setBookingShop, current
         </div>
 
         {/* ── TABS ── */}
-        <div className="sp-tabs" style={{ display: "flex", gap: 32, borderBottom: "1px solid rgba(255,255,255,0.08)", marginBottom: 36 }}>
+        <div className="sp-tabs sp-content-anim" style={{ display: "flex", gap: 32, borderBottom: "1px solid rgba(255,255,255,0.08)", marginBottom: 36 }}>
           {[
             { id: "overview", label: "Overview" },
             { id: "portfolio", label: `Portfolio (${portfolio.length})` },

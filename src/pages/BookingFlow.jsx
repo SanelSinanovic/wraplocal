@@ -124,7 +124,7 @@ export default function BookingFlow({
   if (!bookingShop) return null;
   return (
     <div style={{ fontFamily: "'Bebas Neue', cursive", background: "#0A0A0A", minHeight: "100vh", color: "#fff" }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap'); * { box-sizing: border-box; } input, select, textarea { background: #1A1A1A; border: 1px solid rgba(255,255,255,0.1); padding: 12px 16px; color: #fff; font-family: 'DM Sans', sans-serif; font-size: 14px; outline: none; width: 100%; } input:focus, textarea:focus { border-color: #FF4D00; } textarea { resize: vertical; min-height: 90px; line-height: 1.5; } .btn-main { background: #FF4D00; color: #fff; border: none; padding: 14px 32px; font-family: 'Bebas Neue', cursive; font-size: 18px; letter-spacing: 2px; cursor: pointer; transition: all 0.2s; } .slot { background: #1A1A1A; border: 1px solid rgba(255,255,255,0.1); padding: 10px 18px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 14px; transition: all 0.2s; } .slot:hover, .slot.active { background: rgba(255,77,0,0.15); border-color: #FF4D00; color: #FF4D00; } @media (max-width: 768px) { .booking-nav { padding: 12px 16px !important; } .booking-pad { padding: 20px !important; max-width: 100% !important; } .booking-layout { grid-template-columns: 1fr !important; gap: 24px !important; } .booking-sidebar { position: static !important; } .step-label { display: none !important; } .date-grid { grid-template-columns: repeat(3, 1fr) !important; } .name-grid { grid-template-columns: 1fr !important; } .confirm-btns { flex-direction: column !important; } .confirm-btns button { width: 100%; } } @media (max-width: 420px) { .booking-pad { padding: 14px !important; } }`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap'); * { box-sizing: border-box; } input, select, textarea { background: #151515; border: 1px solid rgba(255,255,255,0.1); padding: 12px 16px; color: #fff; font-family: 'DM Sans', sans-serif; font-size: 14px; outline: none; width: 100%; transition: border-color 0.2s, background 0.2s; } input:focus, textarea:focus { border-color: #FF4D00; background: #1a1a1a; } textarea { resize: vertical; min-height: 90px; line-height: 1.5; } .btn-main { background: #FF4D00; color: #fff; border: none; padding: 14px 32px; font-family: 'Bebas Neue', cursive; font-size: 18px; letter-spacing: 2px; cursor: pointer; transition: background 0.2s, transform 0.15s; } .btn-main:hover { background: #FF6A20; transform: translateY(-1px); } .slot { background: #151515; border: 1px solid rgba(255,255,255,0.08); padding: 10px 18px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 14px; transition: all 0.18s; } .slot:hover, .slot.active { background: rgba(255,77,0,0.12); border-color: #FF4D00; color: #FF4D00; transform: translateY(-1px); } .svc-row { padding: 16px 20px; border: 1px solid rgba(255,255,255,0.08); background: #111; margin-bottom: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: border-color 0.15s, background 0.15s, transform 0.15s; } .svc-row:hover { border-color: rgba(255,77,0,0.35); background: rgba(255,77,0,0.04); transform: translateX(2px); } .svc-row.active { border-color: #FF4D00; background: rgba(255,77,0,0.08); } @keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } } @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } } .step-content { animation: fadeUp 0.35s cubic-bezier(0.22,1,0.36,1) both; } .booking-confirm-anim { animation: fadeUp 0.5s cubic-bezier(0.22,1,0.36,1) both; } @media (max-width: 768px) { .booking-nav { padding: 12px 16px !important; } .booking-pad { padding: 20px !important; max-width: 100% !important; } .booking-layout { grid-template-columns: 1fr !important; gap: 24px !important; } .booking-sidebar { position: static !important; } .step-label { display: none !important; } .date-grid { grid-template-columns: repeat(3, 1fr) !important; } .name-grid { grid-template-columns: 1fr !important; } .confirm-btns { flex-direction: column !important; } .confirm-btns button { width: 100%; } } @media (max-width: 420px) { .booking-pad { padding: 14px !important; } }`}</style>
 
       <nav className="booking-nav" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 40px", background: "rgba(10,10,10,0.95)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
         <div style={{ fontSize: 24, letterSpacing: 4, color: "#FF4D00", cursor: "pointer" }} onClick={() => nav("landing")}>KI<span style={{ color: "#fff" }}>DOR</span></div>
@@ -132,7 +132,7 @@ export default function BookingFlow({
       </nav>
 
       {bookingConfirmed ? (
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "80vh", textAlign: "center", padding: 40 }}>
+        <div className="booking-confirm-anim" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "80vh", textAlign: "center", padding: 40 }}>
           <div style={{ fontSize: 80, marginBottom: 20 }}>🎉</div>
           <div style={{ fontSize: 56, letterSpacing: 2, marginBottom: 12, color: "#FF4D00" }}>REQUEST SENT!</div>
           <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 16, color: "rgba(255,255,255,0.5)", marginBottom: 8 }}>
@@ -164,7 +164,7 @@ export default function BookingFlow({
           <div className="booking-layout" style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: 32, alignItems: "start" }}>
             <div>
               {bookingStep === 1 && (
-                <div>
+                <div className="step-content">
                   <div style={{ fontSize: 36, letterSpacing: 1, marginBottom: 6 }}>CHOOSE A SERVICE</div>
                   <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.35)", marginBottom: 22 }}>
                     The shop will send you a quote after reviewing your request.
@@ -174,9 +174,7 @@ export default function BookingFlow({
                       <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)", letterSpacing: 2, marginBottom: 10 }}>{category.toUpperCase()}</div>
                       {services.map(({ name: s, description: d }) => (
                     <div key={s} onClick={() => setSelectedService(s)}
-                      style={{ padding: "16px 20px", border: "1px solid", borderColor: selectedService === s ? "#FF4D00" : "rgba(255,255,255,0.08)", background: selectedService === s ? "rgba(255,77,0,0.07)" : "#111", marginBottom: 8, cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", transition: "all 0.15s" }}
-                      onMouseEnter={e => { if (selectedService !== s) e.currentTarget.style.borderColor = "rgba(255,77,0,0.4)"; }}
-                      onMouseLeave={e => { if (selectedService !== s) e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; }}>
+                      className={`svc-row${selectedService === s ? " active" : ""}`}>
                       <div>
                         <div style={{ fontSize: 20, letterSpacing: 1 }}>{s}</div>
                         <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)", marginTop: 2 }}>{d}</div>
@@ -245,7 +243,7 @@ export default function BookingFlow({
               )}
 
               {bookingStep === 2 && (
-                <div>
+                <div className="step-content">
                   <div style={{ fontSize: 36, letterSpacing: 1, marginBottom: 6 }}>YOUR INFO</div>
                   <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.35)", marginBottom: 24 }}>
                     No payment needed now — the shop will confirm your appointment and send you a quote.

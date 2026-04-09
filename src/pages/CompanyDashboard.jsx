@@ -667,7 +667,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
 
   return (
     <div className="company-wrap" style={{ fontFamily: "'Bebas Neue', cursive", background: "#090909", minHeight: "100vh", color: "#fff", display: "flex" }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap'); * { box-sizing: border-box; } .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 16px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 14px; color: rgba(255,255,255,0.5); border-radius: 4px; transition: all 0.2s; } .nav-item:hover, .nav-item.active { background: rgba(255,77,0,0.1); color: #FF4D00; } .stat-card { background: #111; border: 1px solid rgba(255,255,255,0.06); padding: 24px; } .cal-day { min-height: 100px; background: #111; border: 1px solid rgba(255,255,255,0.05); padding: 10px 8px 8px; cursor: default; transition: all 0.15s; vertical-align: top; border-radius: 2px; } .cal-day.has-booking { cursor: pointer; } .cal-day:not(.empty-cell):hover { background: rgba(255,255,255,0.025); border-color: rgba(255,255,255,0.1); } .cal-day.has-booking:hover { border-color: rgba(255,77,0,0.4) !important; background: rgba(255,77,0,0.05) !important; } .cal-day.selected { border-color: #FF4D00 !important; background: rgba(255,77,0,0.09) !important; box-shadow: inset 0 0 0 1px rgba(255,77,0,0.25); } .cal-day.today-cell { border-color: rgba(255,255,255,0.22); } .cal-chip { display: flex; align-items: center; gap: 5px; background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.28); padding: 3px 6px 3px 4px; margin-bottom: 3px; border-radius: 2px; cursor: pointer; transition: background 0.12s; } .cal-chip:hover { background: rgba(16,185,129,0.24); } .cal-avatar { width: 16px; height: 16px; border-radius: 50%; background: linear-gradient(135deg,#FF4D00,#FF8C00); display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; color: #fff; flex-shrink: 0; font-family: 'DM Sans',sans-serif; letter-spacing: 0; } .cal-side { background: #0F0F0F; border: 1px solid rgba(255,77,0,0.2); border-radius: 2px; width: 272px; flex-shrink: 0; animation: sideIn 0.16s ease; overflow: hidden; } @keyframes sideIn { from { opacity:0; transform:translateX(10px); } to { opacity:1; transform:translateX(0); } } .view-toggle { display: flex; border: 1px solid rgba(255,255,255,0.1); overflow: hidden; } .view-toggle button { background: transparent; border: none; padding: 8px 18px; font-family: 'Bebas Neue', cursive; font-size: 15px; letter-spacing: 1px; color: rgba(255,255,255,0.4); cursor: pointer; transition: all 0.2s; } .view-toggle button.active { background: #FF4D00; color: #fff; } @media (max-width: 768px) { .company-wrap { flex-direction: column !important; } .company-sidebar { width: 100% !important; flex-direction: row !important; flex-shrink: unset !important; flex-wrap: wrap; border-right: none !important; border-bottom: 1px solid rgba(255,255,255,0.06) !important; padding: 8px !important; } .sidebar-logo { display: none !important; } .sidebar-sub { display: none !important; } .sidebar-footer { display: none !important; } .nav-item { flex: 0 0 auto; padding: 8px 12px !important; font-size: 12px !important; } .company-main { padding: 16px !important; } .stats-4 { grid-template-columns: repeat(2, 1fr) !important; } .stats-2 { grid-template-columns: 1fr !important; } .stats-3 { grid-template-columns: 1fr !important; } .cal-day { min-height: 44px !important; padding: 3px !important; font-size: 11px !important; } .bookings-header { flex-direction: column !important; align-items: flex-start !important; gap: 12px; } .form-2col { grid-template-columns: 1fr !important; } .profile-actions { flex-direction: column !important; } .booking-detail-grid { grid-template-columns: 1fr !important; } .location-grid { grid-template-columns: 1fr !important; } } @media (max-width: 420px) { .company-main { padding: 10px !important; } .nav-item { padding: 6px 8px !important; font-size: 11px !important; } } @keyframes skelPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap'); * { box-sizing: border-box; } .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 16px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 14px; color: rgba(255,255,255,0.5); border-radius: 4px; transition: all 0.2s; } .nav-item:hover, .nav-item.active { background: rgba(255,77,0,0.1); color: #FF4D00; } .stat-card { background: #111; border: 1px solid rgba(255,255,255,0.06); padding: 24px; } .cal-day { min-height: 100px; background: #111; border: 1px solid rgba(255,255,255,0.05); padding: 10px 8px 8px; cursor: default; transition: all 0.15s; vertical-align: top; border-radius: 2px; } .cal-day.has-booking { cursor: pointer; } .cal-day:not(.empty-cell):hover { background: rgba(255,255,255,0.025); border-color: rgba(255,255,255,0.1); } .cal-day.has-booking:hover { border-color: rgba(255,77,0,0.4) !important; background: rgba(255,77,0,0.05) !important; } .cal-day.selected { border-color: #FF4D00 !important; background: rgba(255,77,0,0.09) !important; box-shadow: inset 0 0 0 1px rgba(255,77,0,0.25); } .cal-day.today-cell { border-color: rgba(255,255,255,0.22); } .cal-chip { display: flex; align-items: center; gap: 5px; background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.28); padding: 3px 6px 3px 4px; margin-bottom: 3px; border-radius: 2px; cursor: pointer; transition: background 0.12s; } .cal-chip:hover { background: rgba(16,185,129,0.24); } .cal-avatar { width: 16px; height: 16px; border-radius: 50%; background: linear-gradient(135deg,#FF4D00,#FF8C00); display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; color: #fff; flex-shrink: 0; font-family: 'DM Sans',sans-serif; letter-spacing: 0; } .cal-side { background: #0F0F0F; border: 1px solid rgba(255,77,0,0.2); border-radius: 2px; width: 272px; flex-shrink: 0; animation: sideIn 0.16s ease; overflow: hidden; } @keyframes sideIn { from { opacity:0; transform:translateX(10px); } to { opacity:1; transform:translateX(0); } } .view-toggle { display: flex; border: 1px solid rgba(255,255,255,0.1); overflow: hidden; } .view-toggle button { background: transparent; border: none; padding: 8px 18px; font-family: 'Bebas Neue', cursive; font-size: 15px; letter-spacing: 1px; color: rgba(255,255,255,0.4); cursor: pointer; transition: all 0.2s; } .view-toggle button.active { background: #FF4D00; color: #fff; } @media (max-width: 768px) { .company-wrap { flex-direction: column !important; } .company-sidebar { width: 100% !important; flex-direction: row !important; flex-shrink: unset !important; flex-wrap: wrap; border-right: none !important; border-bottom: 1px solid rgba(255,255,255,0.06) !important; padding: 8px !important; } .sidebar-logo { display: none !important; } .sidebar-sub { display: none !important; } .sidebar-footer { display: none !important; } .nav-item { flex: 0 0 auto; padding: 8px 12px !important; font-size: 12px !important; } .company-main { padding: 16px !important; } .stats-4 { grid-template-columns: repeat(2, 1fr) !important; } .stats-2 { grid-template-columns: 1fr !important; } .stats-3 { grid-template-columns: 1fr !important; } .cal-day { min-height: 44px !important; padding: 3px !important; font-size: 11px !important; } .bookings-header { flex-direction: column !important; align-items: flex-start !important; gap: 12px; } .form-2col { grid-template-columns: 1fr !important; } .profile-actions { flex-direction: column !important; } .booking-detail-grid { grid-template-columns: 1fr !important; } .location-grid { grid-template-columns: 1fr !important; } } @media (max-width: 420px) { .company-main { padding: 10px !important; } .nav-item { padding: 6px 8px !important; font-size: 11px !important; } } @keyframes skelPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } } @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } } @keyframes barGrow { from { width: 0; } to { width: var(--bar-w); } } @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } } .dash-card { background: #111; border: 1px solid rgba(255,255,255,0.07); padding: 24px; transition: border-color 0.2s, transform 0.2s, background 0.2s; } .dash-card:hover { border-color: rgba(255,255,255,0.13); transform: translateY(-2px); background: #131313; } .stat-card-v2 { background: #111; border: 1px solid rgba(255,255,255,0.07); padding: 26px 22px; position: relative; overflow: hidden; transition: border-color 0.2s, transform 0.2s; } .stat-card-v2.hero { background: linear-gradient(135deg, rgba(255,77,0,0.12) 0%, rgba(255,77,0,0.04) 60%, #111 100%); border-color: rgba(255,77,0,0.3); } .stat-card-v2.hero:hover { border-color: rgba(255,77,0,0.5); } .stat-card-v2.card-green { background: linear-gradient(135deg, rgba(16,185,129,0.1) 0%, rgba(16,185,129,0.03) 60%, #111 100%); border-color: rgba(16,185,129,0.22); } .stat-card-v2.card-green:hover { border-color: rgba(16,185,129,0.4); } .stat-card-v2.card-blue { background: linear-gradient(135deg, rgba(99,102,241,0.1) 0%, rgba(99,102,241,0.03) 60%, #111 100%); border-color: rgba(99,102,241,0.22); } .stat-card-v2.card-blue:hover { border-color: rgba(99,102,241,0.4); } .stat-card-v2.card-amber { background: linear-gradient(135deg, rgba(245,158,11,0.1) 0%, rgba(245,158,11,0.03) 60%, #111 100%); border-color: rgba(245,158,11,0.22); } .stat-card-v2.card-amber:hover { border-color: rgba(245,158,11,0.4); } .stat-card-v2::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: var(--accent, rgba(255,255,255,0.08)); } .stat-card-v2:hover { border-color: rgba(255,255,255,0.13); transform: translateY(-2px); } .anim-0 { animation: fadeUp 0.4s ease both; } .anim-1 { animation: fadeUp 0.4s 0.07s ease both; } .anim-2 { animation: fadeUp 0.4s 0.14s ease both; } .anim-3 { animation: fadeUp 0.4s 0.21s ease both; } .anim-4 { animation: fadeUp 0.4s 0.28s ease both; } .anim-5 { animation: fadeUp 0.4s 0.35s ease both; } .booking-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; margin: 0 -12px; border-radius: 4px; cursor: pointer; transition: background 0.2s, border-color 0.2s; border: 1px solid transparent; } .booking-row:hover { background: linear-gradient(90deg, rgba(255,77,0,0.1) 0%, rgba(255,77,0,0.04) 100%); border-color: rgba(255,77,0,0.2); } .section-label { font-family: 'DM Sans', sans-serif; font-size: 11px; letter-spacing: 2px; color: rgba(255,255,255,0.25); text-transform: uppercase; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; } .section-label::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.06); }`}</style>
 
       {/* Sidebar */}
       <div className="company-sidebar" style={{ width: 220, background: "#0D0D0D", borderRight: "1px solid rgba(255,255,255,0.06)", padding: "24px 16px", display: "flex", flexDirection: "column", flexShrink: 0 }}>
@@ -713,89 +713,103 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
           const netPayout = Math.round((totalRevenue - totalFee) * 100) / 100;
           const now = new Date();
           const monthName = now.toLocaleString("en-US", { month: "long", year: "numeric" });
+          const confirmedBookings = dashboardBookings.filter(b => b.status === "confirmed");
+          const pendingBookings = dashboardBookings.filter(b => b.status === "pending");
+          const byService = {};
+          dashboardBookings.forEach(b => { if (b.service) byService[b.service] = (byService[b.service] || 0) + (b.amount || 0); });
+          const serviceEntries = Object.entries(byService).sort((a, b) => b[1] - a[1]);
+          const COLORS = ["#FF4D00","rgba(255,255,255,0.55)","rgba(255,255,255,0.35)","rgba(255,255,255,0.2)","rgba(255,255,255,0.12)"];
           return (
-          <div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 32 }}>
+          <div style={{ animation: "fadeIn 0.3s ease" }}>
+            {/* Header */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 32 }}>
               <div>
-                <div style={{ fontSize: 40, letterSpacing: 2 }}>DASHBOARD</div>
-                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.4)" }}>{monthName} overview</div>
+                <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 11, letterSpacing: 3, color: "rgba(255,255,255,0.2)", marginBottom: 8, textTransform: "uppercase" }}>{monthName}</div>
+                <div style={{ fontSize: 48, letterSpacing: 3, lineHeight: 1 }}>OVERVIEW</div>
               </div>
+              {pendingBookings.length > 0 && (
+                <button onClick={() => setDashTab("requests")} style={{ background: "rgba(255,77,0,0.1)", border: "1px solid rgba(255,77,0,0.35)", color: "#FF4D00", padding: "10px 20px", fontFamily: "'Bebas Neue',cursive", fontSize: 16, letterSpacing: 1.5, cursor: "pointer", display: "flex", alignItems: "center", gap: 10, transition: "all 0.2s" }}>
+                  <span style={{ background: "#FF4D00", color: "#fff", borderRadius: 12, padding: "2px 8px", fontSize: 12, fontFamily: "'DM Sans',sans-serif", fontWeight: 700, lineHeight: 1.4 }}>{pendingBookings.length}</span>
+                  PENDING REQUESTS
+                </button>
+              )}
             </div>
+
+            {/* Banners */}
             {!profilePhotoUrl && (
-              <div
-                onClick={() => setDashTab("profile")}
-                style={{ background: "rgba(255,77,0,0.08)", border: "1px solid rgba(255,77,0,0.3)", padding: "14px 20px", marginBottom: 16, fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.7)", lineHeight: 1.6, cursor: "pointer" }}
-              >
-                🔒 <strong style={{ color: "#FF4D00" }}>Your listing is hidden from customers.</strong> Add a profile photo to appear in search results. <span style={{ color: "#FF4D00", textDecoration: "underline" }}>Go to Profile →</span>
+              <div onClick={() => setDashTab("profile")} style={{ background: "rgba(255,77,0,0.05)", border: "1px solid rgba(255,77,0,0.2)", padding: "14px 18px", marginBottom: 10, fontFamily: "'DM Sans',sans-serif", fontSize: 13, color: "rgba(255,255,255,0.55)", cursor: "pointer", display: "flex", alignItems: "center", gap: 14, animation: "fadeUp 0.3s ease", transition: "background 0.2s" }}>
+                <div style={{ width: 28, height: 28, background: "rgba(255,77,0,0.15)", border: "1px solid rgba(255,77,0,0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, flexShrink: 0 }}>🔒</div>
+                <div><strong style={{ color: "rgba(255,100,40,0.9)" }}>Listing hidden</strong> — add a profile photo to appear in search results. <span style={{ color: "rgba(255,100,40,0.7)", textDecoration: "underline" }}>Fix now →</span></div>
               </div>
             )}
             {!isListed && (
-              <div
-                onClick={() => setDashTab("profile")}
-                style={{ background: "rgba(245,158,11,0.07)", border: "1px solid rgba(245,158,11,0.3)", padding: "14px 20px", marginBottom: 24, fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.7)", lineHeight: 1.6, cursor: "pointer" }}
-              >
-                💳 <strong style={{ color: "#F59E0B" }}>Your shop is not listed.</strong> Activate your monthly listing to be discoverable by customers. <span style={{ color: "#F59E0B", textDecoration: "underline" }}>Go to Profile →</span>
+              <div onClick={() => setDashTab("profile")} style={{ background: "rgba(255,180,0,0.04)", border: "1px solid rgba(255,180,0,0.18)", padding: "14px 18px", marginBottom: 24, fontFamily: "'DM Sans',sans-serif", fontSize: 13, color: "rgba(255,255,255,0.55)", cursor: "pointer", display: "flex", alignItems: "center", gap: 14, animation: "fadeUp 0.3s ease", transition: "background 0.2s" }}>
+                <div style={{ width: 28, height: 28, background: "rgba(255,180,0,0.1)", border: "1px solid rgba(255,180,0,0.25)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, flexShrink: 0 }}>💳</div>
+                <div><strong style={{ color: "rgba(255,200,60,0.85)" }}>Shop not listed</strong> — activate to be discoverable by customers. <span style={{ color: "rgba(255,200,60,0.7)", textDecoration: "underline" }}>Fix now →</span></div>
               </div>
             )}
-            <div className="stats-4" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 32 }}>
+
+            {/* Stat cards */}
+            <div className="stats-4" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 28 }}>
               {[
-                ["Total Revenue", `$${totalRevenue.toLocaleString()}`, `${dashboardBookings.length} booking${dashboardBookings.length !== 1 ? "s" : ""}`, "#10B981"],
-                ["Bookings", String(dashboardBookings.length), "All time", "#10B981"],
-                ["Kidor Fee (7%)", `-$${totalFee.toFixed(2)}`, "Platform fee", "#F59E0B"],
-                ["Net Payout", `$${netPayout.toLocaleString()}`, "After fees", "#FF4D00"],
-              ].map(([l, v, s, c]) => (
-                <div key={l} className="stat-card">
-                  <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 8 }}>{l}</div>
-                  <div style={{ fontSize: 36, letterSpacing: 1, color: l === "Kidor Fee (7%)" ? "rgba(255,255,255,0.7)" : "#fff", marginBottom: 6 }}>{v}</div>
-                  <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: c }}>{s}</div>
+                { label: "NET PAYOUT",    value: `$${netPayout.toLocaleString()}`,    sub: "After KIDOR fee",                   cardCls: "hero",       labelCol: "rgba(255,160,80,0.7)",   valCol: "#fff",                subCol: "rgba(255,140,60,0.65)",  accentBar: "rgba(255,100,0,0.7)",  cls: "anim-0" },
+                { label: "TOTAL REVENUE", value: `$${totalRevenue.toLocaleString()}`, sub: `${dashboardBookings.length} bookings total`, cardCls: "card-green", labelCol: "rgba(100,220,170,0.65)", valCol: "rgba(255,255,255,0.95)", subCol: "rgba(80,200,150,0.55)",  accentBar: "rgba(16,185,129,0.6)", cls: "anim-1" },
+                { label: "CONFIRMED",     value: String(confirmedBookings.length),    sub: `${pendingBookings.length} awaiting`,         cardCls: "card-blue",  labelCol: "rgba(160,165,255,0.65)", valCol: "rgba(255,255,255,0.95)", subCol: "rgba(140,145,240,0.55)", accentBar: "rgba(99,102,241,0.6)", cls: "anim-2" },
+                { label: "AVG ORDER",     value: `$${dashboardBookings.length ? Math.round(totalRevenue / dashboardBookings.length) : 0}`, sub: "per booking", cardCls: "card-amber", labelCol: "rgba(245,190,80,0.65)", valCol: "rgba(255,255,255,0.95)", subCol: "rgba(230,175,60,0.55)", accentBar: "rgba(245,158,11,0.6)", cls: "anim-3" },
+              ].map(({ label, value, sub, cardCls, labelCol, valCol, subCol, accentBar, cls }) => (
+                <div key={label} className={`stat-card-v2 ${cardCls} ${cls}`} style={{ "--accent": accentBar }}>
+                  <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 10, color: labelCol, letterSpacing: 2, marginBottom: 16, textTransform: "uppercase" }}>{label}</div>
+                  <div style={{ fontSize: 40, letterSpacing: 1, lineHeight: 1, marginBottom: 12, color: valCol }}>{value}</div>
+                  <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 12, color: subCol }}>{sub}</div>
                 </div>
               ))}
             </div>
-            <div className="stats-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 24 }}>
-              <div className="stat-card">
-                <div style={{ fontSize: 22, letterSpacing: 1, marginBottom: 16 }}>UPCOMING BOOKINGS</div>
-                {dashboardBookings.filter(b => b.status === "confirmed").length === 0 && (
-                  <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.3)", padding: "12px 0" }}>No confirmed bookings yet.</div>
-                )}
-                {dashboardBookings.filter(b => b.status === "confirmed").map(b => (
-                  <div key={b.id} style={{ display: "flex", justifyContent: "space-between", padding: "12px 0", borderBottom: "1px solid rgba(255,255,255,0.05)", fontFamily: "'DM Sans', sans-serif", fontSize: 14 }}>
-                    <div>
-                      <div style={{ color: "#fff", fontWeight: 500 }}>{b.customer}</div>
-                      <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 12 }}>{b.service} · {b.date}</div>
+
+            {/* Bottom row */}
+            <div className="stats-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+              {/* Upcoming */}
+              <div className="dash-card anim-4">
+                <div className="section-label">Upcoming bookings</div>
+                {confirmedBookings.length === 0 ? (
+                  <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 13, color: "rgba(255,255,255,0.2)", padding: "28px 0", textAlign: "center" }}>No confirmed bookings yet.</div>
+                ) : confirmedBookings.slice(0, 5).map(b => (
+                  <div key={b.id} className="booking-row" onClick={() => { setSelectedBooking(b); setDashTab("bookings"); }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      <div style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(255,77,0,0.15)", border: "1px solid rgba(255,77,0,0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Sans',sans-serif", fontSize: 13, fontWeight: 700, color: "#FF4D00", flexShrink: 0 }}>{(b.customer||"?")[0].toUpperCase()}</div>
+                      <div>
+                        <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 13, fontWeight: 600, marginBottom: 2 }}>{b.customer}</div>
+                        <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)" }}>{b.service}{b.date ? ` · ${b.date}` : ""}</div>
+                      </div>
                     </div>
                     <div style={{ textAlign: "right" }}>
-                      <div style={{ color: "#FF4D00" }}>${b.amount}</div>
-                      <div style={{ color: "#10B981", fontSize: 12 }}>● Confirmed</div>
+                      <div style={{ fontFamily: "'Bebas Neue',cursive", fontSize: 20, letterSpacing: 1, color: "#fff" }}>${b.amount}</div>
+                      <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 10, color: "rgba(255,255,255,0.25)", letterSpacing: 1, textTransform: "uppercase" }}>Confirmed</div>
                     </div>
                   </div>
                 ))}
               </div>
-              <div className="stat-card">
-                <div style={{ fontSize: 22, letterSpacing: 1, marginBottom: 16 }}>REVENUE BREAKDOWN</div>
-                {(() => {
-                  const totalRev = dashboardBookings.reduce((s, b) => s + (b.amount || 0), 0);
-                  const byService = {};
-                  dashboardBookings.forEach(b => {
-                    if (!b.service) return;
-                    byService[b.service] = (byService[b.service] || 0) + (b.amount || 0);
-                  });
-                  const entries = Object.entries(byService).sort((a, b) => b[1] - a[1]);
-                  if (!entries.length) return <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.3)" }}>No booking data yet.</div>;
-                  return entries.map(([service, amt]) => {
-                    const pct = totalRev > 0 ? Math.round(amt / totalRev * 100) : 0;
-                    return (
-                      <div key={service} style={{ marginBottom: 16 }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "'DM Sans', sans-serif", fontSize: 13, marginBottom: 6 }}>
-                          <span style={{ color: "rgba(255,255,255,0.6)" }}>{service}</span>
-                          <span>${amt.toLocaleString()}</span>
-                        </div>
-                        <div style={{ height: 4, background: "rgba(255,255,255,0.06)", borderRadius: 2 }}>
-                          <div style={{ height: "100%", width: `${pct}%`, background: "#FF4D00", borderRadius: 2 }} />
-                        </div>
+
+              {/* Revenue breakdown */}
+              <div className="dash-card anim-5">
+                <div className="section-label">Revenue by service</div>
+                {!serviceEntries.length ? (
+                  <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 13, color: "rgba(255,255,255,0.2)", padding: "28px 0", textAlign: "center" }}>No booking data yet.</div>
+                ) : serviceEntries.map(([service, amt], i) => {
+                  const pct = totalRevenue > 0 ? Math.round(amt / totalRevenue * 100) : 0;
+                  const barColor = i === 0 ? "#FF4D00" : `rgba(255,255,255,${Math.max(0.12, 0.42 - i * 0.08)})`;
+                  return (
+                    <div key={service} style={{ marginBottom: 18 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "'DM Sans',sans-serif", fontSize: 12, marginBottom: 8 }}>
+                        <span style={{ color: "rgba(255,255,255,0.5)" }}>{service}</span>
+                        <span style={{ color: i === 0 ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.45)" }}>${amt.toLocaleString()}</span>
                       </div>
-                    );
-                  });
-                })()}
+                      <div style={{ height: 6, background: "rgba(255,255,255,0.04)", borderRadius: 3, overflow: "hidden", position: "relative" }}>
+                        <div style={{ height: "100%", width: `${pct}%`, background: barColor, borderRadius: 3, animation: "barGrow 0.8s cubic-bezier(0.4,0,0.2,1) both", animationDelay: `${i * 0.1}s`, "--bar-w": `${pct}%` }} />
+                      </div>
+                      <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 10, color: "rgba(255,255,255,0.2)", marginTop: 4, letterSpacing: 0.5 }}>{pct}% of revenue</div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>

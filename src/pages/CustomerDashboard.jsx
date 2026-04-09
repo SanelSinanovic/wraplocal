@@ -39,6 +39,12 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [paymentError, setPaymentError] = useState("");
 
+  // ── Reschedule modal state ───────────────────────────────
+  const [rescheduleBooking, setRescheduleBooking] = useState(null);
+  const [rescheduleNote, setRescheduleNote] = useState("");
+  const [rescheduleSubmitting, setRescheduleSubmitting] = useState(false);
+  const [rescheduleDone, setRescheduleDone] = useState(false);
+
   // Load bookings: real data if logged in, static demo otherwise
   useEffect(() => {
     if (currentUser) {
@@ -422,7 +428,12 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
                 <span>TOTAL</span><span style={{ color: "#FF4D00" }}>${b.amount.toLocaleString()}.00</span>
               </div>
               {b.status === "confirmed" && (
-                <button style={{ marginTop: 20, width: "100%", background: "transparent", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.5)", padding: "10px", fontFamily: "'Bebas Neue', cursive", fontSize: 15, letterSpacing: 2, cursor: "pointer" }}>
+                <button
+                  onClick={() => { setRescheduleBooking(b); setRescheduleNote(""); setRescheduleDone(false); }}
+                  style={{ marginTop: 20, width: "100%", background: "transparent", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.5)", padding: "10px", fontFamily: "'Bebas Neue', cursive", fontSize: 15, letterSpacing: 2, cursor: "pointer", transition: "border-color 0.2s, color 0.2s" }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(255,77,0,0.4)"; e.currentTarget.style.color = "#FF4D00"; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"; e.currentTarget.style.color = "rgba(255,255,255,0.5)"; }}
+                >
                   Request Reschedule
                 </button>
               )}
@@ -509,6 +520,61 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
           </div>
         </div>
       )}
+      {/* ── Reschedule modal ── */}
+      {rescheduleBooking && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 20 }}>
+          <div style={{ background: "#111", border: "1px solid rgba(255,255,255,0.1)", padding: "36px 32px", width: "100%", maxWidth: 440, fontFamily: "'Bebas Neue', cursive" }}>
+            {rescheduleDone ? (
+              <div style={{ textAlign: "center" }}>
+                <div style={{ fontSize: 48, marginBottom: 12 }}>📅</div>
+                <div style={{ fontSize: 28, letterSpacing: 1, marginBottom: 8 }}>REQUEST SENT</div>
+                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.5)", marginBottom: 28 }}>The shop has been notified. They'll reach out to confirm a new time.</div>
+                <button onClick={() => setRescheduleBooking(null)} style={{ width: "100%", background: "#FF4D00", color: "#fff", border: "none", padding: "12px", fontFamily: "'Bebas Neue', cursive", fontSize: 16, letterSpacing: 2, cursor: "pointer" }}>Done</button>
+              </div>
+            ) : (
+              <>
+                <div style={{ fontSize: 26, letterSpacing: 1, marginBottom: 4 }}>REQUEST RESCHEDULE</div>
+                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)", marginBottom: 24 }}>{rescheduleBooking.shop} · {rescheduleBooking.service}</div>
+                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)", letterSpacing: 1, marginBottom: 8 }}>PREFERRED NEW DATE / TIME</div>
+                <input
+                  placeholder="e.g. Any weekday afternoon, March 20 after 2pm…"
+                  value={rescheduleNote}
+                  onChange={e => setRescheduleNote(e.target.value)}
+                  style={{ width: "100%", background: "#151515", border: "1px solid rgba(255,255,255,0.1)", padding: "11px 14px", color: "#fff", fontFamily: "'DM Sans', sans-serif", fontSize: 14, outline: "none", marginBottom: 20, boxSizing: "border-box", transition: "border-color 0.2s" }}
+                  onFocus={e => e.target.style.borderColor = "#FF4D00"}
+                  onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.1)"}
+                />
+                <div style={{ display: "flex", gap: 10 }}>
+                  <button
+                    disabled={rescheduleSubmitting}
+                    onClick={async () => {
+                      setRescheduleSubmitting(true);
+                      const msg = rescheduleNote.trim()
+                        ? `🗓️ I'd like to request a reschedule. Preferred time: ${rescheduleNote.trim()}`
+                        : "🗓️ I'd like to request a reschedule for this appointment. Please let me know your available times.";
+                      await dbSendMessage({ bookingId: rescheduleBooking.id, senderId: currentUser?.id, senderRole: "customer", text: msg });
+                      if (currentUser) {
+                        await sendNotification("reschedule_request", rescheduleBooking.id).catch(() => {});
+                      }
+                      const now = new Date().toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+                      setMessagesMap(prev => ({
+                        ...prev,
+                        [rescheduleBooking.id]: mergeMessages(prev[rescheduleBooking.id] || [], { from: "me", text: msg, time: now }),
+                      }));
+                      setRescheduleSubmitting(false);
+                      setRescheduleDone(true);
+                    }}
+                    style={{ flex: 1, background: rescheduleSubmitting ? "#555" : "#FF4D00", color: "#fff", border: "none", padding: "12px", fontFamily: "'Bebas Neue', cursive", fontSize: 16, letterSpacing: 2, cursor: rescheduleSubmitting ? "default" : "pointer" }}
+                  >
+                    {rescheduleSubmitting ? "Sending…" : "Send Request"}
+                  </button>
+                  <button onClick={() => setRescheduleBooking(null)} style={{ background: "transparent", color: "rgba(255,255,255,0.4)", border: "1px solid rgba(255,255,255,0.1)", padding: "12px 18px", fontFamily: "'Bebas Neue', cursive", fontSize: 16, letterSpacing: 1, cursor: "pointer" }}>Cancel</button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
       </div>
     );
   }
@@ -516,7 +582,7 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
   // ── BOOKINGS LIST VIEW ──────────────────────────────────────────────────────
   return (
     <div style={{ fontFamily: "'Bebas Neue', cursive", background: "#0A0A0A", minHeight: "100vh", color: "#fff" }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap'); * { box-sizing: border-box; } .btn-main { background: #FF4D00; color: #fff; border: none; padding: 10px 20px; font-family: 'Bebas Neue', cursive; font-size: 14px; letter-spacing: 2px; cursor: pointer; } .booking-row:hover { border-color: rgba(255,77,0,0.3) !important; background: #161616 !important; } @media (max-width: 768px) { .dash-pad { padding: 16px !important; } .booking-row-meta { display: none !important; } .booking-row-right { flex-wrap: wrap; gap: 10px !important; } .dash-title { font-size: 36px !important; } } @media (max-width: 420px) { .dash-pad { padding: 12px !important; } } @keyframes skelPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap'); * { box-sizing: border-box; } .btn-main { background: #FF4D00; color: #fff; border: none; padding: 10px 20px; font-family: 'Bebas Neue', cursive; font-size: 14px; letter-spacing: 2px; cursor: pointer; transition: background 0.2s, transform 0.15s; } .btn-main:hover { background: #FF6A20; transform: translateY(-1px); } .booking-row { background: #111; border: 1px solid rgba(255,255,255,0.07); padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: border-color 0.2s, background 0.2s, transform 0.2s; } .booking-row:hover { border-color: rgba(255,77,0,0.3); background: linear-gradient(90deg, rgba(255,77,0,0.07) 0%, rgba(255,77,0,0.02) 60%, #111 100%); transform: translateX(2px); } @keyframes fadeInUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } } .brow-anim { animation: fadeInUp 0.4s cubic-bezier(0.22,1,0.36,1) both; } @media (max-width: 768px) { .dash-pad { padding: 16px !important; } .booking-row-meta { display: none !important; } .booking-row-right { flex-wrap: wrap; gap: 10px !important; } .dash-title { font-size: 36px !important; } } @media (max-width: 420px) { .dash-pad { padding: 12px !important; } } @keyframes skelPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }`}</style>
       <Navbar />
       <div className="dash-pad" style={{ padding: "40px" }}>
         <div className="dash-title" style={{ fontSize: 48, letterSpacing: 2, marginBottom: 8 }}>MY BOOKINGS</div>
@@ -548,9 +614,9 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
           </div>
         ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          {bookings.map(b => (
-            <div key={b.id} className="booking-row" onClick={() => setSelectedBooking(b)}
-              style={{ background: "#111", border: "1px solid rgba(255,255,255,0.06)", padding: "20px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", transition: "all 0.2s" }}>
+          {bookings.map((b, i) => (
+            <div key={b.id} className="booking-row brow-anim" onClick={() => setSelectedBooking(b)}
+              style={{ animationDelay: `${Math.min(i * 0.07, 0.4)}s` }}>
               <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
                 <div style={{ width: 44, height: 44, background: b.shopColor, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700, fontFamily: "'DM Sans', sans-serif", overflow: "hidden", flexShrink: 0 }}>
                     {b.shopImage ? <img src={b.shopImage} alt={b.shop} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : b.shopAvatar}
