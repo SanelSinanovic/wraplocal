@@ -3,7 +3,7 @@ export default function PricingPage({ nav }) {
     <div style={{ fontFamily: "'Bebas Neue', cursive", background: "#0A0A0A", minHeight: "100vh", color: "#fff" }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap'); * { box-sizing: border-box; } @keyframes fadeUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } } @keyframes glowPulse { 0%,100% { opacity: 0.05; } 50% { opacity: 0.12; } } .pricing-hero { animation: fadeUp 0.5s cubic-bezier(0.22,1,0.36,1) both; } .pricing-card-1 { animation: fadeUp 0.5s 0.1s cubic-bezier(0.22,1,0.36,1) both; } .pricing-card-2 { animation: fadeUp 0.5s 0.2s cubic-bezier(0.22,1,0.36,1) both; } .pricing-footer { animation: fadeUp 0.5s 0.3s cubic-bezier(0.22,1,0.36,1) both; } .price-card { transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s; } .price-card:hover { transform: translateY(-4px); box-shadow: 0 16px 48px rgba(0,0,0,0.4); } .price-card.featured:hover { box-shadow: 0 16px 48px rgba(255,77,0,0.18); } .btn-main { background: #FF4D00; color: #fff; border: none; padding: 14px 32px; font-family: 'Bebas Neue', cursive; font-size: 18px; letter-spacing: 2px; cursor: pointer; width: 100%; transition: background 0.2s, transform 0.15s; } .btn-main:hover { background: #FF6A20; transform: translateY(-1px); } .feat-item { font-family: 'DM Sans', sans-serif; font-size: 14px; color: rgba(255,255,255,0.6); margin-bottom: 10px; display: flex; gap: 10px; align-items: flex-start; transition: color 0.15s; } .feat-item:hover { color: rgba(255,255,255,0.85); } @media (max-width: 768px) { .pricing-nav { padding: 12px 16px !important; } .pricing-pad { padding: 40px 20px !important; } .pricing-grid { grid-template-columns: 1fr !important; } }`}</style>
       <nav className="pricing-nav" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 40px", background: "rgba(10,10,10,0.95)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-        <div style={{ fontSize: 24, letterSpacing: 4, color: "#FF4D00", cursor: "pointer" }} onClick={() => nav("landing")}>KI<span style={{ color: "#fff" }}>DOR</span></div>
+        <div style={{ fontSize: 24, letterSpacing: 4, color: "#FF4D00", cursor: "pointer" }} onClick={() => nav("landing")}>WRAP<span style={{ color: "#fff" }}>BRIDGE</span></div>
         <button style={{ background: "transparent", color: "rgba(255,255,255,0.6)", border: "1px solid rgba(255,255,255,0.15)", padding: "10px 20px", fontFamily: "'Bebas Neue', cursive", fontSize: 14, letterSpacing: 2, cursor: "pointer", transition: "all 0.2s" }} onMouseEnter={e => { e.currentTarget.style.borderColor = "#FF4D00"; e.currentTarget.style.color = "#FF4D00"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"; e.currentTarget.style.color = "rgba(255,255,255,0.6)"; }} onClick={() => nav("company-login")}>Business Login</button>
       </nav>
       <div style={{ position: "relative", overflow: "hidden" }}>
@@ -12,7 +12,7 @@ export default function PricingPage({ nav }) {
           <div className="pricing-hero">
             <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "#FF4D00", letterSpacing: 3, marginBottom: 16, textTransform: "uppercase" }}>For Wrap Shop Owners</div>
             <div style={{ fontSize: 64, letterSpacing: 2, marginBottom: 20 }}>GROW YOUR BUSINESS</div>
-            <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 16, color: "rgba(255,255,255,0.45)", maxWidth: 500, margin: "0 auto 60px", lineHeight: 1.7 }}>Get listed on Kidor and reach thousands of local customers actively looking for wrap services.</p>
+            <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 16, color: "rgba(255,255,255,0.45)", maxWidth: 500, margin: "0 auto 60px", lineHeight: 1.7 }}>Get listed on WrapBridge and reach thousands of local customers actively looking for wrap services.</p>
           </div>
 
           <div className="pricing-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, textAlign: "left", maxWidth: 700, margin: "0 auto 60px" }}>
@@ -43,7 +43,7 @@ export default function PricingPage({ nav }) {
           </div>
 
           <div className="pricing-footer" style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.25)" }}>
-            Questions? Email <span style={{ color: "#FF4D00", cursor: "pointer" }}>partners@kidor.com</span>
+            Questions? Email <span style={{ color: "#FF4D00", cursor: "pointer" }}>partners@wrapbridge.com</span>
           </div>
         </div>
       </div>

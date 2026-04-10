@@ -102,7 +102,7 @@ export default function ShopProfile({ nav, selectedShop, setBookingShop, current
       {/* ── NAV ── */}
       <nav className="sp-nav" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 40px", background: "rgba(10,10,10,0.95)", borderBottom: "1px solid rgba(255,255,255,0.06)", position: "sticky", top: 0, zIndex: 100, backdropFilter: "blur(20px)" }}>
         <div style={{ fontSize: 24, letterSpacing: 4, color: "#FF4D00", cursor: "pointer" }} onClick={() => nav("landing")}>
-          KI<span style={{ color: "#fff" }}>DOR</span>
+          WRAP<span style={{ color: "#fff" }}>BRIDGE</span>
         </div>
         <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.5)", cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }} onClick={() => nav("search")}>
           ← Back to Search

@@ -19,7 +19,7 @@ export async function geocodeCityState(city, state) {
   const q = encodeURIComponent([city, state].filter(Boolean).join(', ') + ', USA');
   try {
     const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1`, {
-      headers: { 'User-Agent': 'Kidor/1.0' },
+      headers: { 'User-Agent': 'WrapBridge/1.0' },
     });
     const data = await res.json();
     if (!data.length) return null;

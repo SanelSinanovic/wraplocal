@@ -684,7 +684,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
 
       {/* Sidebar */}
       <div className="company-sidebar" style={{ width: 220, background: "#0D0D0D", borderRight: "1px solid rgba(255,255,255,0.06)", padding: "24px 16px", display: "flex", flexDirection: "column", flexShrink: 0 }}>
-        <div className="sidebar-logo" style={{ fontSize: 20, letterSpacing: 4, color: "#FF4D00", marginBottom: 32, padding: "0 4px", cursor: "pointer" }} onClick={() => nav("landing")}>KI<span style={{ color: "#fff" }}>DOR</span></div>
+        <div className="sidebar-logo" style={{ fontSize: 20, letterSpacing: 4, color: "#FF4D00", marginBottom: 32, padding: "0 4px", cursor: "pointer" }} onClick={() => nav("landing")}>WRAP<span style={{ color: "#fff" }}>BRIDGE</span></div>
         <div className="sidebar-sub" style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.2)", letterSpacing: 2, marginBottom: 8, padding: "0 4px" }}>{userShop?.name?.toUpperCase() || "MY SHOP"}</div>
         {[["overview", "📊 Overview"], ["requests", "📬 Requests"], ["bookings", "📅 Bookings"], ["availability", "🗓️ Availability"], ["profile", "✏️ Profile"], ["payments", "💰 Payments"], ["settings", "⚙️ Settings"]].map(([k, l]) => (
           <div key={k} className={`nav-item${dashTab === k ? " active" : ""}`} onClick={() => { setDashTab(k); setSelectedBooking(null); }} style={{ justifyContent: "space-between" }}>
@@ -771,7 +771,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
             {/* Stat cards */}
             <div className="stats-4" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 28 }}>
               {[
-                { label: "NET PAYOUT",    value: `$${netPayout.toLocaleString()}`,    sub: "After KIDOR fee",                   cardCls: "hero",       labelCol: "rgba(255,160,80,0.7)",   valCol: "#fff",                subCol: "rgba(255,140,60,0.65)",  accentBar: "rgba(255,100,0,0.7)",  cls: "anim-0" },
+                { label: "NET PAYOUT",    value: `$${netPayout.toLocaleString()}`,    sub: "After WRAPBRIDGE fee",                   cardCls: "hero",       labelCol: "rgba(255,160,80,0.7)",   valCol: "#fff",                subCol: "rgba(255,140,60,0.65)",  accentBar: "rgba(255,100,0,0.7)",  cls: "anim-0" },
                 { label: "TOTAL REVENUE", value: `$${totalRevenue.toLocaleString()}`, sub: `${dashboardBookings.length} bookings total`, cardCls: "card-green", labelCol: "rgba(100,220,170,0.65)", valCol: "rgba(255,255,255,0.95)", subCol: "rgba(80,200,150,0.55)",  accentBar: "rgba(16,185,129,0.6)", cls: "anim-1" },
                 { label: "CONFIRMED",     value: String(confirmedBookings.length),    sub: `${pendingBookings.length} awaiting`,         cardCls: "card-blue",  labelCol: "rgba(160,165,255,0.65)", valCol: "rgba(255,255,255,0.95)", subCol: "rgba(140,145,240,0.55)", accentBar: "rgba(99,102,241,0.6)", cls: "anim-2" },
                 { label: "AVG ORDER",     value: `$${dashboardBookings.length ? Math.round(totalRevenue / dashboardBookings.length) : 0}`, sub: "per booking", cardCls: "card-amber", labelCol: "rgba(245,190,80,0.65)", valCol: "rgba(255,255,255,0.95)", subCol: "rgba(230,175,60,0.55)", accentBar: "rgba(245,158,11,0.6)", cls: "anim-3" },
@@ -1154,7 +1154,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
           return (
           <div>
             <div style={{ fontSize: 40, letterSpacing: 2, marginBottom: 8 }}>PAYMENTS & PAYOUTS</div>
-            <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.4)", marginBottom: 32 }}>Kidor retains 7% of all bookings as a platform fee</div>
+            <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.4)", marginBottom: 32 }}>WrapBridge retains 7% of all bookings as a platform fee</div>
 
             {/* ── Stripe Connect payout setup ── */}
             <div style={{ marginBottom: 32, border: stripeAccountId ? "1px solid rgba(16,185,129,0.3)" : "1px solid rgba(245,158,11,0.3)", background: stripeAccountId ? "rgba(16,185,129,0.05)" : "rgba(245,158,11,0.05)", padding: "20px 24px" }}>
@@ -1202,7 +1202,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
               <div className="stat-card">
                 <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 8 }}>PLATFORM FEE (7%)</div>
                 <div style={{ fontSize: 40, color: "#F59E0B" }}>${totalFee.toFixed(2)}</div>
-                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.3)", marginTop: 6 }}>Retained by Kidor</div>
+                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.3)", marginTop: 6 }}>Retained by WrapBridge</div>
               </div>
               <div className="stat-card">
                 <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 8 }}>NET PAYOUT</div>
@@ -1214,7 +1214,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
               <div style={{ fontSize: 22, letterSpacing: 1, marginBottom: 20 }}>FEE BREAKDOWN — {monthLabel}</div>
               <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.5)", lineHeight: 2 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid rgba(255,255,255,0.05)", padding: "8px 0" }}><span>Total Booking Revenue</span><span style={{ color: "#fff" }}>${totalRevenue.toFixed(2)}</span></div>
-                <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid rgba(255,255,255,0.05)", padding: "8px 0" }}><span>Kidor Fee (7%)</span><span style={{ color: "#F59E0B" }}>-${totalFee.toFixed(2)}</span></div>
+                <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid rgba(255,255,255,0.05)", padding: "8px 0" }}><span>WrapBridge Fee (7%)</span><span style={{ color: "#F59E0B" }}>-${totalFee.toFixed(2)}</span></div>
                 <div style={{ display: "flex", justifyContent: "space-between", padding: "12px 0" }}><span style={{ fontSize: 18, fontFamily: "'Bebas Neue', cursive", letterSpacing: 1 }}>NET PAYOUT</span><span style={{ fontSize: 18, color: "#10B981", fontFamily: "'Bebas Neue', cursive" }}>${netPayout.toFixed(2)}</span></div>
               </div>
             </div>
@@ -1386,7 +1386,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
           <div style={{ maxWidth: 600 }}>
             {isNewShop && (
               <div style={{ background: "rgba(255,77,0,0.08)", border: "1px solid rgba(255,77,0,0.3)", padding: "20px 24px", marginBottom: 32 }}>
-                <div style={{ fontSize: 26, letterSpacing: 2, marginBottom: 6 }}>🎉 WELCOME TO KIDOR!</div>
+                <div style={{ fontSize: 26, letterSpacing: 2, marginBottom: 6 }}>🎉 WELCOME TO WRAPBRIDGE!</div>
                 <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.6)", lineHeight: 1.7 }}>
                   Your account is live. Fill in your business details below so customers can find and book you. The more you complete, the better your listing looks.
                 </div>

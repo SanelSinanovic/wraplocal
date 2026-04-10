@@ -187,7 +187,7 @@ export default function LandingPage({ nav, shops: liveShops, setBookingShop, set
 
       {/* NAV */}
       <nav className="nav-pad" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 60px", borderBottom: "1px solid rgba(255,255,255,0.06)", position: "sticky", top: 0, background: "rgba(10,10,10,0.95)", backdropFilter: "blur(20px)", zIndex: 100 }}>
-        <div style={{ fontSize: 28, letterSpacing: 4, color: "#FF4D00" }}>KI<span style={{ color: "#fff" }}>DOR</span></div>
+        <div style={{ fontSize: 28, letterSpacing: 4, color: "#FF4D00" }}>WRAP<span style={{ color: "#fff" }}>BRIDGE</span></div>
         <div className="nav-links" style={{ display: "flex", gap: 32 }}>
           <span className="nav-link" onClick={() => nav("search")}>Find Shops</span>
           <span className="nav-link" onClick={() => nav("pricing")}>For Businesses</span>
@@ -496,9 +496,9 @@ export default function LandingPage({ nav, shops: liveShops, setBookingShop, set
           <span onClick={() => nav("terms")} style={{ cursor: "pointer", transition: "color 0.2s" }} onMouseEnter={e => e.target.style.color="#FF4D00"} onMouseLeave={e => e.target.style.color="rgba(255,255,255,0.3)"}>Terms of Service</span>
           <span onClick={() => nav("privacy")} style={{ cursor: "pointer", transition: "color 0.2s" }} onMouseEnter={e => e.target.style.color="#FF4D00"} onMouseLeave={e => e.target.style.color="rgba(255,255,255,0.3)"}>Privacy Policy</span>
           <span onClick={() => nav("pricing")} style={{ cursor: "pointer", transition: "color 0.2s" }} onMouseEnter={e => e.target.style.color="#FF4D00"} onMouseLeave={e => e.target.style.color="rgba(255,255,255,0.3)"}>Pricing</span>
-          <a href="mailto:support@kidor.app" style={{ color: "rgba(255,255,255,0.3)", textDecoration: "none", transition: "color 0.2s" }} onMouseEnter={e => e.target.style.color="#FF4D00"} onMouseLeave={e => e.target.style.color="rgba(255,255,255,0.3)"}>support@kidor.app</a>
+          <a href="mailto:support@wrapbridge.com" style={{ color: "rgba(255,255,255,0.3)", textDecoration: "none", transition: "color 0.2s" }} onMouseEnter={e => e.target.style.color="#FF4D00"} onMouseLeave={e => e.target.style.color="rgba(255,255,255,0.3)"}>support@wrapbridge.com</a>
         </div>
-        <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.2)" }}>© {new Date().getFullYear()} Kidor. All rights reserved.</div>
+        <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.2)" }}>© {new Date().getFullYear()} WrapBridge. All rights reserved.</div>
       </div>
     </div>
   );

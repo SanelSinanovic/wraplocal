@@ -1,5 +1,5 @@
 // @ts-nocheck
-// Kidor - Email notification edge function (Resend)
+// WrapBridge - Email notification edge function (Resend)
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -19,7 +19,7 @@ function emailWrapper(content) {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Kidor</title>
+  <title>WrapBridge</title>
 </head>
 <body style="margin:0;padding:0;background:#f4f4f4;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:32px 16px;">
@@ -39,8 +39,8 @@ function emailWrapper(content) {
         <tr>
           <td style="background:#f9f9f9;padding:20px 32px;border-top:1px solid #eee;">
             <p style="margin:0;font-size:12px;color:#999;line-height:1.6;">
-              You received this email because you have an active booking on Kidor.<br>
-              Questions? Reply to this email or visit <a href="https://kidor.app" style="color:#FF4D00;">kidor.app</a>
+              You received this email because you have an active booking on WrapBridge.<br>
+              Questions? Reply to this email or visit <a href="https://wrapbridge.com" style="color:#FF4D00;">wrapbridge.com</a>
             </p>
           </td>
         </tr>
@@ -158,7 +158,7 @@ function buildEmail(type, b, customerName, shopName, customerEmail, shopEmail, a
         </table>
         ${divider()}
         <p style="margin:0;font-size:14px;color:#555;line-height:1.6;">
-          You can message the shop any time through your Kidor dashboard.
+          You can message the shop any time through your WrapBridge dashboard.
         </p>
         ${orangeBtn("View My Booking →", appUrl)}
       `);
@@ -181,9 +181,9 @@ function buildEmail(type, b, customerName, shopName, customerEmail, shopEmail, a
         </table>
         ${divider()}
         <p style="margin:0;font-size:14px;color:#555;line-height:1.6;">
-          If you have questions, please reach out through the Kidor dashboard.
+          If you have questions, please reach out through the WrapBridge dashboard.
         </p>
-        ${orangeBtn("Go to Kidor →", appUrl)}
+        ${orangeBtn("Go to WrapBridge →", appUrl)}
       `);
       return { to: customerEmail, subject: `Booking cancelled — ${service} at ${shopName}`, html, shopHtml: html, shopSubject: `Booking cancelled — ${customerName} (${service})`, shopEmail };
     }
@@ -205,7 +205,7 @@ function buildEmail(type, b, customerName, shopName, customerEmail, shopEmail, a
         </table>
         ${divider()}
         <p style="margin:0;font-size:14px;color:#555;line-height:1.6;">
-          Your booking is confirmed. You can message the shop any time through your Kidor dashboard.
+          Your booking is confirmed. You can message the shop any time through your WrapBridge dashboard.
         </p>
         ${orangeBtn("View My Booking \u2192", appUrl)}
       `);
@@ -246,8 +246,8 @@ Deno.serve(async (req) => {
     const resendKey     = Deno.env.get("RESEND_API_KEY");
     const supabaseUrl   = Deno.env.get("SUPABASE_URL");
     const supabaseService = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    const fromEmail     = Deno.env.get("RESEND_FROM") || "Kidor <onboarding@resend.dev>";
-    const appUrl        = Deno.env.get("APP_URL") || "https://kidor.app";
+    const fromEmail     = Deno.env.get("RESEND_FROM") || "WrapBridge <onboarding@resend.dev>";
+    const appUrl        = Deno.env.get("APP_URL") || "https://wrapbridge.com";
 
     if (!resendKey)       return jsonResp({ error: "RESEND_API_KEY not configured" }, 500);
     if (!supabaseUrl)     return jsonResp({ error: "SUPABASE_URL not configured" }, 500);

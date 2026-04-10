@@ -58,7 +58,7 @@ Deno.serve(async (req) => {
     params.append("line_items[0][price_data][unit_amount]", String(serviceCents));
     params.append("line_items[0][price_data][product_data][name]", serviceName || "Service");
     params.append("line_items[0][price_data][product_data][description]",
-      shopName ? `at ${shopName} · powered by Kidor` : "powered by Kidor");
+      shopName ? `at ${shopName} · powered by WrapBridge` : "powered by WrapBridge");
     params.append("line_items[0][quantity]", "1");
     params.append("success_url", successUrl);
     params.append("cancel_url", cancelUrl);
@@ -80,7 +80,7 @@ Deno.serve(async (req) => {
     }
 
     // Block payment entirely if the shop has not completed Stripe Connect onboarding.
-    // This keeps Kidor out of the money flow and eliminates refund/chargeback liability.
+    // This keeps WrapBridge out of the money flow and eliminates refund/chargeback liability.
     if (!useConnect) {
       return new Response(
         JSON.stringify({ error: "This shop has not completed payment setup. Please contact the shop directly." }),

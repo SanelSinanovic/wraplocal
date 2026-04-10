@@ -1,4 +1,4 @@
-// Canonical list of all service types offered on Kidor.
+// Canonical list of all service types offered on WrapBridge.
 // Used in BookingFlow (customer picks service), CompanyDashboard (shop selects offerings),
 // and ShopProfile (displays shop services).
 

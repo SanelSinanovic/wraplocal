@@ -15,7 +15,7 @@ export default function PrivacyPage({ nav }) {
         <div style={{ fontFamily: "'Bebas Neue', cursive", fontSize: 48, letterSpacing: 3, marginBottom: 8 }}>PRIVACY POLICY</div>
         <p style={{ color: "rgba(255,255,255,0.3)", fontSize: 13, marginBottom: 40 }}>Last Updated: April 10, 2026</p>
 
-        <p>This Privacy Policy explains how Kidor ("we", "us", or "our") collects, uses, and shares information about you when you use kidor.app and related services. By using our Platform, you agree to the collection and use of information as described in this Policy.</p>
+        <p>This Privacy Policy explains how WrapBridge ("we", "us", or "our") collects, uses, and shares information about you when you use wrapbridge.com and related services. By using our Platform, you agree to the collection and use of information as described in this Policy.</p>
 
         <h2>1. Information We Collect</h2>
         <h3>1.1 Information You Provide</h3>
@@ -58,13 +58,13 @@ export default function PrivacyPage({ nav }) {
         <h3>3.3 With Infrastructure Providers</h3>
         <p>We use Supabase (database and authentication) and Resend (transactional email). These providers process data on our behalf under confidentiality agreements.</p>
         <h3>3.4 Legal Requirements</h3>
-        <p>We may disclose your information if required by law, court order, or government request, or to protect the rights, property, or safety of Kidor, our users, or the public.</p>
+        <p>We may disclose your information if required by law, court order, or government request, or to protect the rights, property, or safety of WrapBridge, our users, or the public.</p>
 
         <h2>4. Public Information</h2>
         <p>Service Provider shop profiles — including name, location, photos, services, bio, and reviews — are publicly visible to all visitors of the Platform. Do not include private information in public-facing profile fields.</p>
 
         <h2>5. Data Retention</h2>
-        <p>We retain your account data for as long as your account is active. Booking records and messages are retained for a minimum of 2 years for legal and dispute purposes. You may request deletion of your account by contacting us at <a href="mailto:support@kidor.app">support@kidor.app</a>; however, we may retain certain records as required by law or legitimate business interests.</p>
+        <p>We retain your account data for as long as your account is active. Booking records and messages are retained for a minimum of 2 years for legal and dispute purposes. You may request deletion of your account by contacting us at <a href="mailto:support@wrapbridge.com">support@wrapbridge.com</a>; however, we may retain certain records as required by law or legitimate business interests.</p>
 
         <h2>6. Cookies</h2>
         <p>We use browser local storage and session storage to keep you logged in and remember app state. We do not currently use third-party advertising cookies. You can clear local storage in your browser settings, which will log you out of the Platform.</p>
@@ -73,7 +73,7 @@ export default function PrivacyPage({ nav }) {
         <p>We implement industry-standard security measures including encrypted connections (HTTPS), hashed passwords via Supabase Auth, and row-level security on our database. However, no method of transmission over the Internet is 100% secure. We cannot guarantee absolute security of your data.</p>
 
         <h2>8. Children's Privacy</h2>
-        <p>Kidor is not directed at children under the age of 13. We do not knowingly collect personal information from children. If you believe a child has provided us with personal data, contact us at <a href="mailto:support@kidor.app">support@kidor.app</a> and we will delete it.</p>
+        <p>WrapBridge is not directed at children under the age of 13. We do not knowingly collect personal information from children. If you believe a child has provided us with personal data, contact us at <a href="mailto:support@wrapbridge.com">support@wrapbridge.com</a> and we will delete it.</p>
 
         <h2>9. Your Rights</h2>
         <p>Depending on your location, you may have the right to:</p>
@@ -83,7 +83,7 @@ export default function PrivacyPage({ nav }) {
           <li>Request deletion of your account and associated data</li>
           <li>Opt out of non-essential communications</li>
         </ul>
-        <p>To exercise these rights, contact us at <a href="mailto:support@kidor.app">support@kidor.app</a>.</p>
+        <p>To exercise these rights, contact us at <a href="mailto:support@wrapbridge.com">support@wrapbridge.com</a>.</p>
 
         <h2>10. Third-Party Links</h2>
         <p>The Platform may contain links to third-party websites (e.g., Service Provider websites). We are not responsible for the privacy practices of those sites. Review their privacy policies before sharing any personal information.</p>
@@ -92,10 +92,10 @@ export default function PrivacyPage({ nav }) {
         <p>We may update this Privacy Policy from time to time. We will notify you of material changes by posting the updated Policy with a new "Last Updated" date. Continued use of the Platform after changes constitutes acceptance.</p>
 
         <h2>12. Contact</h2>
-        <p>For privacy questions or data requests, contact us at: <a href="mailto:support@kidor.app">support@kidor.app</a></p>
+        <p>For privacy questions or data requests, contact us at: <a href="mailto:support@wrapbridge.com">support@wrapbridge.com</a></p>
 
         <p style={{ marginTop: 60, color: "rgba(255,255,255,0.2)", fontSize: 12, borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 24 }}>
-          © {new Date().getFullYear()} Kidor. All rights reserved. &nbsp;
+          © {new Date().getFullYear()} WrapBridge. All rights reserved. &nbsp;
           <span onClick={() => nav("terms")} style={{ color: "#FF4D00", cursor: "pointer" }}>Terms of Service</span>
         </p>
       </div>
