@@ -10,11 +10,13 @@ import CustomerLogin from "./pages/CustomerLogin";
 import CompanyLogin from "./pages/CompanyLogin";
 import { supabase } from "./lib/supabase";
 import { fetchShops, fetchProfile } from "./lib/queries";
+import TermsPage from "./pages/TermsPage";
+import PrivacyPage from "./pages/PrivacyPage";
 
 // Read initial view from URL hash (e.g. #search) so hard-refresh stays on the right page
 function getInitialView() {
   const hash = window.location.hash.replace("#", "");
-  const valid = ["landing","search","shop","booking","customer-dash","company-dash","pricing","customer-login","company-login"];
+  const valid = ["landing","search","shop","booking","customer-dash","company-dash","pricing","customer-login","company-login","terms","privacy"];
   return valid.includes(hash) ? hash : "landing";
 }
 
@@ -27,8 +29,8 @@ const PAGE_META = {
   "company-dash": { title: "Shop Dashboard — Kidor",                                         description: "Manage your shop, bookings, and payouts on Kidor." },
   pricing:        { title: "Pricing — Kidor",                                                 description: "Simple, transparent pricing for vehicle wrap and tint shops listing on Kidor." },
   "customer-login":{ title: "Sign In — Kidor",                                               description: "Sign in to your Kidor customer account to manage bookings." },
-  "company-login": { title: "Shop Login — Kidor",                                            description: "Sign in to your Kidor shop dashboard." },
-};
+  "company-login": { title: "Shop Login — Kidor",                                            description: "Sign in to your Kidor shop dashboard." },  terms:           { title: "Terms of Service \u2014 Kidor",                                      description: "Read Kidor's Terms of Service, including our payment, refund, and liability policies." },
+  privacy:         { title: "Privacy Policy \u2014 Kidor",                                        description: "Read Kidor's Privacy Policy to understand how we collect, use, and protect your data." },};
 
 export default function App() {
   const [view, setView] = useState(getInitialView);
@@ -203,5 +205,7 @@ export default function App() {
   if (view === "company-dash") return <CompanyDashboard nav={nav} dashTab={dashTab} setDashTab={setDashTab} currentUser={currentUser} currentProfile={currentProfile} onLogout={handleLogout} />;
   if (view === "customer-login") return <CustomerLogin nav={nav} loginForm={loginForm} setLoginForm={setLoginForm} loginError={loginError} setLoginError={setLoginError} handleLogin={handleLogin} bookingContext={!!postLoginNav} />;
   if (view === "company-login") return <CompanyLogin nav={nav} loginForm={loginForm} setLoginForm={setLoginForm} loginError={loginError} setLoginError={setLoginError} handleLogin={handleLogin} />;
+  if (view === "terms") return <TermsPage nav={nav} />;
+  if (view === "privacy") return <PrivacyPage nav={nav} />;
   return null;
 }

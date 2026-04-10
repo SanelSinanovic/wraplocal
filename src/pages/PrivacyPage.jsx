@@ -1,0 +1,104 @@
+export default function PrivacyPage({ nav }) {
+  return (
+    <div style={{ background: "#090909", minHeight: "100vh", color: "#fff", fontFamily: "'DM Sans', sans-serif" }}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap'); * { box-sizing: border-box; } h2 { font-family: 'Bebas Neue', cursive; font-size: 22px; letter-spacing: 2px; color: #FF4D00; margin: 40px 0 10px; } h3 { font-family: 'Bebas Neue', cursive; font-size: 16px; letter-spacing: 1.5px; color: rgba(255,255,255,0.7); margin: 24px 0 8px; } p, li { font-size: 15px; color: rgba(255,255,255,0.6); line-height: 1.8; } ul { padding-left: 20px; margin: 8px 0; } a { color: #FF4D00; text-decoration: none; } a:hover { text-decoration: underline; }`}</style>
+
+      {/* Header */}
+      <div style={{ background: "#0D0D0D", borderBottom: "1px solid rgba(255,255,255,0.07)", padding: "20px 40px", display: "flex", alignItems: "center", gap: 32 }}>
+        <div onClick={() => nav("landing")} style={{ fontFamily: "'Bebas Neue', cursive", fontSize: 22, letterSpacing: 4, cursor: "pointer" }}>
+          <span style={{ color: "#FF4D00" }}>KI</span><span style={{ color: "#fff" }}>DOR</span>
+        </div>
+        <span style={{ fontSize: 13, color: "rgba(255,255,255,0.3)", letterSpacing: 2 }}>PRIVACY POLICY</span>
+      </div>
+
+      <div style={{ maxWidth: 780, margin: "0 auto", padding: "60px 32px 100px" }}>
+        <div style={{ fontFamily: "'Bebas Neue', cursive", fontSize: 48, letterSpacing: 3, marginBottom: 8 }}>PRIVACY POLICY</div>
+        <p style={{ color: "rgba(255,255,255,0.3)", fontSize: 13, marginBottom: 40 }}>Last Updated: April 10, 2026</p>
+
+        <p>This Privacy Policy explains how Kidor ("we", "us", or "our") collects, uses, and shares information about you when you use kidor.app and related services. By using our Platform, you agree to the collection and use of information as described in this Policy.</p>
+
+        <h2>1. Information We Collect</h2>
+        <h3>1.1 Information You Provide</h3>
+        <ul>
+          <li><strong>Account information:</strong> name, email address, and password when you register</li>
+          <li><strong>Profile information:</strong> business name, location, phone number, and bio (Service Providers)</li>
+          <li><strong>Booking information:</strong> vehicle details, service requests, preferred dates, and messages</li>
+          <li><strong>Communications:</strong> messages sent through the Platform between Customers and Service Providers</li>
+        </ul>
+        <h3>1.2 Information Collected Automatically</h3>
+        <ul>
+          <li><strong>Usage data:</strong> pages visited, features used, and actions taken on the Platform</li>
+          <li><strong>Device data:</strong> browser type, operating system, IP address, and general location</li>
+          <li><strong>Cookies and local storage:</strong> used to maintain sessions and remember preferences</li>
+        </ul>
+        <h3>1.3 Information from Third Parties</h3>
+        <ul>
+          <li><strong>Stripe:</strong> We receive payment confirmation data (not full card numbers) to verify transactions</li>
+          <li><strong>Geolocation:</strong> With your permission, we use your browser's geolocation to show nearby shops</li>
+        </ul>
+
+        <h2>2. How We Use Your Information</h2>
+        <p>We use the information we collect to:</p>
+        <ul>
+          <li>Create and manage your account</li>
+          <li>Connect Customers with Service Providers and facilitate bookings</li>
+          <li>Process payments and send transaction-related emails</li>
+          <li>Send booking confirmations, quote notifications, and service updates</li>
+          <li>Display shop profiles, portfolios, and reviews publicly on the Platform</li>
+          <li>Improve the Platform and troubleshoot technical issues</li>
+          <li>Comply with legal obligations</li>
+        </ul>
+        <p>We do <strong>not</strong> sell your personal information to third parties.</p>
+
+        <h2>3. How We Share Your Information</h2>
+        <h3>3.1 With Service Providers</h3>
+        <p>When you submit a booking request, your name, vehicle information, and message are shared with the Service Provider you are booking with. This is necessary to fulfill the service.</p>
+        <h3>3.2 With Stripe</h3>
+        <p>Payment information is handled directly by Stripe. We share your booking details (amount, service name) with Stripe to create checkout sessions. We do not store full card numbers. Stripe's Privacy Policy applies to all payment data.</p>
+        <h3>3.3 With Infrastructure Providers</h3>
+        <p>We use Supabase (database and authentication) and Resend (transactional email). These providers process data on our behalf under confidentiality agreements.</p>
+        <h3>3.4 Legal Requirements</h3>
+        <p>We may disclose your information if required by law, court order, or government request, or to protect the rights, property, or safety of Kidor, our users, or the public.</p>
+
+        <h2>4. Public Information</h2>
+        <p>Service Provider shop profiles — including name, location, photos, services, bio, and reviews — are publicly visible to all visitors of the Platform. Do not include private information in public-facing profile fields.</p>
+
+        <h2>5. Data Retention</h2>
+        <p>We retain your account data for as long as your account is active. Booking records and messages are retained for a minimum of 2 years for legal and dispute purposes. You may request deletion of your account by contacting us at <a href="mailto:support@kidor.app">support@kidor.app</a>; however, we may retain certain records as required by law or legitimate business interests.</p>
+
+        <h2>6. Cookies</h2>
+        <p>We use browser local storage and session storage to keep you logged in and remember app state. We do not currently use third-party advertising cookies. You can clear local storage in your browser settings, which will log you out of the Platform.</p>
+
+        <h2>7. Security</h2>
+        <p>We implement industry-standard security measures including encrypted connections (HTTPS), hashed passwords via Supabase Auth, and row-level security on our database. However, no method of transmission over the Internet is 100% secure. We cannot guarantee absolute security of your data.</p>
+
+        <h2>8. Children's Privacy</h2>
+        <p>Kidor is not directed at children under the age of 13. We do not knowingly collect personal information from children. If you believe a child has provided us with personal data, contact us at <a href="mailto:support@kidor.app">support@kidor.app</a> and we will delete it.</p>
+
+        <h2>9. Your Rights</h2>
+        <p>Depending on your location, you may have the right to:</p>
+        <ul>
+          <li>Access the personal data we hold about you</li>
+          <li>Request correction of inaccurate data</li>
+          <li>Request deletion of your account and associated data</li>
+          <li>Opt out of non-essential communications</li>
+        </ul>
+        <p>To exercise these rights, contact us at <a href="mailto:support@kidor.app">support@kidor.app</a>.</p>
+
+        <h2>10. Third-Party Links</h2>
+        <p>The Platform may contain links to third-party websites (e.g., Service Provider websites). We are not responsible for the privacy practices of those sites. Review their privacy policies before sharing any personal information.</p>
+
+        <h2>11. Changes to This Policy</h2>
+        <p>We may update this Privacy Policy from time to time. We will notify you of material changes by posting the updated Policy with a new "Last Updated" date. Continued use of the Platform after changes constitutes acceptance.</p>
+
+        <h2>12. Contact</h2>
+        <p>For privacy questions or data requests, contact us at: <a href="mailto:support@kidor.app">support@kidor.app</a></p>
+
+        <p style={{ marginTop: 60, color: "rgba(255,255,255,0.2)", fontSize: 12, borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 24 }}>
+          © {new Date().getFullYear()} Kidor. All rights reserved. &nbsp;
+          <span onClick={() => nav("terms")} style={{ color: "#FF4D00", cursor: "pointer" }}>Terms of Service</span>
+        </p>
+      </div>
+    </div>
+  );
+}
