@@ -29,8 +29,10 @@ export default function ShopProfile({ nav, selectedShop, setBookingShop, current
   const bannerSrc = shop.image || shop.banner_url || null;
   const portfolio = shop.portfolio && shop.portfolio.length > 0 ? shop.portfolio : PLACEHOLDER_PORTFOLIO;
   const bio = shop.about || shop.bio || "";
-  const rating = shop.rating ?? 0;
-  const reviewCount = shop.reviews ?? shop.review_count ?? 0;
+  const rating = reviews.length > 0
+    ? Math.round((reviews.reduce((sum, r) => sum + r.stars, 0) / reviews.length) * 10) / 10
+    : 0;
+  const reviewCount = reviews.length;
   const location = shop.location || shop.city || "";
   const priceFrom = shop.price ?? shop.price_from ?? null;
   const tags = shop.tags || [];

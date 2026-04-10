@@ -160,7 +160,12 @@ export default function SearchPage({ nav, shops: liveShops, searchQuery, setSear
                   <div>
                     <div style={{ fontSize: 26, letterSpacing: 1, marginBottom: 4 }}>{shop.name}</div>
                     <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)", marginBottom: 10 }}>
-                      ★ {shop.rating} ({shop.reviews ?? shop.review_count ?? 0} reviews) · {shop.location || [shop.city, shop.state].filter(Boolean).join(", ") || ""}
+                      {(() => {
+                        const rc = shop.reviews ?? shop.review_count ?? 0;
+                        const rt = shop.rating ?? 0;
+                        return rc > 0 && rt > 0 ? `★ ${rt} (${rc} review${rc !== 1 ? "s" : ""}) · ` : "";
+                      })()}
+                      {shop.location || [shop.city, shop.state].filter(Boolean).join(", ") || ""}
                       {shop._distanceMi != null && <span style={{ color: "#FF4D00", marginLeft: 6 }}>· {shop._distanceMi < 10 ? shop._distanceMi.toFixed(1) : Math.round(shop._distanceMi)} mi away</span>}
                     </div>
                     <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>

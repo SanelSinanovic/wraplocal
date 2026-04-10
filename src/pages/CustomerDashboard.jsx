@@ -45,6 +45,13 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
   const [rescheduleSubmitting, setRescheduleSubmitting] = useState(false);
   const [rescheduleDone, setRescheduleDone] = useState(false);
 
+  // ── Cancel booking state ─────────────────────────────────
+  const [cancelConfirmId, setCancelConfirmId] = useState(null);
+  const [cancelSubmitting, setCancelSubmitting] = useState(false);
+
+  // ── Unread messages state ────────────────────────────────
+  const [unreadMap, setUnreadMap] = useState({});
+
   // Load bookings: real data if logged in, static demo otherwise
   useEffect(() => {
     if (currentUser) {
@@ -82,6 +89,23 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
     });
     return () => { channel?.unsubscribe(); };
   }, [selectedBooking?.id, currentUser]);
+
+  // ── Subscribe to ALL bookings for unread dots when on list view ──
+  useEffect(() => {
+    if (selectedBooking || !bookings.length || !currentUser) return;
+    const channels = bookings
+      .filter(b => b.status === "confirmed" || b.status === "pending")
+      .map(b => subscribeToMessages(b.id, newMsg => {
+        if (newMsg.from === "shop") {
+          setUnreadMap(prev => ({ ...prev, [b.id]: true }));
+          setMessagesMap(prev => ({
+            ...prev,
+            [b.id]: mergeMessages(prev[b.id] || [], newMsg),
+          }));
+        }
+      }));
+    return () => { channels.forEach(c => c?.unsubscribe()); };
+  }, [selectedBooking, bookings.length, currentUser]);
 
   useEffect(() => {
     if (selectedBooking?.status === "completed") {
@@ -258,12 +282,31 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
     window.location.href = data.url;
   };
 
+  const handleCancelBooking = async (bookingId) => {
+    setCancelSubmitting(true);
+    await supabase.from("bookings").update({ status: "cancelled" }).eq("id", bookingId).eq("customer_id", currentUser?.id);
+    sendNotification("booking_cancelled", bookingId).catch(() => {});
+    setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status: "cancelled" } : b));
+    setSelectedBooking(prev => prev?.id === bookingId ? { ...prev, status: "cancelled" } : prev);
+    setCancelConfirmId(null);
+    setCancelSubmitting(false);
+  };
+
+  const totalUnread = Object.keys(unreadMap).length;
+
   const Navbar = () => (
     <nav style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 40px", background: "#0D0D0D", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
       <div style={{ fontSize: 24, letterSpacing: 4, color: "#FF4D00", cursor: "pointer" }} onClick={() => nav("landing")}>KI<span style={{ color: "#fff" }}>DOR</span></div>
       <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-        <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#FF4D00", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Sans', sans-serif", fontWeight: 700 }}>
-          {(currentProfile?.name || "M")[0].toUpperCase()}
+        <div style={{ position: "relative" }}>
+          <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#FF4D00", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Sans', sans-serif", fontWeight: 700 }}>
+            {(currentProfile?.name || "M")[0].toUpperCase()}
+          </div>
+          {totalUnread > 0 && (
+            <div style={{ position: "absolute", top: -4, right: -4, width: 18, height: 18, borderRadius: "50%", background: "#EF4444", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Sans', sans-serif", fontSize: 10, fontWeight: 700, color: "#fff", lineHeight: 1 }}>
+              {totalUnread > 9 ? "9+" : totalUnread}
+            </div>
+          )}
         </div>
         <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14 }}>{currentProfile?.name || "My Account"}</span>
         {currentUser && (
@@ -436,6 +479,37 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
                 >
                   Request Reschedule
                 </button>
+              )}
+              {(b.status === "pending" || b.status === "confirmed") && (
+                cancelConfirmId === b.id ? (
+                  <div style={{ marginTop: 12, padding: "14px", background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.2)" }}>
+                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.7)", marginBottom: 12 }}>Are you sure you want to cancel this booking?</div>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <button
+                        onClick={() => handleCancelBooking(b.id)}
+                        disabled={cancelSubmitting}
+                        style={{ flex: 1, background: "#ef4444", color: "#fff", border: "none", padding: "9px", fontFamily: "'Bebas Neue', cursive", fontSize: 14, letterSpacing: 2, cursor: cancelSubmitting ? "default" : "pointer", opacity: cancelSubmitting ? 0.6 : 1 }}
+                      >
+                        {cancelSubmitting ? "Cancelling…" : "Yes, Cancel"}
+                      </button>
+                      <button
+                        onClick={() => setCancelConfirmId(null)}
+                        style={{ flex: 1, background: "transparent", color: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.12)", padding: "9px", fontFamily: "'Bebas Neue', cursive", fontSize: 14, letterSpacing: 2, cursor: "pointer" }}
+                      >
+                        Keep It
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setCancelConfirmId(b.id)}
+                    style={{ marginTop: 8, width: "100%", background: "transparent", border: "1px solid rgba(239,68,68,0.2)", color: "rgba(239,68,68,0.55)", padding: "9px", fontFamily: "'Bebas Neue', cursive", fontSize: 14, letterSpacing: 2, cursor: "pointer", transition: "border-color 0.2s, color 0.2s" }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(239,68,68,0.6)"; e.currentTarget.style.color = "#ef4444"; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(239,68,68,0.2)"; e.currentTarget.style.color = "rgba(239,68,68,0.55)"; }}
+                  >
+                    Cancel Booking
+                  </button>
+                )
               )}
               {b.status === "completed" && (
                 <div style={{ marginTop: 20, paddingTop: 20, borderTop: "1px solid rgba(255,255,255,0.07)" }}>
@@ -615,7 +689,7 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
         ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {bookings.map((b, i) => (
-            <div key={b.id} className="booking-row brow-anim" onClick={() => setSelectedBooking(b)}
+            <div key={b.id} className="booking-row brow-anim" onClick={() => { setSelectedBooking(b); setUnreadMap(prev => { const n = { ...prev }; delete n[b.id]; return n; }); }}
               style={{ animationDelay: `${Math.min(i * 0.07, 0.4)}s` }}>
               <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
                 <div style={{ width: 44, height: 44, background: b.shopColor, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700, fontFamily: "'DM Sans', sans-serif", overflow: "hidden", flexShrink: 0 }}>
@@ -630,6 +704,15 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
                 {messagesMap[b.id].length > 0 && (
                   <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.3)", display: "flex", alignItems: "center", gap: 5 }}>
                     <span>💬</span> {messagesMap[b.id].length}
+                    {unreadMap[b.id] && (
+                      <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#FF4D00", flexShrink: 0 }} />
+                    )}
+                  </div>
+                )}
+                {!messagesMap[b.id].length && unreadMap[b.id] && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 5, fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.3)" }}>
+                    <span>💬</span> 1
+                    <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#FF4D00", flexShrink: 0 }} />
                   </div>
                 )}
                 <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: b.status === "confirmed" ? "#10B981" : "rgba(255,255,255,0.4)" }}>

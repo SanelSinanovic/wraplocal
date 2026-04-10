@@ -272,6 +272,17 @@ Deno.serve(async (req) => {
       results.push({ to: emailData.shopEmail, ok: res2.ok, status: res2.status, id: data2.id, resend: data2 });
     }
 
+    // For new bookings, also email the customer
+    if (type === "booking_created" && emailData.customerEmail) {
+      const res3 = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ from: fromEmail, to: [emailData.customerEmail], subject: emailData.customerSubject, html: emailData.customerHtml }),
+      });
+      const data3 = await res3.json().catch(() => ({}));
+      results.push({ to: emailData.customerEmail, ok: res3.ok, status: res3.status, id: data3.id, resend: data3 });
+    }
+
     return jsonResp({ sent: true, results });
   } catch (e) {
     return jsonResp({ error: e?.message || String(e) }, 500);
