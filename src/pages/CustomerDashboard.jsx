@@ -256,11 +256,14 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
   useEffect(() => {
     if (!stripeReturn || !bookingsLoaded) return;
     const booking = bookings.find(b => String(b.id) === String(stripeReturn.bookingId));
-    if (booking) {
-      confirmBookingFromPayment(stripeReturn.bookingId, stripeReturn.amount);
-      setSelectedBooking({ ...booking, status: "confirmed" });
-      setStripeReturn(null);
-    }
+    if (!booking) return;
+    const { bookingId, amount } = stripeReturn;
+    setStripeReturn(null);
+    const normalizedAmount = Number(amount) || 0;
+    const fee = Math.round(normalizedAmount * 0.07 * 100) / 100;
+    confirmBookingFromPayment(bookingId, normalizedAmount).then(() => {
+      setSelectedBooking({ ...booking, status: "confirmed", amount: normalizedAmount, fee, total: normalizedAmount });
+    });
   }, [stripeReturn, bookingsLoaded]);
 
   // ── Redirect to Stripe Checkout ──────────────────────────────────────────
