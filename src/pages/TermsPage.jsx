@@ -112,7 +112,7 @@ export default function TermsPage({ nav }) {
         <p>Kidor reserves the right to suspend or terminate your access to the Platform at any time, with or without notice, for any reason including violation of these Terms.</p>
 
         <h2>15. Governing Law</h2>
-        <p>These Terms are governed by the laws of the United States, without regard to conflict of law provisions. Any dispute arising from these Terms or your use of the Platform shall be resolved by binding arbitration. <strong>YOU WAIVE YOUR RIGHT TO A JURY TRIAL AND TO PARTICIPATE IN A CLASS ACTION.</strong></p>
+        <p>These Terms are governed by the laws of the <strong>State of Georgia</strong>, without regard to conflict of law provisions. Any dispute arising from these Terms or your use of the Platform shall be resolved exclusively in the courts located in Georgia, and you consent to personal jurisdiction in those courts.</p>
 
         <h2>16. Changes to These Terms</h2>
         <p>Kidor may update these Terms at any time. We will notify you of material changes by posting the updated Terms on the Platform with a new "Last Updated" date. Continued use of the Platform after changes constitutes acceptance of the updated Terms.</p>

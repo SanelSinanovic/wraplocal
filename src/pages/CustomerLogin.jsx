@@ -7,6 +7,11 @@ export default function CustomerLogin({ nav, loginForm, setLoginForm, loginError
   const [signupError, setSignupError] = useState("");
   const [signupSuccess, setSignupSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [tosAccepted, setTosAccepted] = useState(false);
+  const [forgotMode, setForgotMode] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotSent, setForgotSent] = useState(false);
+  const [forgotLoading, setForgotLoading] = useState(false);
 
   const handleSignup = async () => {
     setSignupError("");
@@ -15,6 +20,7 @@ export default function CustomerLogin({ nav, loginForm, setLoginForm, loginError
     if (!email.includes("@")) return setSignupError("Please enter a valid email.");
     if (password.length < 6) return setSignupError("Password must be at least 6 characters.");
     if (password !== confirm) return setSignupError("Passwords do not match.");
+    if (!tosAccepted) return setSignupError("You must agree to the Terms of Service to create an account.");
     setLoading(true);
     const { error } = await supabase.auth.signUp({
       email,
@@ -26,7 +32,15 @@ export default function CustomerLogin({ nav, loginForm, setLoginForm, loginError
     setSignupSuccess(true);
   };
 
-  const switchMode = (m) => { setMode(m); setSignupError(""); setLoginError(""); setSignupSuccess(false); };
+  const handleForgotPassword = async () => {
+    if (!forgotEmail.includes("@")) return;
+    setForgotLoading(true);
+    await supabase.auth.resetPasswordForEmail(forgotEmail, { redirectTo: window.location.origin + "/#customer-login" });
+    setForgotLoading(false);
+    setForgotSent(true);
+  };
+
+  const switchMode = (m) => { setMode(m); setSignupError(""); setLoginError(""); setSignupSuccess(false); setForgotMode(false); setForgotSent(false); setForgotEmail(""); };
 
   return (
     <div style={{ fontFamily: "'Bebas Neue', cursive", background: "#0A0A0A", minHeight: "100vh", color: "#fff", display: "flex", flexDirection: "column" }}>
@@ -66,13 +80,37 @@ export default function CustomerLogin({ nav, loginForm, setLoginForm, loginError
                 <input type="email" placeholder="marcus@email.com" value={loginForm.email} onChange={e => setLoginForm(f => ({ ...f, email: e.target.value }))} />
               </div>
               <div style={{ marginBottom: 28 }}>
-                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", letterSpacing: 1, marginBottom: 6 }}>PASSWORD</div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                  <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", letterSpacing: 1 }}>PASSWORD</span>
+                  <span onClick={() => { setForgotMode(true); setForgotEmail(loginForm.email); }} style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#FF4D00", cursor: "pointer", letterSpacing: 0 }}>Forgot password?</span>
+                </div>
                 <input type="password" placeholder="••••••••" value={loginForm.password} onChange={e => setLoginForm(f => ({ ...f, password: e.target.value }))} onKeyDown={e => e.key === "Enter" && handleLogin("customer")} />
               </div>
-              <button onClick={() => handleLogin("customer")} className="login-submit" style={{ marginBottom: 16 }}>Sign In</button>
-              <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.3)", textAlign: "center" }}>
-                Are you a business? <span style={{ color: "#FF4D00", cursor: "pointer" }} onClick={() => nav("company-login")}>Company login →</span>
-              </div>
+              {forgotMode ? (
+                forgotSent ? (
+                  <div style={{ textAlign: "center", padding: "16px 0 8px" }}>
+                    <div style={{ fontSize: 28, letterSpacing: 1, marginBottom: 8 }}>CHECK YOUR EMAIL</div>
+                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.45)", lineHeight: 1.6, marginBottom: 20 }}>We sent a password reset link to <b style={{ color: "#fff" }}>{forgotEmail}</b>.</div>
+                    <button onClick={() => { setForgotMode(false); setForgotSent(false); }} style={{ background: "none", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.5)", padding: "10px 24px", fontFamily: "'Bebas Neue', cursive", fontSize: 15, letterSpacing: 2, cursor: "pointer" }}>Back to Sign In</button>
+                  </div>
+                ) : (
+                  <>
+                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", letterSpacing: 1, marginBottom: 6 }}>RESET EMAIL</div>
+                    <input type="email" placeholder="your@email.com" value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} style={{ marginBottom: 14 }} onKeyDown={e => e.key === "Enter" && handleForgotPassword()} />
+                    <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
+                      <button onClick={handleForgotPassword} disabled={forgotLoading} className="login-submit" style={{ opacity: forgotLoading ? 0.6 : 1, cursor: forgotLoading ? "not-allowed" : "pointer" }}>{forgotLoading ? "Sending..." : "Send Reset Link"}</button>
+                    </div>
+                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.3)", textAlign: "center", cursor: "pointer" }} onClick={() => setForgotMode(false)}>← Back to sign in</div>
+                  </>
+                )
+              ) : (
+                <>
+                  <button onClick={() => handleLogin("customer")} className="login-submit" style={{ marginBottom: 16 }}>Sign In</button>
+                  <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.3)", textAlign: "center" }}>
+                    Are you a business? <span style={{ color: "#FF4D00", cursor: "pointer" }} onClick={() => nav("company-login")}>Company login →</span>
+                  </div>
+                </>
+              )}
             </>
           ) : signupSuccess ? (
             <div style={{ textAlign: "center", padding: "20px 0" }}>
@@ -109,8 +147,11 @@ export default function CustomerLogin({ nav, loginForm, setLoginForm, loginError
               <button onClick={handleSignup} disabled={loading} className="login-submit" style={{ opacity: loading ? 0.6 : 1, cursor: loading ? "not-allowed" : "pointer", marginBottom: 16 }}>
                 {loading ? "Creating Account..." : "Create Account →"}
               </button>
-              <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.25)", textAlign: "center", lineHeight: 1.5 }}>
-                By signing up you agree to our Terms of Service.
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 10, fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.45)", lineHeight: 1.5 }}>
+                <input type="checkbox" id="tos-customer" checked={tosAccepted} onChange={e => setTosAccepted(e.target.checked)} style={{ width: 15, height: 15, marginTop: 2, accentColor: "#FF4D00", flexShrink: 0, cursor: "pointer" }} />
+                <label htmlFor="tos-customer" style={{ cursor: "pointer" }}>
+                  I agree to the <span onClick={() => nav("terms")} style={{ color: "#FF4D00", cursor: "pointer" }}>Terms of Service</span> and <span onClick={() => nav("privacy")} style={{ color: "#FF4D00", cursor: "pointer" }}>Privacy Policy</span>
+                </label>
               </div>
             </>
           )}
