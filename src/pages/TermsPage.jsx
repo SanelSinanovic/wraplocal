@@ -6,7 +6,7 @@ export default function TermsPage({ nav }) {
       {/* Header */}
       <div style={{ background: "#0D0D0D", borderBottom: "1px solid rgba(255,255,255,0.07)", padding: "20px 40px", display: "flex", alignItems: "center", gap: 32 }}>
         <div onClick={() => nav("landing")} style={{ fontFamily: "'Bebas Neue', cursive", fontSize: 22, letterSpacing: 4, cursor: "pointer" }}>
-          <span style={{ color: "#FF4D00" }}>KI</span><span style={{ color: "#fff" }}>DOR</span>
+          <span style={{ color: "#FF4D00" }}>WRAP</span><span style={{ color: "#fff" }}>BRIDGE</span>
         </div>
         <span style={{ fontSize: 13, color: "rgba(255,255,255,0.3)", letterSpacing: 2 }}>TERMS OF SERVICE</span>
       </div>
