@@ -12,6 +12,7 @@ export default function CustomerLogin({ nav, loginForm, setLoginForm, loginError
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotSent, setForgotSent] = useState(false);
   const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotError, setForgotError] = useState("");
 
   const handleSignup = async () => {
     setSignupError("");
@@ -34,13 +35,17 @@ export default function CustomerLogin({ nav, loginForm, setLoginForm, loginError
 
   const handleForgotPassword = async () => {
     if (!forgotEmail.includes("@")) return;
+    setForgotError("");
     setForgotLoading(true);
-    await supabase.auth.resetPasswordForEmail(forgotEmail, { redirectTo: window.location.origin + "/#customer-login" });
+    const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
+      redirectTo: window.location.href.split("#")[0],
+    });
     setForgotLoading(false);
+    if (error) return setForgotError(error.message);
     setForgotSent(true);
   };
 
-  const switchMode = (m) => { setMode(m); setSignupError(""); setLoginError(""); setSignupSuccess(false); setForgotMode(false); setForgotSent(false); setForgotEmail(""); };
+  const switchMode = (m) => { setMode(m); setSignupError(""); setLoginError(""); setSignupSuccess(false); setForgotMode(false); setForgotSent(false); setForgotEmail(""); setForgotError(""); };
 
   return (
     <div style={{ fontFamily: "'Bebas Neue', cursive", background: "#0A0A0A", minHeight: "100vh", color: "#fff", display: "flex", flexDirection: "column" }}>
@@ -97,6 +102,9 @@ export default function CustomerLogin({ nav, loginForm, setLoginForm, loginError
                   <>
                     <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", letterSpacing: 1, marginBottom: 6 }}>RESET EMAIL</div>
                     <input type="email" placeholder="your@email.com" value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} style={{ marginBottom: 14 }} onKeyDown={e => e.key === "Enter" && handleForgotPassword()} />
+                    {forgotError && (
+                      <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#FF4D00", marginBottom: 12, lineHeight: 1.5 }}>{forgotError}</div>
+                    )}
                     <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
                       <button onClick={handleForgotPassword} disabled={forgotLoading} className="login-submit" style={{ opacity: forgotLoading ? 0.6 : 1, cursor: forgotLoading ? "not-allowed" : "pointer" }}>{forgotLoading ? "Sending..." : "Send Reset Link"}</button>
                     </div>

@@ -12,12 +12,16 @@ import { supabase } from "./lib/supabase";
 import { fetchShops, fetchProfile } from "./lib/queries";
 import TermsPage from "./pages/TermsPage";
 import PrivacyPage from "./pages/PrivacyPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 
 // Read initial view from URL hash (e.g. #search) so hard-refresh stays on the right page
 function getInitialView() {
-  const hash = window.location.hash.replace("#", "");
-  const valid = ["landing","search","shop","booking","customer-dash","company-dash","pricing","customer-login","company-login","terms","privacy"];
-  return valid.includes(hash) ? hash : "landing";
+  const hash = window.location.hash;
+  // Supabase password-reset redirect — hash contains type=recovery token
+  if (hash.includes("type=recovery")) return "reset-password";
+  const view = hash.replace("#", "");
+  const valid = ["landing","search","shop","booking","customer-dash","company-dash","pricing","customer-login","company-login","terms","privacy","reset-password"];
+  return valid.includes(view) ? view : "landing";
 }
 
 const PAGE_META = {
@@ -47,6 +51,7 @@ export default function App() {
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
   const [loginError, setLoginError] = useState("");
   const [postLoginNav, setPostLoginNav] = useState(null);
+  const [recoveryReady, setRecoveryReady] = useState(false);
 
   // ── Dynamic page title + meta description ───────────────────────────────
   useEffect(() => {
@@ -102,8 +107,14 @@ export default function App() {
       setView('customer-dash');
     }
 
-    // Listen for auth changes (login / logout)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    // Listen for auth changes (login / logout / password recovery)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "PASSWORD_RECOVERY") {
+        window.history.replaceState({ view: "reset-password" }, "", "#reset-password");
+        setView("reset-password");
+        setRecoveryReady(true);
+        return;
+      }
       if (session?.user) {
         setCurrentUser(session.user);
         fetchProfile(session.user.id).then(p => setCurrentProfile(p));
@@ -207,5 +218,6 @@ export default function App() {
   if (view === "company-login") return <CompanyLogin nav={nav} loginForm={loginForm} setLoginForm={setLoginForm} loginError={loginError} setLoginError={setLoginError} handleLogin={handleLogin} />;
   if (view === "terms") return <TermsPage nav={nav} />;
   if (view === "privacy") return <PrivacyPage nav={nav} />;
+  if (view === "reset-password") return <ResetPasswordPage nav={nav} recoveryReady={recoveryReady} />;
   return null;
 }
