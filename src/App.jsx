@@ -18,6 +18,18 @@ function getInitialView() {
   return valid.includes(hash) ? hash : "landing";
 }
 
+const PAGE_META = {
+  landing:        { title: "Kidor — Find & Book Vehicle Wrap, Tint & Detailing Shops",     description: "Kidor connects you with the best vehicle wrap, window tint, and detailing shops near you. Compare portfolios, get quotes, and book online." },
+  search:         { title: "Find Shops Near You — Kidor",                                     description: "Browse vehicle wrap, window tint, PPF, and detailing shops on Kidor. Filter by service and location." },
+  shop:           { title: "Shop Profile — Kidor",                                            description: "View services, portfolio and book an appointment through Kidor." },
+  booking:        { title: "Book a Service — Kidor",                                          description: "Request a quote and book your vehicle service through Kidor." },
+  "customer-dash":{ title: "My Bookings — Kidor",                                            description: "Manage your vehicle service bookings on Kidor." },
+  "company-dash": { title: "Shop Dashboard — Kidor",                                         description: "Manage your shop, bookings, and payouts on Kidor." },
+  pricing:        { title: "Pricing — Kidor",                                                 description: "Simple, transparent pricing for vehicle wrap and tint shops listing on Kidor." },
+  "customer-login":{ title: "Sign In — Kidor",                                               description: "Sign in to your Kidor customer account to manage bookings." },
+  "company-login": { title: "Shop Login — Kidor",                                            description: "Sign in to your Kidor shop dashboard." },
+};
+
 export default function App() {
   const [view, setView] = useState(getInitialView);
   const [selectedShop, setSelectedShop] = useState(null);
@@ -33,6 +45,28 @@ export default function App() {
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
   const [loginError, setLoginError] = useState("");
   const [postLoginNav, setPostLoginNav] = useState(null);
+
+  // ── Dynamic page title + meta description ───────────────────────────────
+  useEffect(() => {
+    let title = PAGE_META[view]?.title || "Kidor";
+    let description = PAGE_META[view]?.description || PAGE_META.landing.description;
+
+    if (view === "shop" && selectedShop?.name) {
+      title = `${selectedShop.name} \u2014 Kidor`;
+      description = `${selectedShop.name} on Kidor \u2014 view services, portfolio and book an appointment online.`;
+    } else if (view === "booking" && bookingShop?.name) {
+      title = `Book ${bookingShop.name} \u2014 Kidor`;
+      description = `Request a quote and book your vehicle service at ${bookingShop.name} through Kidor.`;
+    }
+
+    document.title = title;
+    const descEl = document.querySelector('meta[name="description"]');
+    if (descEl) descEl.setAttribute("content", description);
+    const ogTitle = document.querySelector('meta[property="og:title"]');
+    if (ogTitle) ogTitle.setAttribute("content", title);
+    const ogDesc = document.querySelector('meta[property="og:description"]');
+    if (ogDesc) ogDesc.setAttribute("content", description);
+  }, [view, selectedShop, bookingShop]);
 
   // ── Supabase: shops + auth state ──────────────────────────
   const [shops, setShops] = useState([]);
