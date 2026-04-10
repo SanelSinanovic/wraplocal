@@ -79,10 +79,17 @@ Deno.serve(async (req) => {
       }
     }
 
-    if (useConnect) {
-      params.append("payment_intent_data[application_fee_amount]", String(feeCents));
-      params.append("payment_intent_data[transfer_data][destination]", shopStripeAccountId);
+    // Block payment entirely if the shop has not completed Stripe Connect onboarding.
+    // This keeps Kidor out of the money flow and eliminates refund/chargeback liability.
+    if (!useConnect) {
+      return new Response(
+        JSON.stringify({ error: "This shop has not completed payment setup. Please contact the shop directly." }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
+
+    params.append("payment_intent_data[application_fee_amount]", String(feeCents));
+    params.append("payment_intent_data[transfer_data][destination]", shopStripeAccountId);
 
     let res = await fetch("https://api.stripe.com/v1/checkout/sessions", {
       method: "POST",
@@ -92,20 +99,6 @@ Deno.serve(async (req) => {
       },
       body: params.toString(),
     });
-
-    // If Connect routing caused an error, retry without it
-    if (!res.ok && useConnect) {
-      params.delete("payment_intent_data[application_fee_amount]");
-      params.delete("payment_intent_data[transfer_data][destination]");
-      res = await fetch("https://api.stripe.com/v1/checkout/sessions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${stripeKey}`,
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: params.toString(),
-      });
-    }
 
     const session = await res.json();
     if (!res.ok) {

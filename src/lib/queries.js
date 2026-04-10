@@ -85,6 +85,7 @@ export async function fetchShops() {
     .not('banner_url', 'is', null)
     .neq('banner_url', '')
     .eq('is_listed', true)
+    .eq('stripe_onboarded', true)
     .order('rating', { ascending: false })
   if (error) { console.error('fetchShops:', error); return null }
   return data.map(shop => ({

@@ -307,6 +307,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
 
   // ── Stripe Connect state ─────────────────────────────────────────────────
   const [stripeAccountId, setStripeAccountId] = useState("");
+  const [stripeOnboarded, setStripeOnboarded] = useState(false);
   const [connectLoading, setConnectLoading] = useState(false);
   const [connectError, setConnectError] = useState("");
 
@@ -325,6 +326,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
     setProfilePhotoUrl(shop.banner_url || "");
     setIsListed(!!shop.is_listed);
     setStripeAccountId(shop.stripe_account_id || "");
+    setStripeOnboarded(!!shop.stripe_onboarded);
   };
 
   useEffect(() => {
@@ -418,17 +420,28 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
     });
   }, [dashTab, userShop?.id, availLoaded]);
 
-  // Refresh stripe_account_id whenever the payments tab is opened
+  // Refresh Stripe status whenever the payments tab is opened
   // (handles the return from Stripe onboarding)
   useEffect(() => {
     if (dashTab !== "payments" || !userShop?.id) return;
     supabase
       .from("shops")
-      .select("stripe_account_id")
+      .select("stripe_account_id,stripe_onboarded")
       .eq("id", userShop.id)
       .single()
-      .then(({ data }) => {
+      .then(async ({ data }) => {
         if (data?.stripe_account_id) setStripeAccountId(data.stripe_account_id);
+        // Verify with Stripe API and update the DB + local state
+        const { data: session } = await supabase.auth.getSession();
+        const token = session?.session?.access_token;
+        if (token) {
+          supabase.functions.invoke("verify-stripe-account", {
+            body: { shopId: userShop.id },
+            headers: { "x-user-token": token },
+          }).then(({ data: vd }) => {
+            if (vd != null) setStripeOnboarded(!!vd.onboarded);
+          }).catch(() => {});
+        }
       });
   }, [dashTab, userShop?.id]);
 
@@ -705,6 +718,12 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
           <div style={{ background: "rgba(255,77,0,0.06)", border: "1px solid rgba(255,77,0,0.25)", padding: "12px 16px", marginBottom: 16, fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,120,60,0.9)", lineHeight: 1.6 }}>
             ⚠️ {bookingsError}
             <button onClick={() => setBookingsError("")} style={{ marginLeft: 12, background: "none", border: "none", color: "#FF4D00", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", fontSize: 12, textDecoration: "underline" }}>Dismiss</button>
+          </div>
+        )}
+        {userShop && !stripeOnboarded && (
+          <div style={{ background: "rgba(245,158,11,0.07)", border: "1px solid rgba(245,158,11,0.35)", padding: "14px 20px", marginBottom: 20, fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(245,158,11,0.95)", lineHeight: 1.6, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+            <span>⚠️ <strong>Your shop is not publicly listed</strong> — connect your Stripe account to accept payments and appear in search results.</span>
+            <button onClick={() => setDashTab("payments")} style={{ background: "#F59E0B", border: "none", color: "#000", padding: "7px 18px", fontFamily: "'Bebas Neue', cursive", fontSize: 14, letterSpacing: 1, cursor: "pointer", flexShrink: 0 }}>Set Up Payments →</button>
           </div>
         )}
         {dashTab === "overview" && (() => {

@@ -110,3 +110,6 @@ CREATE POLICY "Shop owner delete blocked dates"
 -- 11. Stripe Connect: store each shop's connected account ID
 ALTER TABLE shops ADD COLUMN IF NOT EXISTS stripe_account_id text;
 
+-- 12. Stripe onboarding gate: shops are only publicly listed after verifying charges_enabled
+ALTER TABLE shops ADD COLUMN IF NOT EXISTS stripe_onboarded boolean NOT NULL DEFAULT false;
+
