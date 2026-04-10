@@ -1199,6 +1199,57 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
                 <div style={{ display: "flex", justifyContent: "space-between", padding: "12px 0" }}><span style={{ fontSize: 18, fontFamily: "'Bebas Neue', cursive", letterSpacing: 1 }}>NET PAYOUT</span><span style={{ fontSize: 18, color: "#10B981", fontFamily: "'Bebas Neue', cursive" }}>${netPayout.toFixed(2)}</span></div>
               </div>
             </div>
+
+            {/* ── Payment Receipts ── */}
+            {(() => {
+              const paid = dashboardBookings
+                .filter(b => (b.status === "confirmed" || b.status === "completed") && Number(b.amount) > 0)
+                .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+              return (
+                <div style={{ marginTop: 32 }}>
+                  <div style={{ fontSize: 26, letterSpacing: 2, marginBottom: 6 }}>RECEIPTS</div>
+                  <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.35)", marginBottom: 20 }}>All payments received from customers.</div>
+                  {paid.length === 0 ? (
+                    <div style={{ border: "1px solid rgba(255,255,255,0.07)", padding: "40px 24px", textAlign: "center" }}>
+                      <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.25)" }}>No payments received yet. Receipts will appear here once customers complete payment.</div>
+                    </div>
+                  ) : (
+                  <div style={{ border: "1px solid rgba(255,255,255,0.07)", overflow: "hidden" }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "1.2fr 2fr 2fr 1.2fr 1fr", background: "rgba(255,255,255,0.03)", borderBottom: "1px solid rgba(255,255,255,0.07)", padding: "10px 16px" }}>
+                      {["DATE", "CUSTOMER", "SERVICE", "AMOUNT", "STATUS"].map(h => (
+                        <div key={h} style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, letterSpacing: 1.5, color: "rgba(255,255,255,0.3)" }}>{h}</div>
+                      ))}
+                    </div>
+                    {paid.map((b, i) => {
+                      const fee = Math.round(Number(b.amount) * 0.07 * 100) / 100;
+                      const net = Math.round((Number(b.amount) - fee) * 100) / 100;
+                      const dateLabel = b.date || (b.created_at ? new Date(b.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—");
+                      return (
+                        <div key={b.id}
+                          style={{ display: "grid", gridTemplateColumns: "1.2fr 2fr 2fr 1.2fr 1fr", padding: "12px 16px", borderBottom: i < paid.length - 1 ? "1px solid rgba(255,255,255,0.05)" : "none", alignItems: "center", cursor: "pointer", transition: "background 0.15s" }}
+                          onClick={() => { setSelectedBooking(b); setSelectedBookingSource("bookings"); setDashTab("bookings"); setBookingsView("detail"); }}
+                          onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.025)"}
+                          onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                          <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.45)" }}>{dateLabel}</div>
+                          <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.75)" }}>{b.customerName || b.customer_name || "Customer"}</div>
+                          <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.6)" }}>{b.service}</div>
+                          <div>
+                            <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "#10B981", fontWeight: 600 }}>${Number(b.amount).toFixed(2)}</div>
+                            <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)" }}>net ${net.toFixed(2)}</div>
+                          </div>
+                          <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: b.status === "completed" ? "#10B981" : "#F59E0B" }}>{b.status.charAt(0).toUpperCase() + b.status.slice(1)}</div>
+                        </div>
+                      );
+                    })}
+                    <div style={{ display: "grid", gridTemplateColumns: "1.2fr 2fr 2fr 1.2fr 1fr", padding: "12px 16px", background: "rgba(255,255,255,0.03)", borderTop: "1px solid rgba(255,255,255,0.07)" }}>
+                      <div style={{ gridColumn: "1 / 4", fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.3)", letterSpacing: 1 }}>TOTAL ({paid.length} RECEIPT{paid.length !== 1 ? "S" : ""})</div>
+                      <div style={{ fontFamily: "'Bebas Neue', cursive", fontSize: 16, color: "#10B981", letterSpacing: 1 }}>${paid.reduce((s, b) => s + Number(b.amount), 0).toFixed(2)}</div>
+                    </div>
+                  </div>
+                  )}
+                </div>
+              );
+            })()}
           </div>
           );
         })()}

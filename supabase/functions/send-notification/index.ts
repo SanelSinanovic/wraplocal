@@ -188,6 +188,47 @@ function buildEmail(type, b, customerName, shopName, customerEmail, shopEmail, a
       return { to: customerEmail, subject: `Booking cancelled — ${service} at ${shopName}`, html, shopHtml: html, shopSubject: `Booking cancelled — ${customerName} (${service})`, shopEmail };
     }
 
+    case "payment_received": {
+      const customerHtml = emailWrapper(`
+        <h2 style="margin:0 0 8px;font-size:22px;color:#0A0A0A;font-weight:800;">Payment Received ✓</h2>
+        <p style="margin:0 0 24px;font-size:15px;color:#555;line-height:1.6;">
+          Your payment for your booking at <strong>${shopName}</strong> has been processed successfully.
+        </p>
+        ${divider()}
+        <table cellpadding="0" cellspacing="0" width="100%">
+          ${detail("Shop", shopName)}
+          ${detail("Service", service)}
+          ${b.vehicle ? detail("Vehicle", b.vehicle) : ""}
+          ${dateStr ? detail("Date", dateStr) : ""}
+          ${timeStr ? detail("Time", timeStr) : ""}
+          ${amount ? detail("Amount paid", `<span style="color:#10B981;font-size:18px;font-weight:700;">${amount}</span>`) : ""}
+        </table>
+        ${divider()}
+        <p style="margin:0;font-size:14px;color:#555;line-height:1.6;">
+          Your booking is confirmed. You can message the shop any time through your Kidor dashboard.
+        </p>
+        ${orangeBtn("View My Booking \u2192", appUrl)}
+      `);
+      const shopHtml = emailWrapper(`
+        <h2 style="margin:0 0 8px;font-size:22px;color:#0A0A0A;font-weight:800;">Payment Received ✓</h2>
+        <p style="margin:0 0 24px;font-size:15px;color:#555;line-height:1.6;">
+          <strong>${customerName}</strong> has completed payment for their booking.
+        </p>
+        ${divider()}
+        <table cellpadding="0" cellspacing="0" width="100%">
+          ${detail("Customer", customerName)}
+          ${detail("Service", service)}
+          ${amount ? detail("Amount", `<span style="color:#10B981;font-size:18px;font-weight:700;">${amount}</span>`) : ""}
+        </table>
+        ${divider()}
+        <p style="margin:0;font-size:14px;color:#555;line-height:1.6;">
+          Head to your dashboard to confirm the appointment date and time with the customer.
+        </p>
+        ${orangeBtn("Go to Dashboard \u2192", appUrl)}
+      `);
+      return { to: customerEmail, subject: `Payment confirmed — ${service} at ${shopName}`, html: customerHtml, shopHtml, shopSubject: `Payment received from ${customerName} — ${service}`, shopEmail };
+    }
+
     default:
       return null;
   }
@@ -270,6 +311,17 @@ Deno.serve(async (req) => {
       });
       const data2 = await res2.json().catch(() => ({}));
       results.push({ to: emailData.shopEmail, ok: res2.ok, status: res2.status, id: data2.id, resend: data2 });
+    }
+
+    // For payment_received, also email the shop
+    if (type === "payment_received" && emailData.shopEmail && emailData.shopEmail !== emailData.to) {
+      const res4 = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ from: fromEmail, to: [emailData.shopEmail], subject: emailData.shopSubject, html: emailData.shopHtml }),
+      });
+      const data4 = await res4.json().catch(() => ({}));
+      results.push({ to: emailData.shopEmail, ok: res4.ok, status: res4.status, id: data4.id, resend: data4 });
     }
 
     // For new bookings, also email the customer

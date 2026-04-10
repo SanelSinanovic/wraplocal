@@ -248,6 +248,7 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
     await supabase.from("bookings").update({ status: "confirmed", amount: normalizedAmount, fee, total }).eq("id", bookingId).eq("customer_id", currentUser.id);
     const marker = `QUOTE_RESPONSE::accepted::${normalizedAmount.toFixed(2)}`;
     await dbSendMessage({ bookingId, senderId: currentUser.id, senderRole: "customer", text: marker });
+    sendNotification("payment_received", bookingId).catch(() => {});
     setBookings(prev => prev.map(b => String(b.id) === String(bookingId) ? { ...b, status: "confirmed", amount: normalizedAmount, fee, total } : b));
   };
 
