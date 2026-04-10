@@ -31,13 +31,14 @@ export default function LandingPage({ nav, shops: liveShops, setBookingShop, set
   const countsDone = useRef(false);
 
   const SLIDES = [
-    { label: "Full Color Change Wrap", category: "Vehicle Wraps", accent: "#FF4D00", img: "/color-change-wrap.jpg" },
-    { label: "Monument Signs", category: "Signage", accent: "#3B82F6", img: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=85" },
-    { label: "Channel Letters", category: "Signage", accent: "#3B82F6", img: "https://images.unsplash.com/photo-1567521464027-f127ff144326?w=800&q=85" },
-    { label: "PPF Paint Protection Film", category: "Vehicle Wraps", accent: "#FF4D00", img: "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=800&q=85" },
-    { label: "LED Signs", category: "Signage", accent: "#3B82F6", img: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=85" },
-    { label: "Custom Design Wrap", category: "Vehicle Wraps", accent: "#FF4D00", img: "https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=800&q=85" },
-    { label: "Window Graphics", category: "Signage", accent: "#3B82F6", img: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800&q=85" },
+    { label: "Full Color Change Wrap", category: "Vehicle Wraps", accent: "#FF4D00", img: "/images/color-change-wrap.jpg" },
+    { label: "Monument Signs", category: "Signage", accent: "#3B82F6", img: "/images/Monument-Sign.png" },
+    { label: "Channel Letters", category: "Signage", accent: "#3B82F6", img: "/images/Channel-Letters.png" },
+    { label: "PPF Paint Protection Film", category: "Vehicle Wraps", accent: "#FF4D00", img: "/images/PPF.png" },
+    { label: "LED Signs", category: "Signage", accent: "#3B82F6", img: "/images/LED.png" },
+    { label: "Custom Design Wrap", category: "Vehicle Wraps", accent: "#FF4D00", img: "/images/Custom-Design.png" },
+    { label: "Window Graphics", category: "Signage", accent: "#3B82F6", img: "/images/Window-Graphics.png" },
+    { label: "Window Tinting", category: "Signage", accent: "#3B82F6", img: "/images/Window-Tint.png" },
   ];
 
   useEffect(() => {
