@@ -1,18 +1,18 @@
 export default function TermsPage({ nav }) {
   return (
     <div style={{ background: "#090909", minHeight: "100vh", color: "#fff", fontFamily: "'DM Sans', sans-serif" }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap'); * { box-sizing: border-box; } h2 { font-family: 'Bebas Neue', cursive; font-size: 22px; letter-spacing: 2px; color: #FF4D00; margin: 40px 0 10px; } h3 { font-family: 'Bebas Neue', cursive; font-size: 16px; letter-spacing: 1.5px; color: rgba(255,255,255,0.7); margin: 24px 0 8px; } p, li { font-size: 15px; color: rgba(255,255,255,0.6); line-height: 1.8; } ul { padding-left: 20px; margin: 8px 0; } a { color: #FF4D00; text-decoration: none; } a:hover { text-decoration: underline; }`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap'); * { box-sizing: border-box; } h2 { font-family: 'Bebas Neue', cursive; font-size: 22px; letter-spacing: 2px; color: #FF4D00; margin: 40px 0 10px; } h3 { font-family: 'Bebas Neue', cursive; font-size: 16px; letter-spacing: 1.5px; color: rgba(255,255,255,0.7); margin: 24px 0 8px; } p, li { font-size: 15px; color: rgba(255,255,255,0.6); line-height: 1.8; } ul { padding-left: 20px; margin: 8px 0; } a { color: #FF4D00; text-decoration: none; } a:hover { text-decoration: underline; } @media (max-width: 768px) { .legal-header { padding: 14px 20px !important; } .legal-body { padding: 32px 20px 64px !important; } .legal-title { font-size: 34px !important; letter-spacing: 2px !important; } } @media (max-width: 420px) { .legal-header { padding: 12px 16px !important; } .legal-body { padding: 24px 14px 48px !important; } .legal-title { font-size: 28px !important; letter-spacing: 1px !important; } }`}</style>
 
       {/* Header */}
-      <div style={{ background: "#0D0D0D", borderBottom: "1px solid rgba(255,255,255,0.07)", padding: "20px 40px", display: "flex", alignItems: "center", gap: 32 }}>
+      <div className="legal-header" style={{ background: "#0D0D0D", borderBottom: "1px solid rgba(255,255,255,0.07)", padding: "20px 40px", display: "flex", alignItems: "center", gap: 32 }}>
         <div onClick={() => nav("landing")} style={{ fontFamily: "'Bebas Neue', cursive", fontSize: 22, letterSpacing: 4, cursor: "pointer" }}>
           <span style={{ color: "#FF4D00" }}>WRAP</span><span style={{ color: "#fff" }}>BRIDGE</span>
         </div>
         <span style={{ fontSize: 13, color: "rgba(255,255,255,0.3)", letterSpacing: 2 }}>TERMS OF SERVICE</span>
       </div>
 
-      <div style={{ maxWidth: 780, margin: "0 auto", padding: "60px 32px 100px" }}>
-        <div style={{ fontFamily: "'Bebas Neue', cursive", fontSize: 48, letterSpacing: 3, marginBottom: 8 }}>TERMS OF SERVICE</div>
+      <div className="legal-body" style={{ maxWidth: 780, margin: "0 auto", padding: "60px 32px 100px" }}>
+        <div className="legal-title" style={{ fontFamily: "'Bebas Neue', cursive", fontSize: 48, letterSpacing: 3, marginBottom: 8 }}>TERMS OF SERVICE</div>
         <p style={{ color: "rgba(255,255,255,0.3)", fontSize: 13, marginBottom: 40 }}>Last Updated: April 10, 2026</p>
 
         <p>Please read these Terms of Service ("Terms") carefully before using WrapBridge ("Platform", "we", "us", or "our") at wrapbridge.com or any related services. By accessing or using WrapBridge, you agree to be bound by these Terms. If you do not agree, do not use the Platform.</p>

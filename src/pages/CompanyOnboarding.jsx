@@ -83,16 +83,16 @@ export default function CompanyOnboarding({ currentUser, userShop, onComplete, n
 
   return (
     <div style={{ fontFamily: "'Bebas Neue', cursive", background: "#0A0A0A", minHeight: "100vh", color: "#fff" }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap'); * { box-sizing: border-box; } .ob-input { width: 100%; background: #1A1A1A; border: 1px solid rgba(255,255,255,0.1); padding: 14px 16px; color: #fff; font-family: 'DM Sans', sans-serif; font-size: 14px; outline: none; } .ob-input:focus { border-color: #FF4D00; }`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap'); * { box-sizing: border-box; } .ob-input { width: 100%; background: #1A1A1A; border: 1px solid rgba(255,255,255,0.1); padding: 14px 16px; color: #fff; font-family: 'DM Sans', sans-serif; font-size: 14px; outline: none; } .ob-input:focus { border-color: #FF4D00; } @media (max-width: 768px) { .ob-nav { padding: 12px 20px !important; } .ob-progress { padding: 16px 20px !important; } .ob-content { padding: 32px 20px 60px !important; } .ob-step-title { font-size: 30px !important; letter-spacing: 1px !important; } } @media (max-width: 420px) { .ob-nav { padding: 10px 14px !important; } .ob-progress { padding: 12px 14px !important; } .ob-content { padding: 24px 14px 48px !important; } .ob-step-title { font-size: 26px !important; } }`}</style>
 
       {/* Navbar */}
-      <nav style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 40px", background: "rgba(10,10,10,0.97)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+      <nav className="ob-nav" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 40px", background: "rgba(10,10,10,0.97)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
         <div style={{ fontSize: 24, letterSpacing: 4, color: "#FF4D00" }}>WRAP<span style={{ color: "#fff" }}>BRIDGE</span></div>
         <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.35)" }}>Business Setup</div>
       </nav>
 
       {/* Progress bar */}
-      <div style={{ background: "#111", borderBottom: "1px solid rgba(255,255,255,0.06)", padding: "20px 40px" }}>
+      <div className="ob-progress" style={{ background: "#111", borderBottom: "1px solid rgba(255,255,255,0.06)", padding: "20px 40px" }}>
         <div style={{ maxWidth: 520, margin: "0 auto", display: "flex", gap: 0 }}>
           {STEPS.map((s, i) => {
             const done = step > s.id;
@@ -122,13 +122,13 @@ export default function CompanyOnboarding({ currentUser, userShop, onComplete, n
       </div>
 
       {/* Content */}
-      <div style={{ display: "flex", justifyContent: "center", padding: "48px 24px 80px" }}>
+      <div className="ob-content" style={{ display: "flex", justifyContent: "center", padding: "48px 24px 80px" }}>
         <div style={{ width: "100%", maxWidth: 520 }}>
 
           {/* ── STEP 1: Photo ── */}
           {step === 1 && (
             <div>
-              <div style={{ fontSize: 40, letterSpacing: 2, marginBottom: 6 }}>PROFILE PHOTO</div>
+              <div className="ob-step-title" style={{ fontSize: 40, letterSpacing: 2, marginBottom: 6 }}>PROFILE PHOTO</div>
               <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.45)", lineHeight: 1.6, marginBottom: 36 }}>
                 This is your shop's banner — it appears in search results and on your profile page. Use a clean, high-quality photo of your work or your shop front.
               </div>
@@ -171,7 +171,7 @@ export default function CompanyOnboarding({ currentUser, userShop, onComplete, n
           {/* ── STEP 2: Details ── */}
           {step === 2 && (
             <div>
-              <div style={{ fontSize: 40, letterSpacing: 2, marginBottom: 6 }}>BUSINESS DETAILS</div>
+              <div className="ob-step-title" style={{ fontSize: 40, letterSpacing: 2, marginBottom: 6 }}>BUSINESS DETAILS</div>
               <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.45)", lineHeight: 1.6, marginBottom: 36 }}>
                 Help customers find your shop and know how to reach you.
               </div>
@@ -216,7 +216,7 @@ export default function CompanyOnboarding({ currentUser, userShop, onComplete, n
           {/* ── STEP 3: Services ── */}
           {step === 3 && (
             <div>
-              <div style={{ fontSize: 40, letterSpacing: 2, marginBottom: 6 }}>SERVICES OFFERED</div>
+              <div className="ob-step-title" style={{ fontSize: 40, letterSpacing: 2, marginBottom: 6 }}>SERVICES OFFERED</div>
               <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.45)", lineHeight: 1.6, marginBottom: 32 }}>
                 Select every service your shop provides. Customers filter by service, so the more accurate, the better.
               </div>
@@ -259,7 +259,7 @@ export default function CompanyOnboarding({ currentUser, userShop, onComplete, n
           {/* ── STEP 4: Launch ── */}
           {step === 4 && (
             <div>
-              <div style={{ fontSize: 40, letterSpacing: 2, marginBottom: 6 }}>PREVIEW &amp; LAUNCH</div>
+              <div className="ob-step-title" style={{ fontSize: 40, letterSpacing: 2, marginBottom: 6 }}>PREVIEW &amp; LAUNCH</div>
               <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.45)", lineHeight: 1.6, marginBottom: 32 }}>
                 Here's how your listing will appear in search results. Toggle <b style={{ color: "#fff" }}>Go Live</b> to make it publicly visible.
               </div>
