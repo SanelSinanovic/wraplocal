@@ -27,7 +27,10 @@ export default function CompanyLogin({ nav, loginForm, setLoginForm, loginError,
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { role: "company", name: name.trim(), business_name: businessName.trim() } },
+      options: {
+        data: { role: "company", name: name.trim(), business_name: businessName.trim() },
+        emailRedirectTo: window.location.href.split("#")[0],
+      },
     });
     setLoading(false);
     if (error) return setSignupError(error.message);

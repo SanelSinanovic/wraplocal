@@ -26,7 +26,10 @@ export default function CustomerLogin({ nav, loginForm, setLoginForm, loginError
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { role: "customer", name: name.trim() } },
+      options: {
+        data: { role: "customer", name: name.trim() },
+        emailRedirectTo: window.location.href.split("#")[0],
+      },
     });
     setLoading(false);
     if (error) return setSignupError(error.message);

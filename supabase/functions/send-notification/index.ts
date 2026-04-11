@@ -29,7 +29,7 @@ function emailWrapper(content) {
         <tr>
           <td style="background:#0A0A0A;padding:24px 32px;">
             <span style="font-size:24px;letter-spacing:4px;font-weight:900;font-family:Georgia,serif;">
-              <span style="color:#FF4D00;">KI</span><span style="color:#fff;">DOR</span>
+              <span style="color:#FF4D00;">WRAP</span><span style="color:#fff;">BRIDGE</span>
             </span>
           </td>
         </tr>
