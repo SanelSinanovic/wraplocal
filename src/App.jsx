@@ -117,7 +117,16 @@ export default function App() {
       }
       if (session?.user) {
         setCurrentUser(session.user);
-        fetchProfile(session.user.id).then(p => setCurrentProfile(p));
+        fetchProfile(session.user.id).then(p => {
+          setCurrentProfile(p);
+          // After email confirmation click, redirect to the appropriate dashboard
+          if (event === "SIGNED_IN" && window.location.hash.includes("type=signup")) {
+            const role = p?.role || session.user.user_metadata?.role;
+            const dest = role === "company" ? "company-dash" : "customer-dash";
+            window.history.replaceState({ view: dest }, "", "#" + dest);
+            setView(dest);
+          }
+        });
       } else {
         setCurrentUser(null);
         setCurrentProfile(null);
