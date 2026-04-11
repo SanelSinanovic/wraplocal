@@ -1,11 +1,10 @@
 import { useState, useEffect } from "react";
-import { SHOPS as STATIC_SHOPS } from "../data/data";
 import { SERVICE_CATEGORIES } from "../lib/services";
 import { haversineDistance } from "../lib/queries";
 
 export default function SearchPage({ nav, shops: liveShops, searchQuery, setSearchQuery, serviceFilter, setServiceFilter, setSelectedShop, setBookingShop, currentUser, currentProfile, onLogout }) {
   const role = currentUser ? (currentProfile?.role || currentUser?.user_metadata?.role || "customer") : null;
-  const allShops = liveShops && liveShops.length > 0 ? liveShops : STATIC_SHOPS;
+  const allShops = liveShops || [];
   const [activeService, setActiveService] = useState(null);
   const [userCoords, setUserCoords] = useState(null);      // { lat, lon }
   const [locationStatus, setLocationStatus] = useState("idle"); // idle | loading | ok | denied

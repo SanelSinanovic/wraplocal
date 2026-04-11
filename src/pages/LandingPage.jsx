@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from "react";
-import { SHOPS as STATIC_SHOPS } from "../data/data";
 import { SERVICE_CATEGORIES } from "../lib/services";
 
 const CATEGORY_META = {
@@ -22,7 +21,7 @@ const CATEGORY_META = {
 export default function LandingPage({ nav, shops: liveShops, setBookingShop, setSelectedShop, setServiceFilter, currentUser, currentProfile, onLogout }) {
   const role = currentUser ? (currentProfile?.role || currentUser?.user_metadata?.role || "customer") : null;
   const firstName = currentUser ? ((currentProfile?.name || currentUser?.user_metadata?.name || currentUser?.email || "").split(" ")[0].split("@")[0]) : null;
-  const shops = liveShops && liveShops.length > 0 ? liveShops : STATIC_SHOPS;
+  const shops = liveShops || [];
   const [menuOpen, setMenuOpen] = useState(false);
   const [hoveredService, setHoveredService] = useState(null);
   const [activeSlide, setActiveSlide] = useState(0);

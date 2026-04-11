@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { BOOKINGS } from "../data/data";
+
 import { supabase } from "../lib/supabase";
 import { fetchCustomerBookings, fetchMessages, sendMessage as dbSendMessage, subscribeToMessages, submitReview, fetchBookingReview, uploadChatFile, sendNotification } from "../lib/queries";
 
@@ -64,9 +64,6 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
         setBookingsLoaded(true);
       });
     } else {
-      // Demo fallback — use static data
-      setBookings(BOOKINGS);
-      setMessagesMap(Object.fromEntries(BOOKINGS.map(b => [b.id, b.messages])));
       setBookingsLoaded(true);
     }
   }, [currentUser]);
