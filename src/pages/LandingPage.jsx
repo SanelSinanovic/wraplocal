@@ -242,7 +242,7 @@ export default function LandingPage({ nav, shops: liveShops, setBookingShop, set
       {/* TICKER */}
       <div className="ticker-wrap">
         <div className="ticker-track">
-          {["Vehicle Wraps","Color Change","PPF","Monument Signs","Channel Letters","LED Displays","Window Graphics","Window Tinting","Fleet Wraps","Banners","Boat Wraps","Custom Designs","Vinyl Graphics","Vehicle Wraps","Color Change","PPF","Monument Signs","Channel Letters","LED Displays","Window Graphics","Window Tinting","Fleet Wraps","Banners","Boat Wraps","Custom Designs","Vinyl Graphics"].map((s, i) => (
+          {["Vehicle Wraps","Color Change","PPF","Monument Signs","Channel Letters","LED Displays","Window Graphics","Window Tinting","Fleet Wraps","Banners","Custom Designs","Vinyl Graphics","Vehicle Wraps","Color Change","PPF","Monument Signs","Channel Letters","LED Displays","Window Graphics","Window Tinting","Fleet Wraps","Banners","Custom Designs","Vinyl Graphics"].map((s, i) => (
             <span key={i} className="ticker-item" style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, letterSpacing: 3, color: "#FF4D00", whiteSpace: "nowrap", padding: "0 28px", display: "flex", alignItems: "center", gap: 16, textTransform: "uppercase" }}>
               <span style={{ width: 4, height: 4, borderRadius: "50%", background: i % 4 === 0 ? "#FF4D00" : "rgba(255,255,255,0.15)", display: "inline-block", flexShrink: 0 }} />
               {s}
