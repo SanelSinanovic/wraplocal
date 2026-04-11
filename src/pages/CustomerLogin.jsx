@@ -13,6 +13,16 @@ export default function CustomerLogin({ nav, loginForm, setLoginForm, loginError
   const [forgotSent, setForgotSent] = useState(false);
   const [forgotLoading, setForgotLoading] = useState(false);
   const [forgotError, setForgotError] = useState("");
+  const [emailTaken, setEmailTaken] = useState(false);
+  const [emailChecking, setEmailChecking] = useState(false);
+
+  const checkEmail = async (email) => {
+    if (!email.includes("@")) return;
+    setEmailChecking(true);
+    const { data } = await supabase.rpc("email_exists", { email_address: email });
+    setEmailChecking(false);
+    setEmailTaken(!!data);
+  };
 
   const handleSignup = async () => {
     setSignupError("");
@@ -145,7 +155,22 @@ export default function CustomerLogin({ nav, loginForm, setLoginForm, loginError
               </div>
               <div style={{ marginBottom: 16 }}>
                 <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", letterSpacing: 1, marginBottom: 6 }}>EMAIL ADDRESS</div>
-                <input type="email" placeholder="you@email.com" value={signupForm.email} onChange={e => setSignupForm(f => ({ ...f, email: e.target.value }))} />
+                <input
+                  type="email"
+                  placeholder="you@email.com"
+                  value={signupForm.email}
+                  onChange={e => { setSignupForm(f => ({ ...f, email: e.target.value })); setEmailTaken(false); }}
+                  onBlur={e => checkEmail(e.target.value)}
+                  style={emailTaken ? { borderColor: "#FF4D00" } : {}}
+                />
+                {emailTaken && (
+                  <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#FF4D00", marginTop: 6 }}>
+                    An account with this email already exists. <span style={{ cursor: "pointer", textDecoration: "underline" }} onClick={() => switchMode("login")}>Sign in instead →</span>
+                  </div>
+                )}
+                {emailChecking && (
+                  <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.3)", marginTop: 6 }}>Checking...</div>
+                )}
               </div>
               <div style={{ marginBottom: 16 }}>
                 <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", letterSpacing: 1, marginBottom: 6 }}>PASSWORD</div>
@@ -155,7 +180,7 @@ export default function CustomerLogin({ nav, loginForm, setLoginForm, loginError
                 <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", letterSpacing: 1, marginBottom: 6 }}>CONFIRM PASSWORD</div>
                 <input type="password" placeholder="••••••••" value={signupForm.confirm} onChange={e => setSignupForm(f => ({ ...f, confirm: e.target.value }))} onKeyDown={e => e.key === "Enter" && handleSignup()} />
               </div>
-              <button onClick={handleSignup} disabled={loading} className="login-submit" style={{ opacity: loading ? 0.6 : 1, cursor: loading ? "not-allowed" : "pointer", marginBottom: 16 }}>
+              <button onClick={handleSignup} disabled={loading || emailTaken || emailChecking} className="login-submit" style={{ opacity: (loading || emailTaken || emailChecking) ? 0.4 : 1, cursor: (loading || emailTaken || emailChecking) ? "not-allowed" : "pointer", marginBottom: 16 }}>
                 {loading ? "Creating Account..." : "Create Account →"}
               </button>
               <div style={{ display: "flex", alignItems: "flex-start", gap: 10, fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.45)", lineHeight: 1.5 }}>

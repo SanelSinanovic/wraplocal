@@ -101,3 +101,9 @@ on conflict do nothing;
 --   then manually set owner_id on the shop row you want them to own:
 --   UPDATE shops SET owner_id = '<their-uuid>' WHERE id = '11111111-...';
 -- ============================================================
+
+-- Email existence check for signup validation
+CREATE OR REPLACE FUNCTION public.email_exists(email_address text)
+RETURNS boolean LANGUAGE sql SECURITY DEFINER AS $$
+  SELECT EXISTS (SELECT 1 FROM auth.users WHERE email = email_address);
+$$;
