@@ -66,6 +66,8 @@ function BookingDetailPanel({ selectedBooking, messagesMap, chatInput, setChatIn
   const [schedSaved, setSchedSaved] = useState(false);
   const companyFileRef = useRef(null);
   const [companyFileUploading, setCompanyFileUploading] = useState(false);
+  const [quotePayType, setQuotePayType] = useState("full");
+  const [quoteDepositPct, setQuoteDepositPct] = useState(50);
 
   const handleCompanyFileAttach = async (file) => {
     if (!file || !sendCompanyFileMessage) return;
@@ -160,17 +162,54 @@ function BookingDetailPanel({ selectedBooking, messagesMap, chatInput, setChatIn
             <div ref={chatEndRef} />
           </div>
           {(b.status === "pending" || (b.status === "confirmed" && !b.amount)) && (
-            <div style={{ display: "flex", gap: 8, border: "1px solid rgba(255,255,255,0.07)", borderTop: "none", padding: 12, background: "#111" }}>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={quoteInput}
-                onChange={e => setQuoteInput(e.target.value)}
-                placeholder="Enter quote amount (e.g. 1200)"
-                style={{ flex: 1, background: "#1A1A1A", border: "1px solid rgba(255,255,255,0.1)", padding: "10px 12px", color: "#fff", fontFamily: "'DM Sans', sans-serif", fontSize: 13, outline: "none" }}
-              />
-              <button onClick={sendQuoteOffer} style={{ background: "#10B981", color: "#fff", border: "none", padding: "10px 16px", fontFamily: "'Bebas Neue', cursive", fontSize: 14, letterSpacing: 1, cursor: "pointer" }}>Send Quote</button>
+            <div style={{ border: "1px solid rgba(255,255,255,0.07)", borderTop: "none", background: "#111" }}>
+              {/* Amount + payment type row */}
+              <div style={{ display: "flex", gap: 8, padding: "12px 12px 8px" }}>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={quoteInput}
+                  onChange={e => setQuoteInput(e.target.value)}
+                  placeholder="Quote amount (e.g. 1200)"
+                  style={{ flex: 1, background: "#1A1A1A", border: "1px solid rgba(255,255,255,0.1)", padding: "10px 12px", color: "#fff", fontFamily: "'DM Sans', sans-serif", fontSize: 13, outline: "none" }}
+                />
+                {["full", "deposit"].map(v => (
+                  <button key={v} onClick={() => setQuotePayType(v)} style={{ background: quotePayType === v ? "#1A1A1A" : "transparent", border: `1px solid ${quotePayType === v ? "#FF4D00" : "rgba(255,255,255,0.12)"}`, color: quotePayType === v ? "#FF4D00" : "rgba(255,255,255,0.35)", padding: "10px 10px", fontFamily: "'DM Sans', sans-serif", fontSize: 12, cursor: "pointer", whiteSpace: "nowrap" }}>
+                    {v === "full" ? "Pay in Full" : "Deposit"}
+                  </button>
+                ))}
+              </div>
+              {/* Deposit % selector */}
+              {quotePayType === "deposit" && (
+                <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "0 12px 8px", flexWrap: "wrap" }}>
+                  <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)", letterSpacing: 0.5 }}>DEPOSIT %:</span>
+                  {[25, 50, 75].map(pct => (
+                    <button key={pct} onClick={() => setQuoteDepositPct(pct)} style={{ background: quoteDepositPct === pct ? "#1A1A1A" : "transparent", border: `1px solid ${quoteDepositPct === pct ? "#FF4D00" : "rgba(255,255,255,0.12)"}`, color: quoteDepositPct === pct ? "#FF4D00" : "rgba(255,255,255,0.4)", padding: "4px 10px", fontFamily: "'DM Sans', sans-serif", fontSize: 12, cursor: "pointer" }}>{pct}%</button>
+                  ))}
+                  <input
+                    type="number" min="10" max="99"
+                    placeholder="Other %"
+                    value={[25, 50, 75].includes(quoteDepositPct) ? "" : String(quoteDepositPct)}
+                    onChange={e => { const v = Number(e.target.value); if (v >= 10 && v <= 99) setQuoteDepositPct(v); }}
+                    style={{ width: 60, background: "#1A1A1A", border: `1px solid ${![25, 50, 75].includes(quoteDepositPct) ? "#FF4D00" : "rgba(255,255,255,0.1)"}`, padding: "4px 8px", color: "#fff", fontFamily: "'DM Sans', sans-serif", fontSize: 12, outline: "none" }}
+                  />
+                </div>
+              )}
+              {/* Preview + send row */}
+              <div style={{ display: "flex", gap: 8, alignItems: "center", padding: "0 12px 12px" }}>
+                <div style={{ flex: 1, fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)", lineHeight: 1.5 }}>
+                  {Number(quoteInput) > 0 && (
+                    quotePayType === "deposit"
+                      ? `Customer pays $${(Number(quoteInput) * quoteDepositPct / 100).toFixed(2)} now · $${(Number(quoteInput) * (1 - quoteDepositPct / 100)).toFixed(2)} at pickup · Your WrapBridge fee: $${(Number(quoteInput) * 0.07).toFixed(2)}`
+                      : `Customer pays full $${Number(quoteInput).toFixed(2)} · Your WrapBridge fee: $${(Number(quoteInput) * 0.07).toFixed(2)}`
+                  )}
+                </div>
+                <button
+                  onClick={() => sendQuoteOffer(quotePayType, quotePayType === "deposit" ? quoteDepositPct : 100)}
+                  style={{ background: "#10B981", color: "#fff", border: "none", padding: "10px 16px", fontFamily: "'Bebas Neue', cursive", fontSize: 14, letterSpacing: 1, cursor: "pointer", flexShrink: 0 }}
+                >Send Quote</button>
+              </div>
             </div>
           )}
           <div style={{ display: "flex", border: "1px solid rgba(255,255,255,0.07)", borderTop: "none" }}>
@@ -464,25 +503,30 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
     await sendCompanyMessageText(text);
   };
 
-  const sendQuoteOffer = async () => {
+  const sendQuoteOffer = async (payType = "full", depositPct = 100) => {
     if (!selectedBooking || !["pending", "confirmed"].includes(selectedBooking.status)) return;
     const amount = Number(quoteInput);
     if (!Number.isFinite(amount) || amount <= 0) return;
 
-    const marker = `QUOTE_OFFER::${amount.toFixed(2)}`;
+    const marker = `QUOTE_OFFER::${amount.toFixed(2)}::${payType}::${depositPct}`;
     const result = await dbSendMessage({ bookingId: selectedBooking.id, senderId: currentUser.id, senderRole: "shop", text: marker });
     if (!result) return;
     sendNotification("quote_sent", selectedBooking.id);
 
+    const depositStr = payType === "deposit"
+      ? ` · ${depositPct}% deposit ($${(amount * depositPct / 100).toFixed(2)}) due now`
+      : "";
     const time = new Date(result.sent_at || Date.now()).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
     setMessagesMap(prev => ({
       ...prev,
       [selectedBooking.id]: mergeMessages(prev[selectedBooking.id] || [], {
         id: result.id,
         from: "shop",
-        text: `Quote offer: $${amount.toFixed(2)}`,
+        text: `Quote offer: $${amount.toFixed(2)}${depositStr}`,
         time,
         quoteOffer: amount,
+        paymentType: payType,
+        depositPct,
         rawText: marker,
       }),
     }));
@@ -631,6 +675,40 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
 
   const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
+  // ── Stripe Connect onboarding ──────────────────────────────────────────────
+  const handleConnectStripe = async () => {
+    setConnectLoading(true);
+    setConnectError("");
+    try {
+      const returnUrl = window.location.origin + window.location.pathname + "#company-dash?tab=payments";
+      const { data: { session } } = await supabase.auth.getSession();
+      const accessToken = session?.access_token;
+      if (!accessToken) throw new Error("Not logged in");
+      const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN4bXpjdm92Z3p0cG5reG5vbXVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5ODQ1NjMsImV4cCI6MjA4ODU2MDU2M30.bEul8TJAuwlXGQusLVvLbvuauTan02IJm8ktwwqF7so";
+      const res = await fetch(
+        `https://cxmzcvovgztpnkxnomun.supabase.co/functions/v1/create-connect-onboarding`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + ANON_KEY,
+            "apikey": ANON_KEY,
+            "x-user-token": accessToken,
+          },
+          body: JSON.stringify({ shopId: userShop.id, returnUrl, refreshUrl: returnUrl }),
+        }
+      );
+      const data = await res.json();
+      if (!res.ok || data.error || !data.url) {
+        throw new Error(data.error || ("HTTP " + res.status + ": " + JSON.stringify(data)));
+      }
+      window.location.href = data.url;
+    } catch (e) {
+      setConnectError(e.message);
+      setConnectLoading(false);
+    }
+  };
+
   // ── Onboarding complete handler ────────────────────────────────────────────
   const handleOnboardingComplete = (updatedShop) => {
     setUserShop(updatedShop);
@@ -720,10 +798,13 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
             <button onClick={() => setBookingsError("")} style={{ marginLeft: 12, background: "none", border: "none", color: "#FF4D00", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", fontSize: 12, textDecoration: "underline" }}>Dismiss</button>
           </div>
         )}
-        {userShop && !stripeOnboarded && (
-          <div style={{ background: "rgba(245,158,11,0.07)", border: "1px solid rgba(245,158,11,0.35)", padding: "14px 20px", marginBottom: 20, fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(245,158,11,0.95)", lineHeight: 1.6, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
-            <span>⚠️ <strong>Your shop is not publicly listed</strong> — connect your Stripe account to accept payments and appear in search results.</span>
-            <button onClick={() => setDashTab("payments")} style={{ background: "#F59E0B", border: "none", color: "#000", padding: "7px 18px", fontFamily: "'Bebas Neue', cursive", fontSize: 14, letterSpacing: 1, cursor: "pointer", flexShrink: 0 }}>Set Up Payments →</button>
+        {userShop && !stripeOnboarded && !stripeAccountId && (
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ background: "rgba(245,158,11,0.07)", border: "1px solid rgba(245,158,11,0.35)", padding: "14px 20px", fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(245,158,11,0.95)", lineHeight: 1.6, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+              <span>⚠️ <strong>Your shop is not publicly listed</strong> — connect your Stripe account to accept payments and appear in search results.</span>
+              <button onClick={handleConnectStripe} disabled={connectLoading} style={{ background: "#F59E0B", border: "none", color: "#000", padding: "7px 18px", fontFamily: "'Bebas Neue', cursive", fontSize: 14, letterSpacing: 1, cursor: connectLoading ? "not-allowed" : "pointer", opacity: connectLoading ? 0.6 : 1, flexShrink: 0 }}>{connectLoading ? "REDIRECTING…" : "Set Up Payments →"}</button>
+            </div>
+            {connectError && <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#F87171", padding: "8px 20px", background: "rgba(248,113,113,0.06)", border: "1px solid rgba(248,113,113,0.2)", borderTop: "none" }}>{connectError}</div>}
           </div>
         )}
         {dashTab === "overview" && (() => {
@@ -1116,41 +1197,6 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
           const now = new Date();
           const monthLabel = now.toLocaleString("en-US", { month: "long", year: "numeric" }).toUpperCase();
 
-          const handleConnectStripe = async () => {
-            setConnectLoading(true);
-            setConnectError("");
-            try {
-              const returnUrl = window.location.origin + window.location.pathname + "#company-dash?tab=payments";
-              // Get the session token explicitly so the edge function can verify the user
-              const { data: { session } } = await supabase.auth.getSession();
-              const accessToken = session?.access_token;
-              if (!accessToken) throw new Error("Not logged in");
-
-              const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN4bXpjdm92Z3p0cG5reG5vbXVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5ODQ1NjMsImV4cCI6MjA4ODU2MDU2M30.bEul8TJAuwlXGQusLVvLbvuauTan02IJm8ktwwqF7so";
-              const res = await fetch(
-                `https://cxmzcvovgztpnkxnomun.supabase.co/functions/v1/create-connect-onboarding`,
-                {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": "Bearer " + ANON_KEY,
-                    "apikey": ANON_KEY,
-                    "x-user-token": accessToken,
-                  },
-                  body: JSON.stringify({ shopId: userShop.id, returnUrl, refreshUrl: returnUrl }),
-                }
-              );
-              const data = await res.json();
-              if (!res.ok || data.error || !data.url) {
-                throw new Error(data.error || ("HTTP " + res.status + ": " + JSON.stringify(data)));
-              }
-              window.location.href = data.url;
-            } catch (e) {
-              setConnectError(e.message);
-              setConnectLoading(false);
-            }
-          };
-
           return (
           <div>
             <div style={{ fontSize: 40, letterSpacing: 2, marginBottom: 8 }}>PAYMENTS & PAYOUTS</div>
@@ -1179,8 +1225,20 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
                           body: JSON.stringify({ shopId: userShop.id }),
                         });
                         const data = await res.json();
-                        if (data.url) window.open(data.url, "_blank");
-                        else setConnectError(data.error || "Could not open Stripe dashboard");
+                        if (data.url) {
+                          window.open(data.url, "_blank");
+                        } else {
+                          const errMsg = data.error || "Could not open Stripe dashboard";
+                          // Account was deleted (e.g. Stripe test data cleared) — reset so user can reconnect
+                          if (errMsg.toLowerCase().includes("no such account") || errMsg.toLowerCase().includes("does not exist") || errMsg.toLowerCase().includes("resource_missing")) {
+                            await supabase.from("shops").update({ stripe_account_id: null, stripe_onboarded: false }).eq("id", userShop.id);
+                            setStripeAccountId("");
+                            setStripeOnboarded(false);
+                            setConnectError("Your previous Stripe account no longer exists. Please reconnect a new one.");
+                          } else {
+                            setConnectError(errMsg);
+                          }
+                        }
                       } catch (e) {
                         setConnectError(e.message);
                       }

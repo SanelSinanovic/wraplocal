@@ -10,7 +10,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { bookingId, serviceAmount, serviceName, shopName, successUrl, cancelUrl } = await req.json();
+    const { bookingId, serviceAmount, fullAmount, paymentType, serviceName, shopName, successUrl, cancelUrl } = await req.json();
 
     const stripeKey       = Deno.env.get("STRIPE_SECRET_KEY");
     const supabaseUrl     = Deno.env.get("SUPABASE_URL");
@@ -45,9 +45,16 @@ Deno.serve(async (req) => {
       // Non-fatal — session will still be created, money stays with platform
     }
 
-    // serviceAmount is dollars; Stripe needs integer cents
+    // serviceAmount is the charge amount (deposit or full); fullAmount is the total job price.
+    // Platform fee is always 7% of the full job price, regardless of deposit amount.
     const serviceCents = Math.round(Number(serviceAmount) * 100);
-    const feeCents     = Math.round(serviceCents * 0.07); // 7% platform fee
+    const fullCents    = Math.round(Number(fullAmount || serviceAmount) * 100);
+    const feeCents     = Math.round(fullCents * 0.07); // 7% of full job price
+
+    const isDeposit = paymentType === "deposit";
+    const depositPctLabel = isDeposit && fullCents > 0
+      ? `${Math.round((serviceCents / fullCents) * 100)}% deposit of $${(fullCents / 100).toFixed(2)}`
+      : null;
 
     const params = new URLSearchParams();
     params.append("mode", "payment");
@@ -58,7 +65,9 @@ Deno.serve(async (req) => {
     params.append("line_items[0][price_data][unit_amount]", String(serviceCents));
     params.append("line_items[0][price_data][product_data][name]", serviceName || "Service");
     params.append("line_items[0][price_data][product_data][description]",
-      shopName ? `at ${shopName} · powered by WrapBridge` : "powered by WrapBridge");
+      depositPctLabel
+        ? `${depositPctLabel}${shopName ? ` at ${shopName}` : ''} · powered by WrapBridge`
+        : shopName ? `at ${shopName} · powered by WrapBridge` : "powered by WrapBridge");
     params.append("line_items[0][quantity]", "1");
     params.append("success_url", successUrl);
     params.append("cancel_url", cancelUrl);

@@ -237,16 +237,17 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
   };
 
   // ── Confirm booking after Stripe payment (doesn't depend on selectedBooking state) ──
-  const confirmBookingFromPayment = async (bookingId, amount) => {
+  const confirmBookingFromPayment = async (bookingId, chargeAmount, fullAmount) => {
     if (!currentUser) return;
-    const normalizedAmount = Number(amount) || 0;
-    const fee = Math.round(normalizedAmount * 0.07 * 100) / 100;
-    const total = normalizedAmount;
-    await supabase.from("bookings").update({ status: "confirmed", amount: normalizedAmount, fee, total }).eq("id", bookingId).eq("customer_id", currentUser.id);
-    const marker = `QUOTE_RESPONSE::accepted::${normalizedAmount.toFixed(2)}`;
+    const normalizedCharge = Number(chargeAmount) || 0;
+    const normalizedFull = Number(fullAmount) || normalizedCharge;
+    const fee = Math.round(normalizedFull * 0.07 * 100) / 100;  // 7% of full job price
+    const total = normalizedCharge;                              // what was actually paid now
+    await supabase.from("bookings").update({ status: "confirmed", amount: normalizedFull, fee, total }).eq("id", bookingId).eq("customer_id", currentUser.id);
+    const marker = `QUOTE_RESPONSE::accepted::${normalizedFull.toFixed(2)}`;
     await dbSendMessage({ bookingId, senderId: currentUser.id, senderRole: "customer", text: marker });
     sendNotification("payment_received", bookingId).catch(() => {});
-    setBookings(prev => prev.map(b => String(b.id) === String(bookingId) ? { ...b, status: "confirmed", amount: normalizedAmount, fee, total } : b));
+    setBookings(prev => prev.map(b => String(b.id) === String(bookingId) ? { ...b, status: "confirmed", amount: normalizedFull, fee, total } : b));
   };
 
   // ── Consume Stripe return after bookings are loaded ──────────────────────
@@ -254,12 +255,13 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
     if (!stripeReturn || !bookingsLoaded) return;
     const booking = bookings.find(b => String(b.id) === String(stripeReturn.bookingId));
     if (!booking) return;
-    const { bookingId, amount } = stripeReturn;
+    const { bookingId, amount, fullAmount } = stripeReturn;
     setStripeReturn(null);
-    const normalizedAmount = Number(amount) || 0;
-    const fee = Math.round(normalizedAmount * 0.07 * 100) / 100;
-    confirmBookingFromPayment(bookingId, normalizedAmount).then(() => {
-      setSelectedBooking({ ...booking, status: "confirmed", amount: normalizedAmount, fee, total: normalizedAmount });
+    const normalizedCharge = Number(amount) || 0;
+    const normalizedFull = Number(fullAmount) || normalizedCharge;
+    const fee = Math.round(normalizedFull * 0.07 * 100) / 100;
+    confirmBookingFromPayment(bookingId, normalizedCharge, normalizedFull).then(() => {
+      setSelectedBooking({ ...booking, status: "confirmed", amount: normalizedFull, fee, total: normalizedCharge });
     });
   }, [stripeReturn, bookingsLoaded]);
 
@@ -268,11 +270,13 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
     if (!paymentBooking) return;
     setPaymentLoading(true);
     setPaymentError("");
-    const { booking, amount } = paymentBooking;
-    const successUrl = `${window.location.origin}/?stripe_success=1&booking_id=${booking.id}&amount=${amount}`;
+    const { booking, fullAmount, chargeAmount, paymentType } = paymentBooking;
+    const actualCharge = chargeAmount ?? fullAmount;
+    const actualFull   = fullAmount ?? chargeAmount;
+    const successUrl = `${window.location.origin}/?stripe_success=1&booking_id=${booking.id}&amount=${actualCharge}&full_amount=${actualFull}`;
     const cancelUrl  = `${window.location.origin}/?stripe_cancel=1`;
     const { data, error } = await supabase.functions.invoke("create-checkout-session", {
-      body: { bookingId: booking.id, serviceAmount: amount, serviceName: booking.service, shopName: booking.shop, successUrl, cancelUrl },
+      body: { bookingId: booking.id, serviceAmount: actualCharge, fullAmount: actualFull, paymentType: paymentType || "full", serviceName: booking.service, shopName: booking.shop, successUrl, cancelUrl },
     });
     if (error || !data?.url) {
       const msg = data?.error || error?.message || error?.toString() || "Unknown error";
@@ -395,13 +399,38 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
               {/* Input */}
               {pendingQuote && (
                 <div style={{ border: "1px solid rgba(255,255,255,0.07)", borderTop: "none", padding: "14px 16px", background: "#111" }}>
-                  <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.8)", marginBottom: 10 }}>
-                    Quote received: <span style={{ color: "#10B981", fontWeight: 600 }}>${Number(pendingQuote.quoteOffer).toFixed(2)}</span>
+                  <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.8)", marginBottom: 8 }}>
+                    {pendingQuote.paymentType === "deposit" ? (
+                      <>
+                        Quote: <span style={{ color: "#10B981", fontWeight: 600 }}>${Number(pendingQuote.quoteOffer).toFixed(2)}</span>
+                        <span style={{ color: "rgba(255,255,255,0.4)", fontSize: 12 }}> · {pendingQuote.depositPct}% deposit (${(pendingQuote.quoteOffer * pendingQuote.depositPct / 100).toFixed(2)}) due now</span>
+                      </>
+                    ) : (
+                      <>Quote received: <span style={{ color: "#10B981", fontWeight: 600 }}>${Number(pendingQuote.quoteOffer).toFixed(2)}</span></>
+                    )}
                   </div>
-                  <div style={{ display: "flex", gap: 8 }}>
-                    <button onClick={() => setPaymentBooking({ booking: selectedBooking, amount: pendingQuote.quoteOffer })} style={{ background: "#10B981", color: "#fff", border: "none", padding: "9px 14px", fontFamily: "'Bebas Neue', cursive", fontSize: 14, letterSpacing: 1, cursor: "pointer" }}>Accept &amp; Pay →</button>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    <button
+                      onClick={() => {
+                        const fullAmt = pendingQuote.quoteOffer;
+                        const pType = pendingQuote.paymentType || "full";
+                        const dPct = pendingQuote.depositPct || 100;
+                        const chargeAmt = pType === "deposit" ? Math.round(fullAmt * dPct) / 100 : fullAmt;
+                        setPaymentBooking({ booking: selectedBooking, fullAmount: fullAmt, chargeAmount: chargeAmt, paymentType: pType, depositPct: dPct });
+                      }}
+                      style={{ background: "#10B981", color: "#fff", border: "none", padding: "9px 14px", fontFamily: "'Bebas Neue', cursive", fontSize: 14, letterSpacing: 1, cursor: "pointer" }}
+                    >
+                      {pendingQuote.paymentType === "deposit"
+                        ? `Accept & Pay Deposit ($${(pendingQuote.quoteOffer * pendingQuote.depositPct / 100).toFixed(2)}) →`
+                        : "Accept & Pay →"}
+                    </button>
                     <button onClick={() => handleQuoteDecision("rejected", pendingQuote.quoteOffer)} style={{ background: "transparent", color: "rgba(255,77,0,0.9)", border: "1px solid rgba(255,77,0,0.4)", padding: "9px 14px", fontFamily: "'Bebas Neue', cursive", fontSize: 14, letterSpacing: 1, cursor: "pointer" }}>Decline Quote</button>
                   </div>
+                  {pendingQuote.paymentType === "deposit" && (
+                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 8 }}>
+                      Remaining ${(pendingQuote.quoteOffer * (1 - pendingQuote.depositPct / 100)).toFixed(2)} is due directly to the shop at pickup.
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -571,14 +600,30 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
           <div style={{ background: "#111", border: "1px solid rgba(255,255,255,0.1)", width: "100%", maxWidth: 460, padding: "32px", fontFamily: "'DM Sans', sans-serif" }}>
             <div style={{ fontFamily: "'Bebas Neue', cursive", fontSize: 32, letterSpacing: 2, marginBottom: 6 }}>COMPLETE PAYMENT</div>
             <div style={{ fontSize: 13, color: "rgba(255,255,255,0.45)", marginBottom: 28 }}>{paymentBooking.booking.shop} · {paymentBooking.booking.service}</div>
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, marginBottom: 10 }}>
-              <span style={{ color: "rgba(255,255,255,0.5)" }}>Service</span>
-              <span>${Number(paymentBooking.amount).toFixed(2)}</span>
-            </div>
+            {paymentBooking.paymentType === "deposit" ? (
+              <>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, marginBottom: 10 }}>
+                  <span style={{ color: "rgba(255,255,255,0.5)" }}>Full job price</span>
+                  <span>${Number(paymentBooking.fullAmount).toFixed(2)}</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, marginBottom: 6 }}>
+                  <span style={{ color: "rgba(255,255,255,0.5)" }}>Deposit due now ({paymentBooking.depositPct}%)</span>
+                  <span style={{ color: "#10B981" }}>${Number(paymentBooking.chargeAmount).toFixed(2)}</span>
+                </div>
+                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", marginBottom: 14 }}>
+                  Remaining ${(paymentBooking.fullAmount - paymentBooking.chargeAmount).toFixed(2)} due directly to the shop at pickup.
+                </div>
+              </>
+            ) : (
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, marginBottom: 10 }}>
+                <span style={{ color: "rgba(255,255,255,0.5)" }}>Service</span>
+                <span>${Number(paymentBooking.chargeAmount ?? paymentBooking.fullAmount).toFixed(2)}</span>
+              </div>
+            )}
             <div style={{ height: 1, background: "rgba(255,255,255,0.08)", margin: "14px 0" }} />
             <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "'Bebas Neue', cursive", fontSize: 28, letterSpacing: 1, marginBottom: 24 }}>
-              <span>TOTAL</span>
-              <span style={{ color: "#FF4D00" }}>${Number(paymentBooking.amount).toFixed(2)}</span>
+              <span>{paymentBooking.paymentType === "deposit" ? "DEPOSIT TOTAL" : "TOTAL"}</span>
+              <span style={{ color: "#FF4D00" }}>${Number(paymentBooking.chargeAmount ?? paymentBooking.fullAmount).toFixed(2)}</span>
             </div>
             {paymentError && <div style={{ fontSize: 13, color: "#ef4444", marginBottom: 14 }}>{paymentError}</div>}
             <button
@@ -586,7 +631,7 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
               disabled={paymentLoading}
               style={{ width: "100%", background: paymentLoading ? "#555" : "#10B981", color: "#fff", border: "none", padding: "14px", fontFamily: "'Bebas Neue', cursive", fontSize: 20, letterSpacing: 2, cursor: paymentLoading ? "default" : "pointer", marginBottom: 12 }}
             >
-              {paymentLoading ? "Connecting to Stripe…" : `🔒 PAY $${Number(paymentBooking.amount).toFixed(2)} →`}
+              {paymentLoading ? "Connecting to Stripe…" : `🔒 PAY $${Number(paymentBooking.chargeAmount ?? paymentBooking.fullAmount).toFixed(2)} →`}
             </button>
             <div style={{ textAlign: "center" }}>
               <span onClick={() => { setPaymentBooking(null); setPaymentError(""); }} style={{ fontSize: 13, color: "rgba(255,255,255,0.35)", cursor: "pointer", textDecoration: "underline" }}>Maybe Later</span>
@@ -735,14 +780,30 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
           <div style={{ background: "#111", border: "1px solid rgba(255,255,255,0.1)", width: "100%", maxWidth: 460, padding: "32px", fontFamily: "'DM Sans', sans-serif" }}>
             <div style={{ fontFamily: "'Bebas Neue', cursive", fontSize: 32, letterSpacing: 2, marginBottom: 6 }}>COMPLETE PAYMENT</div>
             <div style={{ fontSize: 13, color: "rgba(255,255,255,0.45)", marginBottom: 28 }}>{paymentBooking.booking.shop} · {paymentBooking.booking.service}</div>
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, marginBottom: 10 }}>
-              <span style={{ color: "rgba(255,255,255,0.5)" }}>Service</span>
-              <span>${Number(paymentBooking.amount).toFixed(2)}</span>
-            </div>
+            {paymentBooking.paymentType === "deposit" ? (
+              <>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, marginBottom: 10 }}>
+                  <span style={{ color: "rgba(255,255,255,0.5)" }}>Full job price</span>
+                  <span>${Number(paymentBooking.fullAmount).toFixed(2)}</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, marginBottom: 6 }}>
+                  <span style={{ color: "rgba(255,255,255,0.5)" }}>Deposit due now ({paymentBooking.depositPct}%)</span>
+                  <span style={{ color: "#10B981" }}>${Number(paymentBooking.chargeAmount).toFixed(2)}</span>
+                </div>
+                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", marginBottom: 14 }}>
+                  Remaining ${(paymentBooking.fullAmount - paymentBooking.chargeAmount).toFixed(2)} due directly to the shop at pickup.
+                </div>
+              </>
+            ) : (
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, marginBottom: 10 }}>
+                <span style={{ color: "rgba(255,255,255,0.5)" }}>Service</span>
+                <span>${Number(paymentBooking.chargeAmount ?? paymentBooking.fullAmount).toFixed(2)}</span>
+              </div>
+            )}
             <div style={{ height: 1, background: "rgba(255,255,255,0.08)", margin: "14px 0" }} />
             <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "'Bebas Neue', cursive", fontSize: 28, letterSpacing: 1, marginBottom: 24 }}>
-              <span>TOTAL</span>
-              <span style={{ color: "#FF4D00" }}>${Number(paymentBooking.amount).toFixed(2)}</span>
+              <span>{paymentBooking.paymentType === "deposit" ? "DEPOSIT TOTAL" : "TOTAL"}</span>
+              <span style={{ color: "#FF4D00" }}>${Number(paymentBooking.chargeAmount ?? paymentBooking.fullAmount).toFixed(2)}</span>
             </div>
             {paymentError && <div style={{ fontSize: 13, color: "#ef4444", marginBottom: 14 }}>{paymentError}</div>}
             <button
@@ -750,7 +811,7 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
               disabled={paymentLoading}
               style={{ width: "100%", background: paymentLoading ? "#555" : "#10B981", color: "#fff", border: "none", padding: "14px", fontFamily: "'Bebas Neue', cursive", fontSize: 20, letterSpacing: 2, cursor: paymentLoading ? "default" : "pointer", marginBottom: 12 }}
             >
-              {paymentLoading ? "Connecting to Stripe…" : `🔒 PAY $${Number(paymentBooking.amount).toFixed(2)} →`}
+              {paymentLoading ? "Connecting to Stripe…" : `🔒 PAY $${Number(paymentBooking.chargeAmount ?? paymentBooking.fullAmount).toFixed(2)} →`}
             </button>
             <div style={{ textAlign: "center" }}>
               <span onClick={() => { setPaymentBooking(null); setPaymentError(""); }} style={{ fontSize: 13, color: "rgba(255,255,255,0.35)", cursor: "pointer", textDecoration: "underline" }}>Maybe Later</span>

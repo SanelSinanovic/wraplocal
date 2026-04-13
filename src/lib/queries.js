@@ -290,13 +290,21 @@ function normalizeMessageRow(m) {
   })
 
   if (text.startsWith('QUOTE_OFFER::')) {
-    const amount = Number(text.split('::')[1])
+    const parts = text.split('::')
+    const amount = Number(parts[1])
+    const paymentType = parts[2] || 'full'
+    const depositPct = parts[3] ? Number(parts[3]) : 100
+    const depositStr = paymentType === 'deposit'
+      ? ` · ${depositPct}% deposit ($${(amount * depositPct / 100).toFixed(2)}) due now`
+      : ''
     return {
       id: m.id,
       from,
-      text: Number.isFinite(amount) ? `Quote offer: $${amount.toFixed(2)}` : 'Quote offer received',
+      text: Number.isFinite(amount) ? `Quote offer: $${amount.toFixed(2)}${depositStr}` : 'Quote offer received',
       time,
       quoteOffer: Number.isFinite(amount) ? amount : null,
+      paymentType,
+      depositPct,
       rawText: text,
     }
   }

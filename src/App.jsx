@@ -102,7 +102,9 @@ export default function App() {
     if (urlParams.get('stripe_success') === '1') {
       const bookingId = urlParams.get('booking_id');
       const amount = parseFloat(urlParams.get('amount'));
-      if (bookingId && !isNaN(amount)) setStripeReturn({ bookingId, amount });
+      const fullAmountRaw = parseFloat(urlParams.get('full_amount'));
+      const fullAmount = isNaN(fullAmountRaw) ? amount : fullAmountRaw;
+      if (bookingId && !isNaN(amount)) setStripeReturn({ bookingId, amount, fullAmount });
       window.history.replaceState({ view: 'customer-dash' }, '', '#customer-dash');
       setView('customer-dash');
     }
