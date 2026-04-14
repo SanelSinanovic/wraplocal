@@ -79,6 +79,9 @@ Deno.serve(async (req) => {
 
     // Update DB if status changed
     if (onboarded !== shop.stripe_onboarded) {
+      // When first becoming onboarded, also auto-list the shop so it appears in search
+      const patch: Record<string, unknown> = { stripe_onboarded: onboarded };
+      if (onboarded) patch.is_listed = true;
       await fetch(supabaseUrl + "/rest/v1/shops?id=eq." + shopId, {
         method: "PATCH",
         headers: {
@@ -87,7 +90,7 @@ Deno.serve(async (req) => {
           "Content-Type": "application/json",
           Prefer: "return=minimal",
         },
-        body: JSON.stringify({ stripe_onboarded: onboarded }),
+        body: JSON.stringify(patch),
       });
     }
 

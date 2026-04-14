@@ -19,9 +19,21 @@ function getInitialView() {
   const hash = window.location.hash;
   // Supabase password-reset redirect — hash contains type=recovery token
   if (hash.includes("type=recovery")) return "reset-password";
-  const view = hash.replace("#", "");
+  // Strip query params from hash (e.g. "company-dash?tab=payments" → "company-dash")
+  const view = hash.replace("#", "").split("?")[0];
   const valid = ["landing","search","shop","booking","customer-dash","company-dash","pricing","customer-login","company-login","terms","privacy","reset-password"];
   return valid.includes(view) ? view : "landing";
+}
+
+// Read initial dashTab from URL hash query params (e.g. #company-dash?tab=payments)
+function getInitialDashTab() {
+  const hash = window.location.hash;
+  const qIndex = hash.indexOf("?");
+  if (qIndex === -1) return "overview";
+  const params = new URLSearchParams(hash.slice(qIndex + 1));
+  const tab = params.get("tab");
+  const validTabs = ["overview","requests","bookings","payments","availability","profile"];
+  return validTabs.includes(tab) ? tab : "overview";
 }
 
 const PAGE_META = {
@@ -44,7 +56,7 @@ export default function App() {
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [selectedDate, setSelectedDate] = useState(null);
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
-  const [dashTab, setDashTab] = useState("overview");
+  const [dashTab, setDashTab] = useState(getInitialDashTab);
   const [searchQuery, setSearchQuery] = useState("");
   const [serviceFilter, setServiceFilter] = useState(null);
   const [stripeReturn, setStripeReturn] = useState(null);
@@ -104,7 +116,8 @@ export default function App() {
       const amount = parseFloat(urlParams.get('amount'));
       const fullAmountRaw = parseFloat(urlParams.get('full_amount'));
       const fullAmount = isNaN(fullAmountRaw) ? amount : fullAmountRaw;
-      if (bookingId && !isNaN(amount)) setStripeReturn({ bookingId, amount, fullAmount });
+      const isRemaining = urlParams.get('remaining') === '1';
+      if (bookingId && !isNaN(amount)) setStripeReturn({ bookingId, amount, fullAmount, isRemaining });
       window.history.replaceState({ view: 'customer-dash' }, '', '#customer-dash');
       setView('customer-dash');
     }
@@ -224,7 +237,7 @@ export default function App() {
   if (view === "booking") return bookingShop ? <BookingFlow nav={nav} bookingShop={bookingShop} bookingStep={bookingStep} setBookingStep={setBookingStep} selectedSlot={selectedSlot} setSelectedSlot={setSelectedSlot} selectedDate={selectedDate} setSelectedDate={setSelectedDate} bookingConfirmed={bookingConfirmed} setBookingConfirmed={setBookingConfirmed} currentUser={currentUser} /> : <SearchPage nav={nav} shops={shops} searchQuery={searchQuery} setSearchQuery={setSearchQuery} serviceFilter={serviceFilter} setServiceFilter={setServiceFilter} setSelectedShop={setSelectedShop} setBookingShop={setBookingShop} currentUser={currentUser} currentProfile={currentProfile} onLogout={handleLogout} />;
   if (view === "customer-dash") return <CustomerDashboard nav={nav} currentUser={currentUser} currentProfile={currentProfile} onLogout={handleLogout} stripeReturn={stripeReturn} setStripeReturn={setStripeReturn} />;
   if (view === "pricing") return <PricingPage nav={nav} />;
-  if (view === "company-dash") return <CompanyDashboard nav={nav} dashTab={dashTab} setDashTab={setDashTab} currentUser={currentUser} currentProfile={currentProfile} onLogout={handleLogout} />;
+  if (view === "company-dash") return <CompanyDashboard nav={nav} dashTab={dashTab} setDashTab={setDashTab} currentUser={currentUser} currentProfile={currentProfile} onLogout={handleLogout} refreshShops={() => fetchShops().then(d => { if (d) setShops(d); })} />;
   if (view === "customer-login") return <CustomerLogin nav={nav} loginForm={loginForm} setLoginForm={setLoginForm} loginError={loginError} setLoginError={setLoginError} handleLogin={handleLogin} bookingContext={!!postLoginNav} />;
   if (view === "company-login") return <CompanyLogin nav={nav} loginForm={loginForm} setLoginForm={setLoginForm} loginError={loginError} setLoginError={setLoginError} handleLogin={handleLogin} />;
   if (view === "terms") return <TermsPage nav={nav} />;

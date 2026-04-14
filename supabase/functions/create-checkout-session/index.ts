@@ -10,7 +10,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { bookingId, serviceAmount, fullAmount, paymentType, serviceName, shopName, successUrl, cancelUrl } = await req.json();
+    const { bookingId, serviceAmount, fullAmount, paymentType, isRemainingBalance, serviceName, shopName, successUrl, cancelUrl } = await req.json();
 
     const stripeKey       = Deno.env.get("STRIPE_SECRET_KEY");
     const supabaseUrl     = Deno.env.get("SUPABASE_URL");
@@ -52,6 +52,10 @@ Deno.serve(async (req) => {
     const feeCents     = Math.round(fullCents * 0.07); // 7% of full job price
 
     const isDeposit = paymentType === "deposit";
+    // For remaining balance payments, platform already collected fee at deposit time.
+    // Fee is 0 for remaining — 100% goes directly to the shop.
+    const effectiveFeeCents = isRemainingBalance ? 0 : feeCents;
+
     const depositPctLabel = isDeposit && fullCents > 0
       ? `${Math.round((serviceCents / fullCents) * 100)}% deposit of $${(fullCents / 100).toFixed(2)}`
       : null;
@@ -65,7 +69,9 @@ Deno.serve(async (req) => {
     params.append("line_items[0][price_data][unit_amount]", String(serviceCents));
     params.append("line_items[0][price_data][product_data][name]", serviceName || "Service");
     params.append("line_items[0][price_data][product_data][description]",
-      depositPctLabel
+      isRemainingBalance
+        ? `Remaining balance${shopName ? ` at ${shopName}` : ''} · powered by WrapBridge`
+        : depositPctLabel
         ? `${depositPctLabel}${shopName ? ` at ${shopName}` : ''} · powered by WrapBridge`
         : shopName ? `at ${shopName} · powered by WrapBridge` : "powered by WrapBridge");
     params.append("line_items[0][quantity]", "1");
@@ -97,7 +103,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    params.append("payment_intent_data[application_fee_amount]", String(feeCents));
+    params.append("payment_intent_data[application_fee_amount]", String(effectiveFeeCents));
     params.append("payment_intent_data[transfer_data][destination]", shopStripeAccountId);
 
     let res = await fetch("https://api.stripe.com/v1/checkout/sessions", {

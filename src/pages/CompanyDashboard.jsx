@@ -303,7 +303,7 @@ function BookingDetailPanel({ selectedBooking, messagesMap, chatInput, setChatIn
   );
 }
 
-export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser, currentProfile, onLogout }) {
+export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser, currentProfile, onLogout, refreshShops }) {
   const [bookingsView, setBookingsView] = useState("list");
   const [showArchived, setShowArchived] = useState(false);
   const [dashboardBookings, setDashboardBookings] = useState([]);
@@ -478,7 +478,13 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
             body: { shopId: userShop.id },
             headers: { "x-user-token": token },
           }).then(({ data: vd }) => {
-            if (vd != null) setStripeOnboarded(!!vd.onboarded);
+            if (vd != null) {
+              setStripeOnboarded(!!vd.onboarded);
+              if (vd.onboarded) {
+                setIsListed(true);
+                refreshShops?.();
+              }
+            }
           }).catch(() => {});
         }
       });

@@ -78,7 +78,7 @@ function buildEmail(type, b, customerName, shopName, customerEmail, shopEmail, a
 
   switch (type) {
     case "booking_created": {
-      const html = emailWrapper(`
+      const shopHtml = emailWrapper(`
         <h2 style="margin:0 0 8px;font-size:22px;color:#0A0A0A;font-weight:800;">New Booking Request</h2>
         <p style="margin:0 0 24px;font-size:15px;color:#555;line-height:1.6;">
           You have a new booking request waiting for your response.
@@ -96,7 +96,27 @@ function buildEmail(type, b, customerName, shopName, customerEmail, shopEmail, a
         </p>
         ${orangeBtn("View Request →", appUrl)}
       `);
-      return { to: shopEmail, subject: `New booking request from ${customerName}`, html };
+      const customerHtml = emailWrapper(`
+        <h2 style="margin:0 0 8px;font-size:22px;color:#0A0A0A;font-weight:800;">Booking Request Sent!</h2>
+        <p style="margin:0 0 24px;font-size:15px;color:#555;line-height:1.6;">
+          Your request has been sent to <strong>${shopName}</strong>. They'll review it and send you a quote shortly.
+        </p>
+        ${divider()}
+        <table cellpadding="0" cellspacing="0" width="100%">
+          ${detail("Shop", shopName)}
+          ${detail("Service", service)}
+          ${detail("Vehicle", b.vehicle || null)}
+        </table>
+        ${divider()}
+        <p style="margin:0;font-size:14px;color:#555;line-height:1.6;">
+          We'll email you again once the shop sends your quote. You can also track your booking in your WrapBridge dashboard.
+        </p>
+        ${orangeBtn("Track My Booking →", appUrl)}
+      `);
+      return {
+        to: shopEmail, subject: `New booking request from ${customerName}`, html: shopHtml,
+        customerEmail, customerHtml, customerSubject: `Booking request sent to ${shopName}`,
+      };
     }
 
     case "quote_sent": {
@@ -227,6 +247,27 @@ function buildEmail(type, b, customerName, shopName, customerEmail, shopEmail, a
         ${orangeBtn("Go to Dashboard \u2192", appUrl)}
       `);
       return { to: customerEmail, subject: `Payment confirmed — ${service} at ${shopName}`, html: customerHtml, shopHtml, shopSubject: `Payment received from ${customerName} — ${service}`, shopEmail };
+    }
+
+    case "reschedule_request": {
+      const html = emailWrapper(`
+        <h2 style="margin:0 0 8px;font-size:22px;color:#0A0A0A;font-weight:800;">Reschedule Request</h2>
+        <p style="margin:0 0 24px;font-size:15px;color:#555;line-height:1.6;">
+          <strong>${customerName}</strong> has requested to reschedule their appointment.
+        </p>
+        ${divider()}
+        <table cellpadding="0" cellspacing="0" width="100%">
+          ${detail("Customer", customerName)}
+          ${detail("Service", service)}
+          ${dateStr ? detail("Current date", dateStr) : ""}
+        </table>
+        ${divider()}
+        <p style="margin:0;font-size:14px;color:#555;line-height:1.6;">
+          Please log in to your dashboard to message the customer and arrange a new time.
+        </p>
+        ${orangeBtn("Go to Dashboard →", appUrl)}
+      `);
+      return { to: shopEmail, subject: `${customerName} requested a reschedule — ${service}`, html };
     }
 
     default:

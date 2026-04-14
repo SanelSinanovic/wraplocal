@@ -243,6 +243,9 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
     const normalizedFull = Number(fullAmount) || normalizedCharge;
     const fee = Math.round(normalizedFull * 0.07 * 100) / 100;  // 7% of full job price
     const total = normalizedCharge;                              // what was actually paid now
+    // Guard: if already confirmed don't re-send the message (prevents duplicates on re-render)
+    const { data: existing } = await supabase.from("bookings").select("status").eq("id", bookingId).single();
+    if (existing?.status === "confirmed") return;
     await supabase.from("bookings").update({ status: "confirmed", amount: normalizedFull, fee, total }).eq("id", bookingId).eq("customer_id", currentUser.id);
     const marker = `QUOTE_RESPONSE::accepted::${normalizedFull.toFixed(2)}`;
     await dbSendMessage({ bookingId, senderId: currentUser.id, senderRole: "customer", text: marker });
@@ -250,19 +253,32 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
     setBookings(prev => prev.map(b => String(b.id) === String(bookingId) ? { ...b, status: "confirmed", amount: normalizedFull, fee, total } : b));
   };
 
-  // ── Consume Stripe return after bookings are loaded ──────────────────────
+  const processingStripeReturn = useRef(false);
+
+  // ── Consume Stripe return after bookings are loaded ────────────────────────────────
   useEffect(() => {
     if (!stripeReturn || !bookingsLoaded) return;
+    if (processingStripeReturn.current) return;
     const booking = bookings.find(b => String(b.id) === String(stripeReturn.bookingId));
     if (!booking) return;
-    const { bookingId, amount, fullAmount } = stripeReturn;
+    processingStripeReturn.current = true;
+    const { bookingId, amount, fullAmount, isRemaining } = stripeReturn;
     setStripeReturn(null);
     const normalizedCharge = Number(amount) || 0;
     const normalizedFull = Number(fullAmount) || normalizedCharge;
     const fee = Math.round(normalizedFull * 0.07 * 100) / 100;
-    confirmBookingFromPayment(bookingId, normalizedCharge, normalizedFull).then(() => {
-      setSelectedBooking({ ...booking, status: "confirmed", amount: normalizedFull, fee, total: normalizedCharge });
-    });
+    if (isRemaining) {
+      // Remaining balance paid — mark total as fully paid, no fee change
+      (async () => {
+        await supabase.from("bookings").update({ total: normalizedFull }).eq("id", bookingId).eq("customer_id", currentUser.id);
+        setBookings(prev => prev.map(b => String(b.id) === String(bookingId) ? { ...b, total: normalizedFull } : b));
+        setSelectedBooking({ ...booking, total: normalizedFull });
+      })();
+    } else {
+      confirmBookingFromPayment(bookingId, normalizedCharge, normalizedFull).then(() => {
+        setSelectedBooking({ ...booking, status: "confirmed", amount: normalizedFull, fee, total: normalizedCharge });
+      });
+    }
   }, [stripeReturn, bookingsLoaded]);
 
   // ── Redirect to Stripe Checkout ──────────────────────────────────────────
@@ -270,13 +286,13 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
     if (!paymentBooking) return;
     setPaymentLoading(true);
     setPaymentError("");
-    const { booking, fullAmount, chargeAmount, paymentType } = paymentBooking;
+    const { booking, fullAmount, chargeAmount, paymentType, isRemaining } = paymentBooking;
     const actualCharge = chargeAmount ?? fullAmount;
     const actualFull   = fullAmount ?? chargeAmount;
-    const successUrl = `${window.location.origin}/?stripe_success=1&booking_id=${booking.id}&amount=${actualCharge}&full_amount=${actualFull}`;
+    const successUrl = `${window.location.origin}/?stripe_success=1&booking_id=${booking.id}&amount=${actualCharge}&full_amount=${actualFull}${isRemaining ? "&remaining=1" : ""}`;
     const cancelUrl  = `${window.location.origin}/?stripe_cancel=1`;
     const { data, error } = await supabase.functions.invoke("create-checkout-session", {
-      body: { bookingId: booking.id, serviceAmount: actualCharge, fullAmount: actualFull, paymentType: paymentType || "full", serviceName: booking.service, shopName: booking.shop, successUrl, cancelUrl },
+      body: { bookingId: booking.id, serviceAmount: actualCharge, fullAmount: actualFull, paymentType: paymentType || "full", isRemainingBalance: !!isRemaining, serviceName: booking.service, shopName: booking.shop, successUrl, cancelUrl },
     });
     if (error || !data?.url) {
       const msg = data?.error || error?.message || error?.toString() || "Unknown error";
@@ -493,13 +509,38 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
                 );
               })()}
               <div style={{ height: 1, background: "rgba(255,255,255,0.06)", margin: "16px 0" }} />
-              <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "'DM Sans', sans-serif", fontSize: 13, marginBottom: 8 }}>
-                <span style={{ color: "rgba(255,255,255,0.4)" }}>Service</span><span>${b.amount.toLocaleString()}.00</span>
-              </div>
-              <div style={{ height: 1, background: "rgba(255,255,255,0.06)", margin: "12px 0" }} />
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 22, letterSpacing: 1 }}>
-                <span>TOTAL</span><span style={{ color: "#FF4D00" }}>${b.amount.toLocaleString()}.00</span>
-              </div>
+              {/* Payment breakdown */}
+              {(() => {
+                const fullPrice = Number(b.amount) || 0;
+                const paid = Number(b.total) || 0;
+                const remaining = Math.max(0, fullPrice - paid);
+                const hasRemaining = b.status === "confirmed" && remaining > 0.005;
+                return (
+                  <>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "'DM Sans', sans-serif", fontSize: 13, marginBottom: 8 }}>
+                      <span style={{ color: "rgba(255,255,255,0.4)" }}>Full job price</span><span>${fullPrice.toFixed(2)}</span>
+                    </div>
+                    {hasRemaining && (
+                      <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "'DM Sans', sans-serif", fontSize: 13, marginBottom: 8 }}>
+                        <span style={{ color: "rgba(255,255,255,0.4)" }}>Deposit paid</span><span style={{ color: "#10B981" }}>-${paid.toFixed(2)}</span>
+                      </div>
+                    )}
+                    <div style={{ height: 1, background: "rgba(255,255,255,0.06)", margin: "12px 0" }} />
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 22, letterSpacing: 1, marginBottom: hasRemaining ? 12 : 0 }}>
+                      <span>{hasRemaining ? "REMAINING" : "TOTAL"}</span>
+                      <span style={{ color: hasRemaining ? "#F59E0B" : "#FF4D00" }}>${hasRemaining ? remaining.toFixed(2) : fullPrice.toFixed(2)}</span>
+                    </div>
+                    {hasRemaining && (
+                      <button
+                        onClick={() => setPaymentBooking({ booking: b, fullAmount: fullPrice, chargeAmount: remaining, paymentType: "remaining", isRemaining: true })}
+                        style={{ width: "100%", background: "#F59E0B", border: "none", color: "#000", padding: "12px", fontFamily: "'Bebas Neue', cursive", fontSize: 16, letterSpacing: 2, cursor: "pointer", marginBottom: 8 }}
+                      >
+                        Pay Remaining Balance (${remaining.toFixed(2)}) →
+                      </button>
+                    )}
+                  </>
+                );
+              })()}
               {b.status === "confirmed" && (
                 <button
                   onClick={() => { setRescheduleBooking(b); setRescheduleNote(""); setRescheduleDone(false); }}
@@ -600,7 +641,19 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
           <div style={{ background: "#111", border: "1px solid rgba(255,255,255,0.1)", width: "100%", maxWidth: 460, padding: "32px", fontFamily: "'DM Sans', sans-serif" }}>
             <div style={{ fontFamily: "'Bebas Neue', cursive", fontSize: 32, letterSpacing: 2, marginBottom: 6 }}>COMPLETE PAYMENT</div>
             <div style={{ fontSize: 13, color: "rgba(255,255,255,0.45)", marginBottom: 28 }}>{paymentBooking.booking.shop} · {paymentBooking.booking.service}</div>
-            {paymentBooking.paymentType === "deposit" ? (
+            {paymentBooking.isRemaining ? (
+              <>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, marginBottom: 10 }}>
+                  <span style={{ color: "rgba(255,255,255,0.5)" }}>Full job price</span>
+                  <span>${Number(paymentBooking.fullAmount).toFixed(2)}</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, marginBottom: 6 }}>
+                  <span style={{ color: "rgba(255,255,255,0.5)" }}>Deposit already paid</span>
+                  <span style={{ color: "#10B981" }}>-${(paymentBooking.fullAmount - paymentBooking.chargeAmount).toFixed(2)}</span>
+                </div>
+                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", marginBottom: 14 }}>Platform fee was collected at deposit. No additional charge on this payment.</div>
+              </>
+            ) : paymentBooking.paymentType === "deposit" ? (
               <>
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, marginBottom: 10 }}>
                   <span style={{ color: "rgba(255,255,255,0.5)" }}>Full job price</span>
@@ -611,7 +664,7 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
                   <span style={{ color: "#10B981" }}>${Number(paymentBooking.chargeAmount).toFixed(2)}</span>
                 </div>
                 <div style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", marginBottom: 14 }}>
-                  Remaining ${(paymentBooking.fullAmount - paymentBooking.chargeAmount).toFixed(2)} due directly to the shop at pickup.
+                  Remaining ${(paymentBooking.fullAmount - paymentBooking.chargeAmount).toFixed(2)} due at pickup.
                 </div>
               </>
             ) : (
@@ -622,7 +675,7 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
             )}
             <div style={{ height: 1, background: "rgba(255,255,255,0.08)", margin: "14px 0" }} />
             <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "'Bebas Neue', cursive", fontSize: 28, letterSpacing: 1, marginBottom: 24 }}>
-              <span>{paymentBooking.paymentType === "deposit" ? "DEPOSIT TOTAL" : "TOTAL"}</span>
+              <span>{paymentBooking.isRemaining ? "REMAINING BALANCE" : paymentBooking.paymentType === "deposit" ? "DEPOSIT TOTAL" : "TOTAL"}</span>
               <span style={{ color: "#FF4D00" }}>${Number(paymentBooking.chargeAmount ?? paymentBooking.fullAmount).toFixed(2)}</span>
             </div>
             {paymentError && <div style={{ fontSize: 13, color: "#ef4444", marginBottom: 14 }}>{paymentError}</div>}
@@ -778,9 +831,21 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
       {paymentBooking && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "20px" }}>
           <div style={{ background: "#111", border: "1px solid rgba(255,255,255,0.1)", width: "100%", maxWidth: 460, padding: "32px", fontFamily: "'DM Sans', sans-serif" }}>
-            <div style={{ fontFamily: "'Bebas Neue', cursive", fontSize: 32, letterSpacing: 2, marginBottom: 6 }}>COMPLETE PAYMENT</div>
+            <div style={{ fontFamily: "'Bebas Neue', cursive", fontSize: 32, letterSpacing: 2, marginBottom: 6 }}>{paymentBooking.isRemaining ? "PAY REMAINING BALANCE" : "COMPLETE PAYMENT"}</div>
             <div style={{ fontSize: 13, color: "rgba(255,255,255,0.45)", marginBottom: 28 }}>{paymentBooking.booking.shop} · {paymentBooking.booking.service}</div>
-            {paymentBooking.paymentType === "deposit" ? (
+            {paymentBooking.isRemaining ? (
+              <>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, marginBottom: 10 }}>
+                  <span style={{ color: "rgba(255,255,255,0.5)" }}>Full job price</span>
+                  <span>${Number(paymentBooking.fullAmount).toFixed(2)}</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, marginBottom: 6 }}>
+                  <span style={{ color: "rgba(255,255,255,0.5)" }}>Deposit already paid</span>
+                  <span style={{ color: "#10B981" }}>-${(paymentBooking.fullAmount - paymentBooking.chargeAmount).toFixed(2)}</span>
+                </div>
+                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", marginBottom: 14 }}>Platform fee was collected at deposit. No additional charge on this payment.</div>
+              </>
+            ) : paymentBooking.paymentType === "deposit" ? (
               <>
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, marginBottom: 10 }}>
                   <span style={{ color: "rgba(255,255,255,0.5)" }}>Full job price</span>
@@ -791,7 +856,7 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
                   <span style={{ color: "#10B981" }}>${Number(paymentBooking.chargeAmount).toFixed(2)}</span>
                 </div>
                 <div style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", marginBottom: 14 }}>
-                  Remaining ${(paymentBooking.fullAmount - paymentBooking.chargeAmount).toFixed(2)} due directly to the shop at pickup.
+                  Remaining ${(paymentBooking.fullAmount - paymentBooking.chargeAmount).toFixed(2)} due at pickup.
                 </div>
               </>
             ) : (
@@ -802,7 +867,7 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
             )}
             <div style={{ height: 1, background: "rgba(255,255,255,0.08)", margin: "14px 0" }} />
             <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "'Bebas Neue', cursive", fontSize: 28, letterSpacing: 1, marginBottom: 24 }}>
-              <span>{paymentBooking.paymentType === "deposit" ? "DEPOSIT TOTAL" : "TOTAL"}</span>
+              <span>{paymentBooking.isRemaining ? "REMAINING BALANCE" : paymentBooking.paymentType === "deposit" ? "DEPOSIT TOTAL" : "TOTAL"}</span>
               <span style={{ color: "#FF4D00" }}>${Number(paymentBooking.chargeAmount ?? paymentBooking.fullAmount).toFixed(2)}</span>
             </div>
             {paymentError && <div style={{ fontSize: 13, color: "#ef4444", marginBottom: 14 }}>{paymentError}</div>}
