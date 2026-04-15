@@ -812,10 +812,10 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
           <button onClick={onLogout} style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", background: "none", border: "1px solid rgba(255,255,255,0.1)", padding: "8px 12px", cursor: "pointer", marginBottom: 12, width: "100%" }}>Log Out</button>
         )}
         <div className="sidebar-footer" style={{ padding: "14px 16px", background: "rgba(255,77,0,0.05)", border: "1px solid rgba(255,77,0,0.15)" }}>
-          <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)", marginBottom: 4 }}>SUBSCRIPTION</div>
-          <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "#10B981", marginBottom: 4 }}>● Active - Monthly</div>
-          <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.3)" }}>Renews Mar 15, 2026</div>
-          <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "#FF4D00", marginTop: 6, cursor: "pointer" }}>Upgrade to Annual →</div>
+          <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)", marginBottom: 4 }}>PLAN</div>
+          <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "#10B981", marginBottom: 4 }}>● Free — Launch Period</div>
+          <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.3)" }}>No subscription fee during launch</div>
+          <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,160,80,0.6)", marginTop: 6 }}>7% platform fee per booking</div>
         </div>
       </div>
 

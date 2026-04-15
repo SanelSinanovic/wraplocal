@@ -455,7 +455,7 @@ export default function LandingPage({ nav, shops: liveShops, setBookingShop, set
         <div>
           <div style={{ fontSize: 48, letterSpacing: 2, marginBottom: 12 }}>OWN A WRAP OR SIGN SHOP?</div>
           <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 16, color: "rgba(255,255,255,0.85)", lineHeight: 1.6, maxWidth: 520 }}>
-            List your business for $49.99/month. Set your services, get discovered by local customers, and manage all your bookings and quotes in one place.
+            List your business for free during our launch. Set your services, get discovered by local customers, and manage all your bookings and quotes in one place.
           </div>
         </div>
         <button onClick={() => nav("pricing")} style={{ background: "#fff", color: "#FF4D00", border: "none", padding: "16px 40px", fontFamily: "'Bebas Neue', cursive", fontSize: 20, letterSpacing: 2, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}>
