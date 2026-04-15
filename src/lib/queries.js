@@ -209,7 +209,7 @@ export async function fetchCompanyBookings(shopId) {
   if (error) { console.error('fetchCompanyBookings:', error); return { data: null, error } }
   if (!data || data.length === 0) return { data: [], error: null }
 
-  // Fetch customer names from profiles in one batch (best-effort — may be empty if no profile row)
+  // Fetch customer names from profiles in one batch
   const customerIds = [...new Set(data.map(b => b.customer_id).filter(Boolean))]
   const { data: profiles } = await supabase
     .from('profiles')
@@ -217,12 +217,35 @@ export async function fetchCompanyBookings(shopId) {
     .in('id', customerIds)
   const nameById = Object.fromEntries((profiles || []).map(p => [p.id, p.name]))
 
+  // For bookings where the profile name is missing or still the default 'Customer',
+  // fall back to the contact-info message that BookingFlow sends on every booking.
+  const bookingIds = data.map(b => b.id)
+  const { data: contactMsgs } = await supabase
+    .from('messages')
+    .select('booking_id, text')
+    .in('booking_id', bookingIds)
+    .like('text', '📋 Contact info%')
+  // Parse "📋 Contact info — Full Name · email · phone"
+  const nameFromMsg = {}
+  for (const msg of contactMsgs || []) {
+    const match = msg.text.match(/📋 Contact info — ([^·]+)·/)
+    if (match) nameFromMsg[msg.booking_id] = match[1].trim()
+  }
+
   return {
-    data: data.map(b => ({
-      ...b,
-      customer: nameById[b.customer_id] || 'Customer',
-      payout: b.amount ? Math.round(b.amount * 0.93 * 100) / 100 : 0,
-    })),
+    data: data.map(b => {
+      const profileName = nameById[b.customer_id]
+      const resolvedName =
+        (profileName && profileName !== 'Customer' ? profileName : null) ||
+        nameFromMsg[b.id] ||
+        profileName ||
+        'Customer'
+      return {
+        ...b,
+        customer: resolvedName,
+        payout: b.amount ? Math.round(b.amount * 0.93 * 100) / 100 : 0,
+      }
+    }),
     error: null,
   }
 }
@@ -239,7 +262,7 @@ export function subscribeToShopBookings(shopId, callback) {
     .subscribe()
 }
 
-export async function createBooking({ shopId, customerId, service, date, timeSlot, preferredDates, vehicle, designOption, designFileUrl, amount = 0 }) {
+export async function createBooking({ shopId, customerId, service, date, timeSlot, preferredDates, vehicle, designOption, designFileUrl, amount = 0, customerName, customerPhone }) {
   // Build the row with only the required columns first
   const row = {
     shop_id: shopId,

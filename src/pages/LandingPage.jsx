@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { SERVICE_CATEGORIES } from "../lib/services";
 
 const CATEGORY_META = {
@@ -25,9 +25,6 @@ export default function LandingPage({ nav, shops: liveShops, setBookingShop, set
   const [menuOpen, setMenuOpen] = useState(false);
   const [hoveredService, setHoveredService] = useState(null);
   const [activeSlide, setActiveSlide] = useState(0);
-  const [counts, setCounts] = useState({ shops: 0, jobs: 0, rating: 0.0 });
-  const statsRef = useRef(null);
-  const countsDone = useRef(false);
 
   const SLIDES = [
     { label: "Full Color Change Wrap", category: "Vehicle Wraps", accent: "#FF4D00", img: "/images/color-change-wrap.jpg" },
@@ -43,33 +40,6 @@ export default function LandingPage({ nav, shops: liveShops, setBookingShop, set
   useEffect(() => {
     const t = setInterval(() => setActiveSlide(s => (s + 1) % SLIDES.length), 3500);
     return () => clearInterval(t);
-  }, []);
-
-  // Count-up animation for hero stats
-  useEffect(() => {
-    const el = statsRef.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting && !countsDone.current) {
-        countsDone.current = true;
-        const start = Date.now();
-        const duration = 1600;
-        const tick = () => {
-          const p = Math.min((Date.now() - start) / duration, 1);
-          const ease = 1 - Math.pow(1 - p, 3);
-          setCounts({
-            shops: Math.floor(ease * 500),
-            jobs: Math.floor(ease * 12000),
-            rating: (ease * 4.8).toFixed(1),
-          });
-          if (p < 1) requestAnimationFrame(tick);
-        };
-        requestAnimationFrame(tick);
-        observer.disconnect();
-      }
-    }, { threshold: 0.4 });
-    observer.observe(el);
-    return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
@@ -186,7 +156,7 @@ export default function LandingPage({ nav, shops: liveShops, setBookingShop, set
 
       {/* NAV */}
       <nav className="nav-pad" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 60px", borderBottom: "1px solid rgba(255,255,255,0.06)", position: "sticky", top: 0, background: "rgba(10,10,10,0.95)", backdropFilter: "blur(20px)", zIndex: 100 }}>
-        <div style={{ fontSize: 28, letterSpacing: 4, color: "#FF4D00" }}>WRAP<span style={{ color: "#fff" }}>BRIDGE</span></div>
+        <img src="/images/Logo.png" alt="WrapBridge" style={{ height: 52, display: "block", cursor: "pointer" }} onClick={() => nav("landing")} />
         <div className="nav-links" style={{ display: "flex", gap: 32 }}>
           <span className="nav-link" onClick={() => nav("search")}>Find Shops</span>
           <span className="nav-link" onClick={() => nav("pricing")}>For Businesses</span>
@@ -278,17 +248,24 @@ export default function LandingPage({ nav, shops: liveShops, setBookingShop, set
             </p>
             <div className="hero-cta" style={{ display: "flex", gap: 16, alignItems: "center" }}>
               <button className="btn-main" style={{ fontSize: 20, padding: "16px 40px" }} onClick={() => nav("search")}>Find Shops Near Me →</button>
-              <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.3)" }}>No account needed</span>
+              <button className="btn-ghost" style={{ fontSize: 16, padding: "14px 28px" }} onClick={() => nav("pricing")}>List Your Shop →</button>
             </div>
-            <div ref={statsRef} className="hero-stats stats-row" style={{ display: "flex", gap: 48, marginTop: 64 }}>
+            <div className="hero-stats" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 48 }}>
               {[
-                [counts.shops > 0 ? counts.shops + "+" : "0", "Shops Listed"],
-                [counts.jobs > 0 ? (counts.jobs >= 1000 ? Math.floor(counts.jobs/1000) + "K+" : counts.jobs + "+") : "0", "Jobs Completed"],
-                [counts.rating > 0 ? counts.rating + "★" : "0★", "Avg Rating"],
-              ].map(([n, l]) => (
-                <div key={l}>
-                  <div className="stat-num" style={{ fontSize: 40, color: "#FF4D00", fontVariantNumeric: "tabular-nums", minWidth: 80, display: "inline-block" }}>{n}</div>
-                  <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)", marginTop: 2 }}>{l}</div>
+                { icon: "📍", title: "Local Verified Shops", desc: "Browse real shops in your area with full portfolios" },
+                { icon: "💬", title: "Direct Shop Chat", desc: "Message shops, negotiate quotes & confirm details" },
+                { icon: "🎨", title: "Portfolio Browsing", desc: "See past work before you commit to anything" },
+                { icon: "⚡", title: "Fast Booking", desc: "Request appointments in under 2 minutes" },
+              ].map(({ icon, title, desc }) => (
+                <div key={title} style={{ display: "flex", gap: 12, alignItems: "flex-start", padding: "14px 16px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", transition: "border-color 0.2s", cursor: "default" }}
+                  onMouseEnter={e => e.currentTarget.style.borderColor = "rgba(255,77,0,0.3)"}
+                  onMouseLeave={e => e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)"}
+                >
+                  <span style={{ fontSize: 20, lineHeight: 1, flexShrink: 0, marginTop: 2 }}>{icon}</span>
+                  <div>
+                    <div style={{ fontFamily: "'Bebas Neue', cursive", fontSize: 15, letterSpacing: 1, marginBottom: 3 }}>{title}</div>
+                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.38)", lineHeight: 1.45 }}>{desc}</div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -488,9 +465,7 @@ export default function LandingPage({ nav, shops: liveShops, setBookingShop, set
 
       {/* Footer */}
       <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", padding: "32px 60px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
-        <div style={{ fontFamily: "'Bebas Neue', cursive", fontSize: 18, letterSpacing: 4 }}>
-          <span style={{ color: "#FF4D00" }}>WRAP</span><span style={{ color: "rgba(255,255,255,0.5)" }}>BRIDGE</span>
-        </div>
+        <img src="/images/Logo.png" alt="WrapBridge" style={{ height: 40, display: "block" }} />
         <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.3)", display: "flex", gap: 24, flexWrap: "wrap", alignItems: "center" }}>
           <span onClick={() => nav("terms")} style={{ cursor: "pointer", transition: "color 0.2s" }} onMouseEnter={e => e.target.style.color="#FF4D00"} onMouseLeave={e => e.target.style.color="rgba(255,255,255,0.3)"}>Terms of Service</span>
           <span onClick={() => nav("privacy")} style={{ cursor: "pointer", transition: "color 0.2s" }} onMouseEnter={e => e.target.style.color="#FF4D00"} onMouseLeave={e => e.target.style.color="rgba(255,255,255,0.3)"}>Privacy Policy</span>

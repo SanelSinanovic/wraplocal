@@ -67,6 +67,10 @@ export default function BookingFlow({
 
   const handleSubmit = async () => {
     setSubmitError("");
+    if (!firstName.trim() || !lastName.trim() || !customerEmail.trim() || !customerPhone.trim()) {
+      setSubmitError("Please fill in your first name, last name, email, and phone number.");
+      return;
+    }
     setIsSubmitting(true);
     try {
       if (currentUser && bookingShop?.id) {
@@ -96,6 +100,8 @@ export default function BookingFlow({
           designOption,
           designFileUrl: designFileUrl || designLinkInput || null,
           amount: 0,
+          customerName: `${firstName.trim()} ${lastName.trim()}`,
+          customerPhone: customerPhone.trim(),
         });
         if (bookingError || !booking) {
           setSubmitError(bookingError?.message || bookingError?.details || JSON.stringify(bookingError) || "Could not save your request.");
@@ -103,6 +109,8 @@ export default function BookingFlow({
           return;
         }
         sendNotification("booking_created", booking.id);
+        // Send customer contact info as first message so shop can always see it
+        await sendMessage({ bookingId: booking.id, senderId: currentUser.id, senderRole: "customer", text: `📋 Contact info — ${firstName.trim()} ${lastName.trim()} · ${customerEmail.trim()} · ${customerPhone.trim()}` });
         // Send design file into chat so the shop can see it immediately
         if (designFileUrl) {
           await sendMessage({ bookingId: booking.id, senderId: currentUser.id, senderRole: "customer", text: `FILE::${designFileUrl}::${designFileName || "design-file"}` });
@@ -127,7 +135,7 @@ export default function BookingFlow({
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap'); * { box-sizing: border-box; } input, select, textarea { background: #151515; border: 1px solid rgba(255,255,255,0.1); padding: 12px 16px; color: #fff; font-family: 'DM Sans', sans-serif; font-size: 14px; outline: none; width: 100%; transition: border-color 0.2s, background 0.2s; } input:focus, textarea:focus { border-color: #FF4D00; background: #1a1a1a; } textarea { resize: vertical; min-height: 90px; line-height: 1.5; } .btn-main { background: #FF4D00; color: #fff; border: none; padding: 14px 32px; font-family: 'Bebas Neue', cursive; font-size: 18px; letter-spacing: 2px; cursor: pointer; transition: background 0.2s, transform 0.15s; } .btn-main:hover { background: #FF6A20; transform: translateY(-1px); } .slot { background: #151515; border: 1px solid rgba(255,255,255,0.08); padding: 10px 18px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 14px; transition: all 0.18s; } .slot:hover, .slot.active { background: rgba(255,77,0,0.12); border-color: #FF4D00; color: #FF4D00; transform: translateY(-1px); } .svc-row { padding: 16px 20px; border: 1px solid rgba(255,255,255,0.08); background: #111; margin-bottom: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: border-color 0.15s, background 0.15s, transform 0.15s; } .svc-row:hover { border-color: rgba(255,77,0,0.35); background: rgba(255,77,0,0.04); transform: translateX(2px); } .svc-row.active { border-color: #FF4D00; background: rgba(255,77,0,0.08); } @keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } } @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } } .step-content { animation: fadeUp 0.35s cubic-bezier(0.22,1,0.36,1) both; } .booking-confirm-anim { animation: fadeUp 0.5s cubic-bezier(0.22,1,0.36,1) both; } @media (max-width: 768px) { .booking-nav { padding: 12px 16px !important; } .booking-pad { padding: 20px !important; max-width: 100% !important; } .booking-layout { grid-template-columns: 1fr !important; gap: 24px !important; } .booking-sidebar { position: static !important; } .step-label { display: none !important; } .date-grid { grid-template-columns: repeat(3, 1fr) !important; } .name-grid { grid-template-columns: 1fr !important; } .confirm-btns { flex-direction: column !important; } .confirm-btns button { width: 100%; } } @media (max-width: 420px) { .booking-pad { padding: 14px !important; } }`}</style>
 
       <nav className="booking-nav" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 40px", background: "rgba(10,10,10,0.95)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-        <div style={{ fontSize: 24, letterSpacing: 4, color: "#FF4D00", cursor: "pointer" }} onClick={() => nav("landing")}>WRAP<span style={{ color: "#fff" }}>BRIDGE</span></div>
+        <img src="/images/Logo.png" alt="WrapBridge" style={{ height: 48, display: "block", cursor: "pointer" }} onClick={() => nav("landing")} />
         <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.5)", cursor: "pointer" }} onClick={() => { if (bookingStep === 2) { setBookingStep(1); } else { nav("shop"); } }}>← Back</span>
       </nav>
 
@@ -252,11 +260,11 @@ export default function BookingFlow({
                     No payment needed now — the shop will confirm your appointment and send you a quote.
                   </div>
                   <div className="name-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
-                    <div><div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>FIRST NAME</div><input placeholder="Marcus" value={firstName} onChange={e => setFirstName(e.target.value)} /></div>
-                    <div><div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>LAST NAME</div><input placeholder="Thompson" value={lastName} onChange={e => setLastName(e.target.value)} /></div>
+                    <div><div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>FIRST NAME <span style={{ color: "#FF4D00" }}>*</span></div><input placeholder="Marcus" value={firstName} onChange={e => setFirstName(e.target.value)} /></div>
+                    <div><div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>LAST NAME <span style={{ color: "#FF4D00" }}>*</span></div><input placeholder="Thompson" value={lastName} onChange={e => setLastName(e.target.value)} /></div>
                   </div>
-                  <div style={{ marginBottom: 14 }}><div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>EMAIL</div><input placeholder="marcus@email.com" value={customerEmail} onChange={e => setCustomerEmail(e.target.value)} /></div>
-                  <div style={{ marginBottom: 14 }}><div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>PHONE</div><input placeholder="(404) 555-0100" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} /></div>
+                  <div style={{ marginBottom: 14 }}><div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>EMAIL <span style={{ color: "#FF4D00" }}>*</span></div><input placeholder="marcus@email.com" value={customerEmail} onChange={e => setCustomerEmail(e.target.value)} /></div>
+                  <div style={{ marginBottom: 14 }}><div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>PHONE <span style={{ color: "#FF4D00" }}>*</span></div><input placeholder="(404) 555-0100" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} /></div>
                   {isVehicleService && (
                   <div style={{ marginBottom: 14 }}>
                     <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>VEHICLE TYPE</div>
