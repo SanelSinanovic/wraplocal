@@ -108,6 +108,7 @@ export async function fetchUserShop(ownerId) {
     .from('shops')
     .select('*')
     .eq('owner_id', ownerId)
+    .order('created_at', { ascending: true })
     .limit(1)
   if (error) {
     console.error('fetchUserShop:', error)
@@ -128,6 +129,11 @@ export async function updateShop(shopId, fields) {
 }
 
 export async function createShop({ ownerId, name, city = '' }) {
+  // Always check first — never create a second shop for the same owner
+  const existing = await fetchUserShop(ownerId)
+  if (existing.data) return existing
+  if (existing.error) return existing
+
   const { data, error } = await supabase
     .from('shops')
     .insert({
