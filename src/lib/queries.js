@@ -29,6 +29,23 @@ export async function geocodeCityState(city, state) {
   }
 }
 
+/** Geocode any free-form query (zip code, city, address) via Nominatim.
+ *  Returns { lat, lon } or null on failure. */
+export async function geocodeSearch(query) {
+  if (!query) return null;
+  const q = encodeURIComponent(query + ', USA');
+  try {
+    const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1`, {
+      headers: { 'User-Agent': 'WrapBridge/1.0' },
+    });
+    const data = await res.json();
+    if (!data.length) return null;
+    return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
+  } catch {
+    return null;
+  }
+}
+
 // ── PORTFOLIO IMAGES ─────────────────────────────────────────────────────────
 
 export async function fetchPortfolioImages(shopId) {

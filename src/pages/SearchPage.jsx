@@ -1,16 +1,19 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { SERVICE_CATEGORIES } from "../lib/services";
-import { haversineDistance } from "../lib/queries";
+import { haversineDistance, geocodeSearch } from "../lib/queries";
 
 export default function SearchPage({ nav, shops: liveShops, searchQuery, setSearchQuery, serviceFilter, setServiceFilter, setSelectedShop, setBookingShop, currentUser, currentProfile, onLogout }) {
   const role = currentUser ? (currentProfile?.role || currentUser?.user_metadata?.role || "customer") : null;
   const allShops = liveShops || [];
   const [activeService, setActiveService] = useState(null);
-  const [userCoords, setUserCoords] = useState(null);      // { lat, lon }
+  const [userCoords, setUserCoords] = useState(null);      // { lat, lon } from GPS
+  const [searchCoords, setSearchCoords] = useState(null);   // { lat, lon } geocoded from query
   const [locationStatus, setLocationStatus] = useState("idle"); // idle | loading | ok | denied
+  const [isGeocodingSearch, setIsGeocodingSearch] = useState(false);
   const [sortByDistance, setSortByDistance] = useState(true);
   const PAGE_SIZE = 10;
   const [page, setPage] = useState(0);
+  const geocodeTimer = useRef(null);
 
   // Request geolocation on mount
   useEffect(() => {
@@ -23,6 +26,20 @@ export default function SearchPage({ nav, shops: liveShops, searchQuery, setSear
     );
   }, []);
 
+  // Geocode the search query whenever it changes (debounced 600ms)
+  useEffect(() => {
+    clearTimeout(geocodeTimer.current);
+    const q = searchQuery.trim();
+    if (!q) { setSearchCoords(null); setIsGeocodingSearch(false); return; }
+    setIsGeocodingSearch(true);
+    geocodeTimer.current = setTimeout(async () => {
+      const coords = await geocodeSearch(q);
+      setSearchCoords(coords);
+      setIsGeocodingSearch(false);
+    }, 600);
+    return () => clearTimeout(geocodeTimer.current);
+  }, [searchQuery]);
+
   // Consume a service filter set from LandingPage
   useEffect(() => {
     if (serviceFilter) {
@@ -32,11 +49,16 @@ export default function SearchPage({ nav, shops: liveShops, searchQuery, setSear
   }, [serviceFilter, setServiceFilter]);
 
   // Reset to first page whenever filter/query/sort changes
-  useEffect(() => { setPage(0); }, [searchQuery, activeService, sortByDistance]);
+  useEffect(() => { setPage(0); }, [searchQuery, activeService, sortByDistance, searchCoords]);
 
   const q = searchQuery.trim().toLowerCase();
+  // Detect if the query looks like a US zip code
+  const isZipQuery = /^\d{5}$/.test(searchQuery.trim());
+
   const filteredShops = allShops.filter(shop => {
-    const matchesText = !q ||
+    // If the search resolved to a location (geocoded), show ALL shops and sort by distance
+    // Only apply text filter when geocoding didn't find a location (e.g. shop name search)
+    const matchesText = !q || searchCoords || isGeocodingSearch ||
       (shop.name || "").toLowerCase().includes(q) ||
       (shop.city || shop.location || "").toLowerCase().includes(q) ||
       (shop.state || "").toLowerCase().includes(q) ||
@@ -45,17 +67,25 @@ export default function SearchPage({ nav, shops: liveShops, searchQuery, setSear
     return matchesText && matchesService;
   });
 
-  // Attach computed distance and sort
+  // Reference coords: prefer geocoded search location, then GPS
+  const refCoords = searchCoords || userCoords;
+
+  // Attach computed distance from reference point
   const shopsWithDistance = filteredShops.map(shop => {
-    if (userCoords && shop.latitude && shop.longitude) {
-      const dist = haversineDistance(userCoords.lat, userCoords.lon, shop.latitude, shop.longitude);
+    if (refCoords && shop.latitude && shop.longitude) {
+      const dist = haversineDistance(refCoords.lat, refCoords.lon, shop.latitude, shop.longitude);
       return { ...shop, _distanceMi: dist };
     }
     return { ...shop, _distanceMi: null };
   });
 
-  const shops = sortByDistance && userCoords
+  const shops = sortByDistance && refCoords
     ? [...shopsWithDistance].sort((a, b) => {
+        // Exact zip match always floats to top
+        const aExact = isZipQuery && (a.zip || "") === searchQuery.trim() ? 0 : 1;
+        const bExact = isZipQuery && (b.zip || "") === searchQuery.trim() ? 0 : 1;
+        if (aExact !== bExact) return aExact - bExact;
+        // Then sort by distance
         if (a._distanceMi == null && b._distanceMi == null) return 0;
         if (a._distanceMi == null) return 1;
         if (b._distanceMi == null) return -1;
@@ -124,7 +154,11 @@ export default function SearchPage({ nav, shops: liveShops, searchQuery, setSear
             }
             {totalPages > 1 && <span style={{ marginLeft: 8 }}>· Page {page + 1} of {totalPages}</span>}
           </span>
-          {locationStatus === "ok" && (
+          {isGeocodingSearch && <span style={{ fontSize: 12, color: "rgba(255,255,255,0.3)" }}>📍 Finding location…</span>}
+          {!isGeocodingSearch && searchCoords && q && (
+            <span style={{ fontSize: 12, color: "rgba(255,77,0,0.7)" }}>📍 Showing nearest to "{searchQuery.trim()}"</span>
+          )}
+          {!searchCoords && locationStatus === "ok" && (
             <button
               onClick={() => setSortByDistance(v => !v)}
               style={{ background: sortByDistance ? "rgba(255,77,0,0.12)" : "transparent", border: `1px solid ${sortByDistance ? "#FF4D00" : "rgba(255,255,255,0.15)"}`, color: sortByDistance ? "#FF4D00" : "rgba(255,255,255,0.4)", padding: "4px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}
@@ -132,8 +166,8 @@ export default function SearchPage({ nav, shops: liveShops, searchQuery, setSear
               📍 {sortByDistance ? "Nearest first" : "Sort by distance"}
             </button>
           )}
-          {locationStatus === "loading" && <span style={{ fontSize: 12, color: "rgba(255,255,255,0.25)" }}>📍 Detecting location…</span>}
-          {locationStatus === "denied" && <span style={{ fontSize: 12, color: "rgba(255,255,255,0.25)" }}>📍 Location unavailable — enable in browser to sort by distance</span>}
+          {!searchCoords && locationStatus === "loading" && <span style={{ fontSize: 12, color: "rgba(255,255,255,0.25)" }}>📍 Detecting location…</span>}
+          {!searchCoords && locationStatus === "denied" && <span style={{ fontSize: 12, color: "rgba(255,255,255,0.25)" }}>📍 Location unavailable — enable in browser to sort by distance</span>}
         </div>
         {shops.length === 0 && (
           <div style={{ background: "#111", border: "1px solid rgba(255,255,255,0.06)", padding: "64px 32px", display: "flex", flexDirection: "column", alignItems: "center", gap: 16, textAlign: "center" }}>
