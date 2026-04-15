@@ -156,7 +156,7 @@ export default function LandingPage({ nav, shops: liveShops, setBookingShop, set
 
       {/* NAV */}
       <nav className="nav-pad" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 60px", borderBottom: "1px solid rgba(255,255,255,0.06)", position: "sticky", top: 0, background: "rgba(10,10,10,0.95)", backdropFilter: "blur(20px)", zIndex: 100 }}>
-        <img src="/images/Logo.png" alt="WrapBridge" style={{ height: 52, display: "block", cursor: "pointer" }} onClick={() => nav("landing")} />
+        <img src="/images/Logo.png" alt="WrapBridge" style={{ height: 72, display: "block", cursor: "pointer" }} onClick={() => nav("landing")} />
         <div className="nav-links" style={{ display: "flex", gap: 32 }}>
           <span className="nav-link" onClick={() => nav("search")}>Find Shops</span>
           <span className="nav-link" onClick={() => nav("pricing")}>For Businesses</span>
@@ -465,7 +465,7 @@ export default function LandingPage({ nav, shops: liveShops, setBookingShop, set
 
       {/* Footer */}
       <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", padding: "32px 60px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
-        <img src="/images/Logo.png" alt="WrapBridge" style={{ height: 40, display: "block" }} />
+        <img src="/images/Logo.png" alt="WrapBridge" style={{ height: 56, display: "block" }} />
         <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.3)", display: "flex", gap: 24, flexWrap: "wrap", alignItems: "center" }}>
           <span onClick={() => nav("terms")} style={{ cursor: "pointer", transition: "color 0.2s" }} onMouseEnter={e => e.target.style.color="#FF4D00"} onMouseLeave={e => e.target.style.color="rgba(255,255,255,0.3)"}>Terms of Service</span>
           <span onClick={() => nav("privacy")} style={{ cursor: "pointer", transition: "color 0.2s" }} onMouseEnter={e => e.target.style.color="#FF4D00"} onMouseLeave={e => e.target.style.color="rgba(255,255,255,0.3)"}>Privacy Policy</span>

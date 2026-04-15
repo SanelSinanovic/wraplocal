@@ -5,7 +5,7 @@ export default function TermsPage({ nav }) {
 
       {/* Header */}
       <div className="legal-header" style={{ background: "#0D0D0D", borderBottom: "1px solid rgba(255,255,255,0.07)", padding: "20px 40px", display: "flex", alignItems: "center", gap: 32 }}>
-        <img src="/images/Logo.png" alt="WrapBridge" style={{ height: 44, display: "block", cursor: "pointer" }} onClick={() => nav("landing")} />
+        <img src="/images/Logo.png" alt="WrapBridge" style={{ height: 64, display: "block", cursor: "pointer" }} onClick={() => nav("landing")} />
         <span style={{ fontSize: 13, color: "rgba(255,255,255,0.3)", letterSpacing: 2 }}>TERMS OF SERVICE</span>
       </div>
 

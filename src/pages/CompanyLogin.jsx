@@ -65,7 +65,7 @@ export default function CompanyLogin({ nav, loginForm, setLoginForm, loginError,
     <div style={{ fontFamily: "'Bebas Neue', cursive", background: "#0A0A0A", minHeight: "100vh", color: "#fff", display: "flex", flexDirection: "column" }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap'); * { box-sizing: border-box; } input { width: 100%; background: #161616; border: 1px solid rgba(255,255,255,0.1); padding: 14px 16px; color: #fff; font-family: 'DM Sans', sans-serif; font-size: 15px; outline: none; transition: border-color 0.2s, background 0.2s; } input:focus { border-color: #FF4D00; background: #1c1c1c; } @keyframes fadeUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } } @keyframes glowPulse { 0%,100% { opacity: 0.06; } 50% { opacity: 0.13; } } .login-card { animation: fadeUp 0.5s cubic-bezier(0.22,1,0.36,1) both; } .login-submit { background: #FF4D00; color: #fff; border: none; padding: 16px; font-family: 'Bebas Neue', cursive; font-size: 20px; letter-spacing: 3px; cursor: pointer; width: 100%; transition: background 0.2s, transform 0.15s; } .login-submit:hover { background: #FF6A20; transform: translateY(-1px); } .login-submit:active { transform: translateY(0); } @media (max-width: 768px) { .login-nav { padding: 12px 16px !important; } .login-outer { padding: 24px 20px !important; } .login-heading { font-size: 30px !important; letter-spacing: 1px !important; } } @media (max-width: 420px) { .login-outer { padding: 20px 14px !important; } .login-heading { font-size: 26px !important; } }`}</style>
       <nav className="login-nav" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 40px", background: "rgba(10,10,10,0.95)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-        <div style={{ fontSize: 24, letterSpacing: 4, color: "#FF4D00", cursor: "pointer" }} onClick={() => nav("landing")}>WRAP<span style={{ color: "#fff" }}>BRIDGE</span></div>
+        <img src="/images/Logo.png" alt="WrapBridge" style={{ height: 68, display: "block", cursor: "pointer" }} onClick={() => nav("landing")} />
         <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)", cursor: "pointer" }} onClick={() => nav("pricing")}>View Pricing</span>
       </nav>
       <div className="login-outer" style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: 40, position: "relative", overflow: "hidden" }}>
@@ -73,6 +73,10 @@ export default function CompanyLogin({ nav, loginForm, setLoginForm, loginError,
         <div style={{ position: "absolute", top: "30%", left: "50%", transform: "translateX(-50%)", width: 600, height: 600, borderRadius: "50%", background: "radial-gradient(circle, rgba(255,77,0,0.07) 0%, transparent 70%)", pointerEvents: "none", animation: "glowPulse 4s ease-in-out infinite" }} />
         <div className="login-card" style={{ width: "100%", maxWidth: 420, position: "relative", zIndex: 1 }}>
           <div style={{ height: 3, background: "linear-gradient(90deg, #FF4D00, #FF8C00)", marginBottom: 32 }} />
+
+          <div style={{ textAlign: "center", marginBottom: 32 }}>
+            <img src="/images/Logo.png" alt="WrapBridge" style={{ height: 130, cursor: "pointer" }} onClick={() => nav("landing")} />
+          </div>
 
           {/* Mode tabs */}
           <div style={{ display: "flex", marginBottom: 32, borderBottom: "1px solid rgba(255,255,255,0.08)" }}>

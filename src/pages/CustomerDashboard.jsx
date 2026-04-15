@@ -317,7 +317,7 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
 
   const Navbar = () => (
     <nav style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 40px", background: "#0D0D0D", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-      <img src="/images/Logo.png" alt="WrapBridge" style={{ height: 48, display: "block", cursor: "pointer" }} onClick={() => nav("landing")} />
+      <img src="/images/Logo.png" alt="WrapBridge" style={{ height: 68, display: "block", cursor: "pointer" }} onClick={() => nav("landing")} />
       <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
         <div style={{ position: "relative" }}>
           <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#FF4D00", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Sans', sans-serif", fontWeight: 700 }}>

@@ -101,7 +101,7 @@ export default function ShopProfile({ nav, selectedShop, setBookingShop, current
 
       {/* ── NAV ── */}
       <nav className="sp-nav" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 40px", background: "rgba(10,10,10,0.95)", borderBottom: "1px solid rgba(255,255,255,0.06)", position: "sticky", top: 0, zIndex: 100, backdropFilter: "blur(20px)" }}>
-        <img src="/images/Logo.png" alt="WrapBridge" style={{ height: 48, display: "block", cursor: "pointer" }} onClick={() => nav("landing")} />
+        <img src="/images/Logo.png" alt="WrapBridge" style={{ height: 68, display: "block", cursor: "pointer" }} onClick={() => nav("landing")} />
         <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.5)", cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }} onClick={() => nav("search")}>
           ← Back to Search
         </span>
