@@ -55,6 +55,35 @@ Deno.serve(async (req) => {
 
     // Create or reuse Stripe Express account
     let accountId = shop.stripe_account_id;
+    // If an account ID already exists, verify it is still valid in Stripe.
+    // If it has been deleted (e.g. test data wipe), clear it so we create a fresh one.
+    if (accountId) {
+      const checkRes = await fetch("https://api.stripe.com/v1/accounts/" + accountId, {
+        headers: { Authorization: "Bearer " + stripeKey },
+      });
+      const checkData = await checkRes.json().catch(() => ({}));
+      const isDeleted = !checkRes.ok || checkData?.deleted === true ||
+        (checkData?.error?.code === "resource_missing") ||
+        (typeof checkData?.error?.message === "string" && (
+          checkData.error.message.toLowerCase().includes("no such account") ||
+          checkData.error.message.toLowerCase().includes("does not exist")
+        ));
+      if (isDeleted) {
+        // Wipe stale account from DB so a fresh one is created below
+        await fetch(supabaseUrl + "/rest/v1/shops?id=eq." + shopId, {
+          method: "PATCH",
+          headers: {
+            apikey: supabaseService,
+            Authorization: "Bearer " + supabaseService,
+            "Content-Type": "application/json",
+            Prefer: "return=minimal",
+          },
+          body: JSON.stringify({ stripe_account_id: null, stripe_onboarded: false }),
+        });
+        accountId = null;
+      }
+    }
+
     if (!accountId) {
       const accParams = new URLSearchParams();
       accParams.append("type", "express");

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "../lib/supabase";
 import { fetchUserShop, fetchCompanyBookings, createShop, updateShop, fetchMessages, sendMessage as dbSendMessage, subscribeToMessages, subscribeToShopBookings, fetchPortfolioImages, addPortfolioImage, deletePortfolioImage, setHeroPortfolioImage, scheduleBooking, uploadChatFile, geocodeCityState, fetchShopAvailability, saveShopAvailability, sendNotification } from "../lib/queries";
 import { SERVICE_CATEGORIES, ALL_SERVICE_NAMES } from "../lib/services";
@@ -349,6 +349,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
   const [stripeOnboarded, setStripeOnboarded] = useState(false);
   const [connectLoading, setConnectLoading] = useState(false);
   const [connectError, setConnectError] = useState("");
+  const [verifyLoading, setVerifyLoading] = useState(false);
 
   const syncProfileForm = (shop) => {
     setProfileForm({
@@ -459,36 +460,44 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
     });
   }, [dashTab, userShop?.id, availLoaded]);
 
+  // Shared Stripe verification helper — fetches fresh account_id from DB then calls edge fn
+  const runVerifyStripe = useCallback(async (shopId) => {
+    if (!shopId) return;
+    try {
+      const { data } = await supabase.from("shops").select("stripe_account_id,stripe_onboarded").eq("id", shopId).single();
+      if (data?.stripe_account_id) setStripeAccountId(data.stripe_account_id);
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) return;
+      const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN4bXpjdm92Z3p0cG5reG5vbXVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5ODQ1NjMsImV4cCI6MjA4ODU2MDU2M30.bEul8TJAuwlXGQusLVvLbvuauTan02IJm8ktwwqF7so";
+      const res = await fetch("https://cxmzcvovgztpnkxnomun.supabase.co/functions/v1/verify-stripe-account", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + ANON_KEY, "apikey": ANON_KEY, "x-user-token": token },
+        body: JSON.stringify({ shopId }),
+      });
+      const vd = await res.json().catch(() => null);
+      if (vd != null) {
+        setStripeOnboarded(!!vd.onboarded);
+        if (vd.onboarded) { setIsListed(true); refreshShops?.(); }
+      }
+    } catch (_) {}
+  }, [refreshShops]);
+
   // Refresh Stripe status whenever the payments tab is opened
-  // (handles the return from Stripe onboarding)
   useEffect(() => {
     if (dashTab !== "payments" || !userShop?.id) return;
-    supabase
-      .from("shops")
-      .select("stripe_account_id,stripe_onboarded")
-      .eq("id", userShop.id)
-      .single()
-      .then(async ({ data }) => {
-        if (data?.stripe_account_id) setStripeAccountId(data.stripe_account_id);
-        // Verify with Stripe API and update the DB + local state
-        const { data: session } = await supabase.auth.getSession();
-        const token = session?.session?.access_token;
-        if (token) {
-          supabase.functions.invoke("verify-stripe-account", {
-            body: { shopId: userShop.id },
-            headers: { "x-user-token": token },
-          }).then(({ data: vd }) => {
-            if (vd != null) {
-              setStripeOnboarded(!!vd.onboarded);
-              if (vd.onboarded) {
-                setIsListed(true);
-                refreshShops?.();
-              }
-            }
-          }).catch(() => {});
-        }
-      });
+    runVerifyStripe(userShop.id);
   }, [dashTab, userShop?.id]);
+
+  // Also re-verify when the user returns to this tab (e.g. after completing Stripe onboarding)
+  useEffect(() => {
+    if (!userShop?.id) return;
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") runVerifyStripe(userShop.id);
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, [userShop?.id, runVerifyStripe]);
 
   const sendCompanyMessageText = async (text) => {
     if (!text || !selectedBooking) return;
@@ -681,6 +690,26 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
 
   const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
+  // ── Stripe Connect: manually verify account status ──────────────────────
+  const handleVerifyStripe = async () => {
+    if (!userShop?.id) return;
+    setVerifyLoading(true);
+    setConnectError("");
+    try {
+      await runVerifyStripe(userShop.id);
+      // If still not onboarded after verify, show a helpful message
+      // (runVerifyStripe updates state; we read from DB via a fresh check)
+      const { data } = await supabase.from("shops").select("stripe_onboarded,stripe_account_id").eq("id", userShop.id).single();
+      if (data && !data.stripe_onboarded) {
+        setConnectError("Stripe has not fully enabled your account yet. Complete the Stripe onboarding flow and try again.");
+      }
+    } catch (e) {
+      setConnectError(e.message || String(e));
+    } finally {
+      setVerifyLoading(false);
+    }
+  };
+
   // ── Stripe Connect onboarding ──────────────────────────────────────────────
   const handleConnectStripe = async () => {
     setConnectLoading(true);
@@ -804,11 +833,19 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
             <button onClick={() => setBookingsError("")} style={{ marginLeft: 12, background: "none", border: "none", color: "#FF4D00", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", fontSize: 12, textDecoration: "underline" }}>Dismiss</button>
           </div>
         )}
-        {userShop && !stripeOnboarded && !stripeAccountId && (
+        {userShop && !stripeOnboarded && (
           <div style={{ marginBottom: 20 }}>
             <div style={{ background: "rgba(245,158,11,0.07)", border: "1px solid rgba(245,158,11,0.35)", padding: "14px 20px", fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(245,158,11,0.95)", lineHeight: 1.6, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
-              <span>⚠️ <strong>Your shop is not publicly listed</strong> — connect your Stripe account to accept payments and appear in search results.</span>
-              <button onClick={handleConnectStripe} disabled={connectLoading} style={{ background: "#F59E0B", border: "none", color: "#000", padding: "7px 18px", fontFamily: "'Bebas Neue', cursive", fontSize: 14, letterSpacing: 1, cursor: connectLoading ? "not-allowed" : "pointer", opacity: connectLoading ? 0.6 : 1, flexShrink: 0 }}>{connectLoading ? "REDIRECTING…" : "Set Up Payments →"}</button>
+              {stripeAccountId
+                ? <span>⚠️ <strong>Payment setup incomplete</strong> — your Stripe account is linked but not fully verified. Complete the Stripe onboarding to accept payments and appear in search results.</span>
+                : <span>⚠️ <strong>Your shop is not publicly listed</strong> — connect your Stripe account to accept payments and appear in search results.</span>
+              }
+              <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+                {stripeAccountId && (
+                  <button onClick={handleVerifyStripe} disabled={verifyLoading} style={{ background: "transparent", border: "1px solid rgba(245,158,11,0.6)", color: "rgba(245,158,11,0.95)", padding: "7px 14px", fontFamily: "'Bebas Neue', cursive", fontSize: 13, letterSpacing: 1, cursor: verifyLoading ? "not-allowed" : "pointer", opacity: verifyLoading ? 0.6 : 1 }}>{verifyLoading ? "CHECKING…" : "CHECK STATUS"}</button>
+                )}
+                <button onClick={handleConnectStripe} disabled={connectLoading} style={{ background: "#F59E0B", border: "none", color: "#000", padding: "7px 18px", fontFamily: "'Bebas Neue', cursive", fontSize: 14, letterSpacing: 1, cursor: connectLoading ? "not-allowed" : "pointer", opacity: connectLoading ? 0.6 : 1 }}>{connectLoading ? "REDIRECTING…" : stripeAccountId ? "COMPLETE SETUP →" : "SET UP PAYMENTS →"}</button>
+              </div>
             </div>
             {connectError && <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#F87171", padding: "8px 20px", background: "rgba(248,113,113,0.06)", border: "1px solid rgba(248,113,113,0.2)", borderTop: "none" }}>{connectError}</div>}
           </div>
@@ -1209,17 +1246,22 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
             <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.4)", marginBottom: 32 }}>WrapBridge retains 7% of all bookings as a platform fee</div>
 
             {/* ── Stripe Connect payout setup ── */}
-            <div style={{ marginBottom: 32, border: stripeAccountId ? "1px solid rgba(16,185,129,0.3)" : "1px solid rgba(245,158,11,0.3)", background: stripeAccountId ? "rgba(16,185,129,0.05)" : "rgba(245,158,11,0.05)", padding: "20px 24px" }}>
+            <div style={{ marginBottom: 32, border: stripeOnboarded ? "1px solid rgba(16,185,129,0.3)" : stripeAccountId ? "1px solid rgba(245,158,11,0.4)" : "1px solid rgba(245,158,11,0.3)", background: stripeOnboarded ? "rgba(16,185,129,0.05)" : "rgba(245,158,11,0.05)", padding: "20px 24px" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
                 <div>
-                  <div style={{ fontSize: 18, letterSpacing: 1, marginBottom: 4, color: stripeAccountId ? "#10B981" : "#F59E0B" }}>{stripeAccountId ? "✓ STRIPE CONNECTED" : "⚠ STRIPE PAYOUT SETUP REQUIRED"}</div>
+                  <div style={{ fontSize: 18, letterSpacing: 1, marginBottom: 4, color: stripeOnboarded ? "#10B981" : "#F59E0B" }}>
+                    {stripeOnboarded ? "✓ STRIPE CONNECTED" : stripeAccountId ? "⚠ STRIPE ONBOARDING INCOMPLETE" : "⚠ STRIPE PAYOUT SETUP REQUIRED"}
+                  </div>
                   <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.45)" }}>
-                    {stripeAccountId
-                      ? <>Your Stripe account <span style={{ fontFamily: "monospace", color: "rgba(255,255,255,0.7)" }}>{stripeAccountId.slice(0, 18)}…</span> receives 93% of each payment automatically.</>  
+                    {stripeOnboarded
+                      ? <>Your Stripe account <span style={{ fontFamily: "monospace", color: "rgba(255,255,255,0.7)" }}>{stripeAccountId.slice(0, 18)}…</span> receives 93% of each payment automatically.</>
+                      : stripeAccountId
+                      ? <>Account <span style={{ fontFamily: "monospace", color: "rgba(255,255,255,0.5)" }}>{stripeAccountId.slice(0, 18)}…</span> linked but not yet fully enabled by Stripe. Complete the onboarding or check status.</>
                       : "Connect a Stripe account so you receive 93% of each booking payment directly to your bank."}
                   </div>
                 </div>
-                {stripeAccountId ? (
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {stripeOnboarded ? (
                   <button
                     onClick={async () => {
                       try {
@@ -1235,7 +1277,6 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
                           window.open(data.url, "_blank");
                         } else {
                           const errMsg = data.error || "Could not open Stripe dashboard";
-                          // Account was deleted (e.g. Stripe test data cleared) — reset so user can reconnect
                           if (errMsg.toLowerCase().includes("no such account") || errMsg.toLowerCase().includes("does not exist") || errMsg.toLowerCase().includes("resource_missing")) {
                             await supabase.from("shops").update({ stripe_account_id: null, stripe_onboarded: false }).eq("id", userShop.id);
                             setStripeAccountId("");
@@ -1251,9 +1292,15 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
                     }}
                     style={{ padding: "9px 20px", background: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.4)", color: "#10B981", fontFamily: "'DM Sans', sans-serif", fontSize: 13, cursor: "pointer", whiteSpace: "nowrap" }}
                   >Manage on Stripe →</button>
+                ) : stripeAccountId ? (
+                  <>
+                    <button onClick={handleVerifyStripe} disabled={verifyLoading} style={{ padding: "10px 18px", background: "transparent", border: "1px solid rgba(245,158,11,0.5)", color: "#F59E0B", fontFamily: "'Bebas Neue', cursive", fontSize: 14, letterSpacing: 1, cursor: verifyLoading ? "not-allowed" : "pointer", opacity: verifyLoading ? 0.6 : 1 }}>{verifyLoading ? "CHECKING…" : "CHECK STATUS"}</button>
+                    <button onClick={handleConnectStripe} disabled={connectLoading} style={{ padding: "10px 22px", background: "#F59E0B", border: "none", color: "#000", fontFamily: "'Bebas Neue', cursive", fontSize: 15, letterSpacing: 1, cursor: connectLoading ? "not-allowed" : "pointer", opacity: connectLoading ? 0.6 : 1 }}>{connectLoading ? "REDIRECTING…" : "COMPLETE SETUP"}</button>
+                  </>
                 ) : (
                   <button onClick={handleConnectStripe} disabled={connectLoading} style={{ padding: "10px 22px", background: "#F59E0B", border: "none", color: "#000", fontFamily: "'Bebas Neue', cursive", fontSize: 15, letterSpacing: 1, cursor: connectLoading ? "not-allowed" : "pointer", opacity: connectLoading ? 0.6 : 1 }}>{connectLoading ? "REDIRECTING…" : "CONNECT STRIPE ACCOUNT"}</button>
                 )}
+              </div>
               </div>
               {connectError && <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#F87171", marginTop: 10 }}>{connectError}</div>}
             </div>
