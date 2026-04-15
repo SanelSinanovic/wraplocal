@@ -448,10 +448,17 @@ export async function saveShopAvailability(shopId, workingDays, blockedDates) {
 
 // ── EMAIL NOTIFICATIONS ───────────────────────────────────────────────────────
 // Fire-and-forget: errors are swallowed so they never block the booking flow.
+const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN4bXpjdm92Z3p0cG5reG5vbXVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5ODQ1NjMsImV4cCI6MjA4ODU2MDU2M30.bEul8TJAuwlXGQusLVvLbvuauTan02IJm8ktwwqF7so";
 export async function sendNotification(type, bookingId) {
   try {
-    await supabase.functions.invoke('send-notification', {
-      body: { type, bookingId },
+    await fetch("https://cxmzcvovgztpnkxnomun.supabase.co/functions/v1/send-notification", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + ANON_KEY,
+        "apikey": ANON_KEY,
+      },
+      body: JSON.stringify({ type, bookingId }),
     });
   } catch (e) {
     console.warn('sendNotification failed:', e);
