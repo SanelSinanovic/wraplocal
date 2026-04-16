@@ -400,7 +400,7 @@ export default function LandingPage({ nav, shops: liveShops, setBookingShop, set
         </div>
         <div className="shops-grid reveal reveal-stagger" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20 }}>
           {shops.slice(0, 3).map(shop => (
-            <div key={shop.id} className="card-hover" onClick={() => { setSelectedShop(shop); nav("shop"); }}
+            <div key={shop.id} className="card-hover" onClick={() => nav("shop", { selectedShop: shop })}
               style={{ background: "#111", border: "1px solid rgba(255,255,255,0.06)", overflow: "hidden" }}>
               <div style={{ position: "relative", height: 200, overflow: "hidden" }}>
                 <img src={shop.image || shop.banner_url || 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=600&q=80'} alt={shop.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -420,7 +420,7 @@ export default function LandingPage({ nav, shops: liveShops, setBookingShop, set
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.5)" }}>From <b style={{ color: "#fff" }}>${(shop.price ?? shop.price_from ?? 0).toLocaleString()}</b></span>
-                  <button className="btn-main" style={{ fontSize: 13, padding: "8px 18px" }} onClick={(e) => { e.stopPropagation(); setBookingShop(shop); nav("booking"); }}>Book Now</button>
+                  <button className="btn-main" style={{ fontSize: 13, padding: "8px 18px" }} onClick={(e) => { e.stopPropagation(); nav("booking", { bookingShop: shop }); }}>Book Now</button>
                 </div>
               </div>
             </div>

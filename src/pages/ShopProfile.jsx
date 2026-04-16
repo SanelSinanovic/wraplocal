@@ -34,7 +34,7 @@ export default function ShopProfile({ nav, selectedShop, setBookingShop, current
     ? shop.name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()
     : "??";
 
-  const handleBook = () => { setBookingShop(shop); nav("booking"); };
+  const handleBook = () => { nav("booking", { bookingShop: shop }); };
 
   return (
     <div style={{ fontFamily: "'Bebas Neue', cursive", background: "#0A0A0A", minHeight: "100vh", color: "#fff" }}>

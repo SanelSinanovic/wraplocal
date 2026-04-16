@@ -78,28 +78,36 @@ export default function App() {
       description = `Request a quote and book your vehicle service at ${bookingShop.name} through WrapBridge.`;
     }
 
+    const url = `https://wrapbridge.com/#${view}`;
+
     document.title = title;
-    const descEl = document.querySelector('meta[name="description"]');
-    if (descEl) descEl.setAttribute("content", description);
-    const ogTitle = document.querySelector('meta[property="og:title"]');
-    if (ogTitle) ogTitle.setAttribute("content", title);
-    const ogDesc = document.querySelector('meta[property="og:description"]');
-    if (ogDesc) ogDesc.setAttribute("content", description);
+    const setMeta = (sel, attr, val) => { const el = document.querySelector(sel); if (el) el.setAttribute(attr, val); };
+    setMeta('meta[name="description"]',         "content", description);
+    setMeta('meta[property="og:title"]',         "content", title);
+    setMeta('meta[property="og:description"]',   "content", description);
+    setMeta('meta[property="og:url"]',            "content", url);
+    setMeta('meta[name="twitter:title"]',         "content", title);
+    setMeta('meta[name="twitter:description"]',   "content", description);
   }, [view, selectedShop, bookingShop]);
 
   // ── Supabase: shops + auth state ──────────────────────────
   const [shops, setShops] = useState([]);
+  const [shopsLoading, setShopsLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
   const [currentProfile, setCurrentProfile] = useState(null);
 
   useEffect(() => {
+    // Disable browser's automatic scroll restoration so we control it manually
+    if ('scrollRestoration' in window.history) window.history.scrollRestoration = 'manual';
+
     // Seed initial history entry so the initial view has a state
     if (!window.history.state?.view) {
       window.history.replaceState({ view }, "", "#" + view);
     }
 
     // Load shops on mount
-    fetchShops().then(data => { if (data) setShops(data); });
+    setShopsLoading(true);
+    fetchShops().then(data => { if (data) setShops(data); setShopsLoading(false); });
 
     // Check existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -151,7 +159,11 @@ export default function App() {
     // Sync browser back/forward buttons with app view
     const handlePopState = (e) => {
       const v = e.state?.view || window.location.hash.replace("#", "") || "landing";
+      // Restore shop context stored in history state
+      if (e.state?.selectedShop !== undefined) setSelectedShop(e.state.selectedShop);
+      if (e.state?.bookingShop !== undefined) setBookingShop(e.state.bookingShop);
       setView(v);
+      window.scrollTo(0, 0);
       if (v === "search" || v === "landing") {
         fetchShops().then(data => { if (data) setShops(data); });
       }
@@ -164,7 +176,7 @@ export default function App() {
     };
   }, []);
 
-  const nav = (v) => {
+  const nav = (v, ctx = {}) => {
     // Gate booking behind customer auth
     if (v === "booking") {
       const role = currentProfile?.role || currentUser?.user_metadata?.role;
@@ -172,15 +184,21 @@ export default function App() {
         setPostLoginNav("booking");
         window.history.pushState({ view: "customer-login" }, "", "#customer-login");
         setView("customer-login");
+        window.scrollTo(0, 0);
         return;
       }
       if (role === "company") {
         window.history.pushState({ view: "company-dash" }, "", "#company-dash");
         setView("company-dash");
+        window.scrollTo(0, 0);
         return;
       }
     }
-    window.history.pushState({ view: v }, "", "#" + v);
+    // Build history state — include shop context so back/forward can restore it
+    const histState = { view: v };
+    if (ctx.selectedShop) { setSelectedShop(ctx.selectedShop); histState.selectedShop = ctx.selectedShop; }
+    if (ctx.bookingShop)  { setBookingShop(ctx.bookingShop);   histState.bookingShop  = ctx.bookingShop; }
+    window.history.pushState(histState, "", "#" + v);
     setView(v);
     setBookingConfirmed(false);
     setBookingStep(1);
@@ -188,10 +206,12 @@ export default function App() {
     setSelectedDate(null);
     setLoginError("");
     setLoginForm({ email: "", password: "" });
+    window.scrollTo(0, 0);
     // Re-fetch shops whenever the customer-facing pages are visited
     // so newly registered companies appear immediately
     if (v === "search" || v === "landing") {
-      fetchShops().then(data => { if (data) setShops(data); });
+      setShopsLoading(true);
+      fetchShops().then(data => { if (data) setShops(data); setShopsLoading(false); });
     }
   };
 
@@ -232,9 +252,9 @@ export default function App() {
   };
 
   if (view === "landing") return <LandingPage nav={nav} shops={shops} setBookingShop={setBookingShop} setSelectedShop={setSelectedShop} setServiceFilter={setServiceFilter} currentUser={currentUser} currentProfile={currentProfile} onLogout={handleLogout} />;
-  if (view === "search") return <SearchPage nav={nav} shops={shops} searchQuery={searchQuery} setSearchQuery={setSearchQuery} serviceFilter={serviceFilter} setServiceFilter={setServiceFilter} setSelectedShop={setSelectedShop} setBookingShop={setBookingShop} currentUser={currentUser} currentProfile={currentProfile} onLogout={handleLogout} />;
-  if (view === "shop") return selectedShop ? <ShopProfile nav={nav} selectedShop={selectedShop} setBookingShop={setBookingShop} currentUser={currentUser} currentProfile={currentProfile} onLogout={handleLogout} /> : <SearchPage nav={nav} shops={shops} searchQuery={searchQuery} setSearchQuery={setSearchQuery} serviceFilter={serviceFilter} setServiceFilter={setServiceFilter} setSelectedShop={setSelectedShop} setBookingShop={setBookingShop} currentUser={currentUser} currentProfile={currentProfile} onLogout={handleLogout} />;
-  if (view === "booking") return bookingShop ? <BookingFlow nav={nav} bookingShop={bookingShop} bookingStep={bookingStep} setBookingStep={setBookingStep} selectedSlot={selectedSlot} setSelectedSlot={setSelectedSlot} selectedDate={selectedDate} setSelectedDate={setSelectedDate} bookingConfirmed={bookingConfirmed} setBookingConfirmed={setBookingConfirmed} currentUser={currentUser} /> : <SearchPage nav={nav} shops={shops} searchQuery={searchQuery} setSearchQuery={setSearchQuery} serviceFilter={serviceFilter} setServiceFilter={setServiceFilter} setSelectedShop={setSelectedShop} setBookingShop={setBookingShop} currentUser={currentUser} currentProfile={currentProfile} onLogout={handleLogout} />;
+  if (view === "search") return <SearchPage nav={nav} shops={shops} shopsLoading={shopsLoading} searchQuery={searchQuery} setSearchQuery={setSearchQuery} serviceFilter={serviceFilter} setServiceFilter={setServiceFilter} setSelectedShop={setSelectedShop} setBookingShop={setBookingShop} currentUser={currentUser} currentProfile={currentProfile} onLogout={handleLogout} />;
+  if (view === "shop") return selectedShop ? <ShopProfile nav={nav} selectedShop={selectedShop} setBookingShop={setBookingShop} currentUser={currentUser} currentProfile={currentProfile} onLogout={handleLogout} /> : <SearchPage nav={nav} shops={shops} shopsLoading={shopsLoading} searchQuery={searchQuery} setSearchQuery={setSearchQuery} serviceFilter={serviceFilter} setServiceFilter={setServiceFilter} setSelectedShop={setSelectedShop} setBookingShop={setBookingShop} currentUser={currentUser} currentProfile={currentProfile} onLogout={handleLogout} />;
+  if (view === "booking") return bookingShop ? <BookingFlow nav={nav} bookingShop={bookingShop} bookingStep={bookingStep} setBookingStep={setBookingStep} selectedSlot={selectedSlot} setSelectedSlot={setSelectedSlot} selectedDate={selectedDate} setSelectedDate={setSelectedDate} bookingConfirmed={bookingConfirmed} setBookingConfirmed={setBookingConfirmed} currentUser={currentUser} /> : <SearchPage nav={nav} shops={shops} shopsLoading={shopsLoading} searchQuery={searchQuery} setSearchQuery={setSearchQuery} serviceFilter={serviceFilter} setServiceFilter={setServiceFilter} setSelectedShop={setSelectedShop} setBookingShop={setBookingShop} currentUser={currentUser} currentProfile={currentProfile} onLogout={handleLogout} />;
   if (view === "customer-dash") return <CustomerDashboard nav={nav} currentUser={currentUser} currentProfile={currentProfile} onLogout={handleLogout} stripeReturn={stripeReturn} setStripeReturn={setStripeReturn} />;
   if (view === "pricing") return <PricingPage nav={nav} currentUser={currentUser} currentProfile={currentProfile} />;
   if (view === "company-dash") return <CompanyDashboard nav={nav} dashTab={dashTab} setDashTab={setDashTab} currentUser={currentUser} currentProfile={currentProfile} onLogout={handleLogout} refreshShops={() => fetchShops().then(d => { if (d) setShops(d); })} />;

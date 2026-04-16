@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { SERVICE_CATEGORIES } from "../lib/services";
 import { haversineDistance, geocodeSearch } from "../lib/queries";
 
-export default function SearchPage({ nav, shops: liveShops, searchQuery, setSearchQuery, serviceFilter, setServiceFilter, setSelectedShop, setBookingShop, currentUser, currentProfile, onLogout }) {
+export default function SearchPage({ nav, shops: liveShops, shopsLoading, searchQuery, setSearchQuery, serviceFilter, setServiceFilter, setSelectedShop, setBookingShop, currentUser, currentProfile, onLogout }) {
   const role = currentUser ? (currentProfile?.role || currentUser?.user_metadata?.role || "customer") : null;
   const allShops = liveShops || [];
   const [activeService, setActiveService] = useState(null);
@@ -98,7 +98,7 @@ export default function SearchPage({ nav, shops: liveShops, searchQuery, setSear
 
   return (
     <div style={{ fontFamily: "'Bebas Neue', cursive", background: "#0A0A0A", minHeight: "100vh", color: "#fff" }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap'); * { box-sizing: border-box; } .btn-main { background: #FF4D00; color: #fff; border: none; padding: 12px 24px; font-family: 'Bebas Neue', cursive; font-size: 16px; letter-spacing: 2px; cursor: pointer; transition: all 0.2s; } .btn-main:hover { background: #FF6A20; transform: translateY(-1px); } .svc-chip { font-family: 'DM Sans', sans-serif; font-size: 12px; padding: 5px 14px; border: 1px solid rgba(255,255,255,0.1); background: transparent; color: rgba(255,255,255,0.45); cursor: pointer; white-space: nowrap; transition: all 0.15s; } .svc-chip:hover { border-color: rgba(255,77,0,0.45); color: rgba(255,255,255,0.8); } .svc-chip.active { background: rgba(255,77,0,0.12); border-color: #FF4D00; color: #FF4D00; } @keyframes fadeInUp { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: translateY(0); } } .shop-card-anim { animation: fadeInUp 0.45s cubic-bezier(0.22,1,0.36,1) both; } .shop-card { background: #111; border: 1px solid rgba(255,255,255,0.07); overflow: hidden; transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s; cursor: pointer; } .shop-card:hover { border-color: rgba(255,77,0,0.35); transform: translateY(-2px); box-shadow: 0 8px 40px rgba(255,77,0,0.1); } .shop-tag { padding: 3px 10px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); font-family: 'DM Sans', sans-serif; font-size: 11px; color: rgba(255,255,255,0.4); transition: all 0.15s; } .shop-tag:hover { border-color: rgba(255,77,0,0.3); color: rgba(255,255,255,0.7); } .search-input { flex: 1; background: #151515; border: 1px solid rgba(255,255,255,0.1); padding: 10px 16px; color: #fff; font-family: 'DM Sans', sans-serif; font-size: 14px; outline: none; transition: border-color 0.2s; } .search-input:focus { border-color: rgba(255,77,0,0.5); } @media (max-width: 768px) { .search-nav { flex-wrap: wrap; padding: 12px 16px !important; gap: 10px; } .search-bar { order: 3; flex: 0 0 100% !important; margin: 0 !important; max-width: 100% !important; } .search-pad { padding: 16px !important; } .shop-card-inner { flex-direction: column !important; } .shop-img { width: 100% !important; height: 180px !important; } .shop-card-right { flex-direction: column !important; align-items: flex-start !important; gap: 12px !important; } .shop-book-btn { align-self: stretch; } }`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap'); * { box-sizing: border-box; } @keyframes skelPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.45; } } .btn-main { background: #FF4D00; color: #fff; border: none; padding: 12px 24px; font-family: 'Bebas Neue', cursive; font-size: 16px; letter-spacing: 2px; cursor: pointer; transition: all 0.2s; } .btn-main:hover { background: #FF6A20; transform: translateY(-1px); } .svc-chip { font-family: 'DM Sans', sans-serif; font-size: 12px; padding: 5px 14px; border: 1px solid rgba(255,255,255,0.1); background: transparent; color: rgba(255,255,255,0.45); cursor: pointer; white-space: nowrap; transition: all 0.15s; } .svc-chip:hover { border-color: rgba(255,77,0,0.45); color: rgba(255,255,255,0.8); } .svc-chip.active { background: rgba(255,77,0,0.12); border-color: #FF4D00; color: #FF4D00; } @keyframes fadeInUp { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: translateY(0); } } .shop-card-anim { animation: fadeInUp 0.45s cubic-bezier(0.22,1,0.36,1) both; } .shop-card { background: #111; border: 1px solid rgba(255,255,255,0.07); overflow: hidden; transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s; cursor: pointer; } .shop-card:hover { border-color: rgba(255,77,0,0.35); transform: translateY(-2px); box-shadow: 0 8px 40px rgba(255,77,0,0.1); } .shop-tag { padding: 3px 10px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); font-family: 'DM Sans', sans-serif; font-size: 11px; color: rgba(255,255,255,0.4); transition: all 0.15s; } .shop-tag:hover { border-color: rgba(255,77,0,0.3); color: rgba(255,255,255,0.7); } .search-input { flex: 1; background: #151515; border: 1px solid rgba(255,255,255,0.1); padding: 10px 16px; color: #fff; font-family: 'DM Sans', sans-serif; font-size: 14px; outline: none; transition: border-color 0.2s; } .search-input:focus { border-color: rgba(255,77,0,0.5); } @media (max-width: 768px) { .search-nav { flex-wrap: wrap; padding: 12px 16px !important; gap: 10px; } .search-bar { order: 3; flex: 0 0 100% !important; margin: 0 !important; max-width: 100% !important; } .search-pad { padding: 16px !important; } .shop-card-inner { flex-direction: column !important; } .shop-img { width: 100% !important; height: 180px !important; } .shop-card-right { flex-direction: column !important; align-items: flex-start !important; gap: 12px !important; } .shop-book-btn { align-self: stretch; } }`}</style>
       <nav className="search-nav" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 40px", background: "rgba(10,10,10,0.95)", borderBottom: "1px solid rgba(255,255,255,0.06)", position: "sticky", top: 0, zIndex: 100 }}>
         <img src="/images/Logo.png" alt="WrapBridge" style={{ height: 68, display: "block", cursor: "pointer" }} onClick={() => nav("landing")} />
         <div className="search-bar" style={{ display: "flex", gap: 16, flex: 1, maxWidth: 500, margin: "0 40px" }}>
@@ -169,7 +169,24 @@ export default function SearchPage({ nav, shops: liveShops, searchQuery, setSear
           {!searchCoords && locationStatus === "loading" && <span style={{ fontSize: 12, color: "rgba(255,255,255,0.25)" }}>📍 Detecting location…</span>}
           {!searchCoords && locationStatus === "denied" && <span style={{ fontSize: 12, color: "rgba(255,255,255,0.25)" }}>📍 Location unavailable — enable in browser to sort by distance</span>}
         </div>
-        {shops.length === 0 && (
+        {/* ── LOADING SKELETON ── */}
+        {shopsLoading && allShops.length === 0 && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            {[1, 2, 3].map(i => (
+              <div key={i} style={{ background: "#111", border: "1px solid rgba(255,255,255,0.07)", overflow: "hidden", display: "flex", animation: "skelPulse 1.4s ease-in-out infinite" }}>
+                <div style={{ width: 240, height: 160, background: "rgba(255,255,255,0.05)", flexShrink: 0 }} />
+                <div style={{ padding: "20px 24px", flex: 1 }}>
+                  <div style={{ width: "55%", height: 22, background: "rgba(255,255,255,0.06)", marginBottom: 10 }} />
+                  <div style={{ width: "35%", height: 14, background: "rgba(255,255,255,0.04)", marginBottom: 14 }} />
+                  <div style={{ display: "flex", gap: 6 }}>
+                    {[80, 100, 70].map((w, j) => <div key={j} style={{ width: w, height: 22, background: "rgba(255,255,255,0.04)" }} />)}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        {shops.length === 0 && !shopsLoading && (
           <div style={{ background: "#111", border: "1px solid rgba(255,255,255,0.06)", padding: "64px 32px", display: "flex", flexDirection: "column", alignItems: "center", gap: 16, textAlign: "center" }}>
             <div style={{ fontSize: 56 }}>🔍</div>
             <div style={{ fontFamily: "'Bebas Neue', cursive", fontSize: 36, letterSpacing: 2 }}>NO SHOPS FOUND</div>
@@ -185,7 +202,7 @@ export default function SearchPage({ nav, shops: liveShops, searchQuery, setSear
         )}
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           {pagedShops.map((shop, i) => (
-            <div key={shop.id} className="shop-card shop-card-anim" onClick={() => { setSelectedShop(shop); nav("shop"); }}
+            <div key={shop.id} className="shop-card shop-card-anim" onClick={() => nav("shop", { selectedShop: shop })}
               style={{ animationDelay: `${Math.min(i * 0.07, 0.42)}s` }}>
               <div className="shop-card-inner" style={{ display: "flex" }}>
                 <img className="shop-img" src={shop.image || shop.banner_url || 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=600&q=80'} alt={shop.name} style={{ width: 240, height: 160, objectFit: "cover", flexShrink: 0 }} />
@@ -209,7 +226,7 @@ export default function SearchPage({ nav, shops: liveShops, searchQuery, setSear
                     <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)" }}>From</div>
                     <div style={{ fontSize: 32, color: "#FF4D00", marginBottom: 8 }}>${(shop.price ?? shop.price_from ?? 0).toLocaleString()}</div>
                     <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: shop.availability === "Today" ? "#10B981" : "#F59E0B", marginBottom: 8 }}>{shop.availability ? `● Available ${shop.availability}` : '● Contact for availability'}</div>
-                    <button className="btn-main shop-book-btn" onClick={(e) => { e.stopPropagation(); setBookingShop(shop); nav("booking"); }}>Book Now</button>
+                    <button className="btn-main shop-book-btn" onClick={(e) => { e.stopPropagation(); nav("booking", { bookingShop: shop }); }}>Book Now</button>
                   </div>
                 </div>
               </div>
