@@ -94,7 +94,7 @@ export default function CompanyOnboarding({ currentUser, userShop, onComplete, n
 
       {/* Navbar */}
       <nav className="ob-nav" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 40px", background: "rgba(10,10,10,0.97)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-        <div style={{ fontSize: 24, letterSpacing: 4, color: "#FF4D00" }}>WRAP<span style={{ color: "#fff" }}>BRIDGE</span></div>
+        <img src="/images/Logo.png" alt="WrapBridge" style={{ height: 68, display: "block", cursor: "pointer" }} onClick={() => nav("landing")} />
         <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.35)" }}>Business Setup</div>
       </nav>
 
