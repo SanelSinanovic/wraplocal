@@ -59,7 +59,7 @@ export default function LandingPage({ nav, shops: liveShops, setBookingShop, set
   };
 
   return (
-    <div style={{ fontFamily: "'Bebas Neue', cursive, sans-serif", background: "#0A0A0A", minHeight: "100vh", color: "#fff", overflow: "hidden" }}>
+    <div style={{ fontFamily: "'Bebas Neue', cursive, sans-serif", background: "linear-gradient(180deg, #0A0A0A 0%, #140A04 20%, #0A0A0A 50%, #05050C 100%)", minHeight: "100vh", color: "#fff", overflow: "hidden" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -81,10 +81,12 @@ export default function LandingPage({ nav, shops: liveShops, setBookingShop, set
         @keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
         @keyframes float-card { 0%,100% { transform: translateY(0px); } 50% { transform: translateY(-6px); } }
         @keyframes mesh-move { 0%,100% { opacity: 0.04; transform: scale(1) rotate(0deg); } 50% { opacity: 0.07; transform: scale(1.05) rotate(1deg); } }
-        @keyframes glow-breathe { 0%,100% { opacity: 0.12; transform: scale(1); } 50% { opacity: 0.22; transform: scale(1.08); } }
+        @keyframes glow-breathe { 0%,100% { opacity: 0.35; transform: scale(1); } 50% { opacity: 0.6; transform: scale(1.08); } }
         @keyframes shimmer-slide { 0% { background-position: -200% center; } 100% { background-position: 200% center; } }
         @keyframes spin-ring { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         @keyframes beam-sweep { 0% { transform: translateX(-100%) skewX(-20deg); opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { transform: translateX(400%) skewX(-20deg); opacity: 0; } }
+        @keyframes orb-drift { 0%,100% { transform: translate(0px,0px) scale(1); } 33% { transform: translate(40px,-30px) scale(1.06); } 66% { transform: translate(-25px,20px) scale(0.96); } }
+        @keyframes orb-drift-r { 0%,100% { transform: translate(0px,0px) scale(1); } 33% { transform: translate(-35px,25px) scale(0.97); } 66% { transform: translate(20px,-15px) scale(1.04); } }
         .ticker-wrap { overflow: hidden; border-top: 1px solid rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.05); background: #0D0D0D; padding: 10px 0; }
         .ticker-track { display: flex; width: max-content; animation: ticker 28s linear infinite; }
         .ticker-item { fontFamily: "'DM Sans', sans-serif"; font-size: 12px; letter-spacing: 3px; color: #FF4D00; white-space: nowrap; padding: 0 32px; display: flex; align-items: center; gap: 12px; }
@@ -224,7 +226,7 @@ export default function LandingPage({ nav, shops: liveShops, setBookingShop, set
       {/* HERO */}
       <div className="hero-section" style={{ position: "relative", padding: "100px 60px 80px", overflow: "hidden" }}>
         {/* Animated glow orb */}
-        <div style={{ position: "absolute", top: "10%", right: "5%", width: 700, height: 700, background: "radial-gradient(circle, rgba(255,77,0,0.18) 0%, transparent 70%)", borderRadius: "50%", pointerEvents: "none", animation: "glow-breathe 5s ease-in-out infinite" }} />
+        <div style={{ position: "absolute", top: "10%", right: "5%", width: 800, height: 800, background: "radial-gradient(circle, rgba(255,77,0,0.3) 0%, transparent 70%)", borderRadius: "50%", pointerEvents: "none", animation: "glow-breathe 5s ease-in-out infinite" }} />
         {/* Animated mesh grid */}
         <div style={{ position: "absolute", inset: 0, pointerEvents: "none", animation: "mesh-move 8s ease-in-out infinite", backgroundImage: "linear-gradient(rgba(255,77,0,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,77,0,0.05) 1px, transparent 1px)", backgroundSize: "60px 60px", maskImage: "radial-gradient(ellipse at 70% 50%, black 30%, transparent 70%)" }} />
         {/* Spinning ring */}
@@ -336,8 +338,17 @@ export default function LandingPage({ nav, shops: liveShops, setBookingShop, set
         </div>
       </div>
 
+      {/* Hero → Services transition glow strip */}
+      <div style={{ position: "relative", height: 2, overflow: "visible", zIndex: 0 }}>
+        <div style={{ position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)", width: "80%", height: 180, background: "radial-gradient(ellipse at center, rgba(255,77,0,0.45) 0%, transparent 70%)", pointerEvents: "none" }} />
+      </div>
+
       {/* BROWSE BY SERVICE */}
-      <div className="section-pad" style={{ padding: "70px 60px", background: "#0D0D0D", borderTop: "1px solid rgba(255,255,255,0.05)", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+      <div className="section-pad" style={{ position: "relative", padding: "70px 60px", background: "transparent", borderTop: "1px solid rgba(255,255,255,0.05)", borderBottom: "1px solid rgba(255,255,255,0.05)", overflow: "hidden" }}>
+        {/* Left ambient orb */}
+        <div aria-hidden="true" style={{ position: "absolute", top: "10%", left: "-8%", width: 700, height: 700, background: "radial-gradient(circle, rgba(59,130,246,0.22) 0%, transparent 65%)", borderRadius: "50%", pointerEvents: "none", animation: "orb-drift 14s ease-in-out infinite" }} />
+        {/* Right ambient orb */}
+        <div aria-hidden="true" style={{ position: "absolute", bottom: "5%", right: "-6%", width: 600, height: 600, background: "radial-gradient(circle, rgba(255,77,0,0.22) 0%, transparent 65%)", borderRadius: "50%", pointerEvents: "none", animation: "orb-drift-r 18s ease-in-out infinite" }} />
         <div className="reveal" style={{ textAlign: "center", marginBottom: 52 }}>
           <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#FF4D00", letterSpacing: 3, marginBottom: 10 }}>WHAT ARE YOU LOOKING FOR?</div>
           <div style={{ fontSize: 48, letterSpacing: 2 }}>BROWSE BY SERVICE</div>
@@ -390,7 +401,11 @@ export default function LandingPage({ nav, shops: liveShops, setBookingShop, set
       </div>
 
       {/* FEATURED SHOPS */}
-      <div className="section-pad" style={{ padding: "70px 60px 80px" }}>
+      <div className="section-pad" style={{ position: "relative", padding: "70px 60px 80px", overflow: "hidden" }}>
+        {/* Center bloom */}
+        <div aria-hidden="true" style={{ position: "absolute", top: "20%", left: "50%", transform: "translateX(-50%)", width: 1000, height: 600, background: "radial-gradient(ellipse at center, rgba(255,77,0,0.18) 0%, transparent 60%)", pointerEvents: "none", animation: "glow-breathe 7s ease-in-out infinite" }} />
+        {/* Top-left cool accent */}
+        <div aria-hidden="true" style={{ position: "absolute", top: 0, left: "5%", width: 450, height: 450, background: "radial-gradient(circle, rgba(120,80,255,0.16) 0%, transparent 70%)", borderRadius: "50%", pointerEvents: "none" }} />
         <div className="reveal shops-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 32 }}>
           <div>
             <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#FF4D00", letterSpacing: 3, marginBottom: 8 }}>FEATURED NEAR YOU</div>
@@ -433,7 +448,13 @@ export default function LandingPage({ nav, shops: liveShops, setBookingShop, set
       </div>
 
       {/* HOW IT WORKS */}
-      <div className="section-pad" style={{ padding: "70px 60px 100px", borderTop: "1px solid rgba(255,255,255,0.06)", background: "#0D0D0D" }}>
+      <div className="section-pad" style={{ position: "relative", padding: "70px 60px 100px", borderTop: "1px solid rgba(255,255,255,0.06)", background: "transparent", overflow: "hidden" }}>
+        {/* Diagonal stripe accent */}
+        <div aria-hidden="true" style={{ position: "absolute", inset: 0, pointerEvents: "none", backgroundImage: "repeating-linear-gradient(118deg, transparent, transparent 60px, rgba(255,77,0,0.055) 60px, rgba(255,77,0,0.055) 62px)" }} />
+        {/* Bottom-right glow */}
+        <div aria-hidden="true" style={{ position: "absolute", bottom: "-10%", right: "-5%", width: 700, height: 700, background: "radial-gradient(circle, rgba(255,77,0,0.2) 0%, transparent 65%)", borderRadius: "50%", pointerEvents: "none", animation: "orb-drift 20s ease-in-out infinite" }} />
+        {/* Top-left cool orb */}
+        <div aria-hidden="true" style={{ position: "absolute", top: "-5%", left: "-3%", width: 500, height: 500, background: "radial-gradient(circle, rgba(59,130,246,0.16) 0%, transparent 65%)", borderRadius: "50%", pointerEvents: "none" }} />
         <div className="reveal" style={{ textAlign: "center", marginBottom: 60 }}>
           <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#FF4D00", letterSpacing: 3, marginBottom: 8 }}>SIMPLE PROCESS</div>
           <div style={{ fontSize: 48, letterSpacing: 2 }}>HOW IT WORKS</div>
