@@ -2,15 +2,6 @@ import { useState, useEffect } from "react";
 import { ALL_SERVICE_NAMES } from "../lib/services";
 import { fetchShopReviews } from "../lib/queries";
 
-const PLACEHOLDER_PORTFOLIO = [
-  "https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=600&q=80",
-  "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=600&q=80",
-  "https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=600&q=80",
-  "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=600&q=80",
-  "https://images.unsplash.com/photo-1525609004556-c46c7d6cf023?w=600&q=80",
-  "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80",
-];
-
 export default function ShopProfile({ nav, selectedShop, setBookingShop, currentUser, currentProfile, onLogout }) {
   const [activeTab, setActiveTab] = useState("overview");
   const [lightboxImg, setLightboxImg] = useState(null);
@@ -27,7 +18,7 @@ export default function ShopProfile({ nav, selectedShop, setBookingShop, current
   const shop = selectedShop;
   const accentColor = shop.color || "#FF4D00";
   const bannerSrc = shop.image || shop.banner_url || null;
-  const portfolio = shop.portfolio && shop.portfolio.length > 0 ? shop.portfolio : PLACEHOLDER_PORTFOLIO;
+  const portfolio = shop.portfolio && shop.portfolio.length > 0 ? shop.portfolio : [];
   const bio = shop.about || shop.bio || "";
   const rating = reviews.length > 0
     ? Math.round((reviews.reduce((sum, r) => sum + r.stars, 0) / reviews.length) * 10) / 10
@@ -202,18 +193,27 @@ export default function ShopProfile({ nav, selectedShop, setBookingShop, current
               <div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
                   <div style={{ fontSize: 28, letterSpacing: 2 }}>PORTFOLIO</div>
-                  <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)", cursor: "pointer" }} onClick={() => setActiveTab("portfolio")}>
-                    View all {portfolio.length} →
-                  </span>
+                  {portfolio.length > 0 && (
+                    <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)", cursor: "pointer" }} onClick={() => setActiveTab("portfolio")}>
+                      View all {portfolio.length} →
+                    </span>
+                  )}
                 </div>
-                <div className="sp-port-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
-                  {portfolio.slice(0, 3).map((img, i) => (
-                    <div key={i} className="sp-port-item" onClick={() => setLightboxImg(img)}>
-                      <img src={img} alt={`Work ${i + 1}`} />
-                      <div className="sp-port-overlay"><span className="sp-port-label">VIEW</span></div>
-                    </div>
-                  ))}
-                </div>
+                {portfolio.length > 0 ? (
+                  <div className="sp-port-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+                    {portfolio.slice(0, 3).map((img, i) => (
+                      <div key={i} className="sp-port-item" onClick={() => setLightboxImg(img)}>
+                        <img src={img} alt={`Work ${i + 1}`} />
+                        <div className="sp-port-overlay"><span className="sp-port-label">VIEW</span></div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div style={{ background: "#111", border: "1px solid rgba(255,255,255,0.06)", padding: "32px 24px", textAlign: "center" }}>
+                    <div style={{ fontSize: 32, opacity: 0.12, marginBottom: 8 }}>🖼</div>
+                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.25)", fontStyle: "italic" }}>No portfolio photos added yet.</div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -296,27 +296,42 @@ export default function ShopProfile({ nav, selectedShop, setBookingShop, current
         {/* ── PORTFOLIO TAB ── */}
         {activeTab === "portfolio" && (
           <div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-              <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.32)", letterSpacing: 1 }}>
-                {portfolio.length} PHOTO{portfolio.length !== 1 ? "S" : ""}
-              </div>
-              <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.22)", display: "flex", alignItems: "center", gap: 6 }}>
-                ⌕ Click any photo to enlarge
-              </div>
-            </div>
-            <div className="sp-port-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
-              {portfolio.map((img, i) => (
-                <div key={i} className="sp-port-item" onClick={() => setLightboxImg(img)}>
-                  <img src={img} alt={`Portfolio ${i + 1}`} loading="lazy" />
-                  <div className="sp-port-overlay"><span className="sp-port-label">VIEW FULL</span></div>
+            {portfolio.length === 0 ? (
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "80px 24px", textAlign: "center" }}>
+                <div style={{ fontSize: 56, opacity: 0.1, marginBottom: 16 }}>🖼</div>
+                <div style={{ fontFamily: "'Bebas Neue', cursive", fontSize: 28, letterSpacing: 2, marginBottom: 8, color: "rgba(255,255,255,0.3)" }}>NO PHOTOS YET</div>
+                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.25)", maxWidth: 300, lineHeight: 1.6 }}>
+                  This shop hasn't uploaded any portfolio photos yet.
                 </div>
-              ))}
-            </div>
-            <div style={{ marginTop: 44, textAlign: "center" }}>
-              <button className="sp-btn" style={{ fontSize: 18, padding: "16px 52px" }} onClick={handleBook}>
-                Book an Appointment →
-              </button>
-            </div>
+                <button className="sp-btn" style={{ fontSize: 16, padding: "14px 40px", marginTop: 32 }} onClick={handleBook}>
+                  Book Anyway →
+                </button>
+              </div>
+            ) : (
+              <>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+                  <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.32)", letterSpacing: 1 }}>
+                    {portfolio.length} PHOTO{portfolio.length !== 1 ? "S" : ""}
+                  </div>
+                  <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.22)", display: "flex", alignItems: "center", gap: 6 }}>
+                    ⌕ Click any photo to enlarge
+                  </div>
+                </div>
+                <div className="sp-port-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
+                  {portfolio.map((img, i) => (
+                    <div key={i} className="sp-port-item" onClick={() => setLightboxImg(img)}>
+                      <img src={img} alt={`Portfolio ${i + 1}`} loading="lazy" />
+                      <div className="sp-port-overlay"><span className="sp-port-label">VIEW FULL</span></div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ marginTop: 44, textAlign: "center" }}>
+                  <button className="sp-btn" style={{ fontSize: 18, padding: "16px 52px" }} onClick={handleBook}>
+                    Book an Appointment →
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         )}
 

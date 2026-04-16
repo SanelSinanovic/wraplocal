@@ -37,6 +37,11 @@ export default function CompanyOnboarding({ currentUser, userShop, onComplete, n
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
 
+  // Geocoding for step 2
+  const [geoCoords, setGeoCoords] = useState(null);
+  const [geoChecking, setGeoChecking] = useState(false);
+  const [geoWarning, setGeoWarning] = useState(false); // true = geocode failed, coords unknown
+
   const handlePhotoUpload = async (file) => {
     if (!file) return;
     setPhotoUploading(true);
@@ -57,10 +62,12 @@ export default function CompanyOnboarding({ currentUser, userShop, onComplete, n
     setSaving(true);
     setSaveError("");
     let geoUpdates = {};
-    if (form.city || form.state) {
-      const geo = await geocodeCityState(form.city, form.state);
-      if (geo) geoUpdates = { latitude: geo.lat, longitude: geo.lon };
+    // Use pre-fetched coords from step 2 check; if unavailable, try one more time
+    let resolvedGeo = geoCoords;
+    if (!resolvedGeo && (form.city || form.state)) {
+      resolvedGeo = await geocodeCityState(form.city.trim(), form.state.trim());
     }
+    if (resolvedGeo) geoUpdates = { latitude: resolvedGeo.lat, longitude: resolvedGeo.lon };
     const updates = {
       name: form.name.trim() || userShop.name,
       phone: form.phone.trim(),
@@ -201,12 +208,47 @@ export default function CompanyOnboarding({ currentUser, userShop, onComplete, n
                   <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.2)", marginTop: 5 }}>City and State are used to show your shop to nearby customers.</div>
                 </div>
               </div>
-              <div style={{ display: "flex", gap: 12, marginTop: 36 }}>
+              {geoWarning && (
+                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(245,158,11,0.9)", background: "rgba(245,158,11,0.07)", border: "1px solid rgba(245,158,11,0.3)", padding: "12px 16px", marginTop: 20, lineHeight: 1.6 }}>
+                  ⚠️ We couldn't verify your location coordinates — your shop may not appear in distance-sorted searches. Double-check your City &amp; State or{" "}
+                  <span
+                    style={{ textDecoration: "underline", cursor: "pointer" }}
+                    onClick={async () => {
+                      setGeoChecking(true);
+                      setGeoWarning(false);
+                      const geo = await geocodeCityState(form.city.trim(), form.state.trim());
+                      setGeoChecking(false);
+                      if (geo) { setGeoCoords(geo); setStep(3); }
+                      else setGeoWarning(true);
+                    }}
+                  >retry</span>. You can also fix this from your dashboard later.
+                </div>
+              )}
+              <div style={{ display: "flex", gap: 12, marginTop: 20 }}>
                 <button onClick={() => setStep(1)} style={{ background: "transparent", color: "rgba(255,255,255,0.4)", border: "1px solid rgba(255,255,255,0.12)", padding: "14px 24px", fontFamily: "'Bebas Neue', cursive", fontSize: 17, letterSpacing: 2, cursor: "pointer" }}>← Back</button>
-                <button onClick={() => setStep(3)} disabled={!canAdvanceStep2} style={{ flex: 1, background: canAdvanceStep2 ? "#FF4D00" : "rgba(255,77,0,0.3)", color: "#fff", border: "none", padding: "16px", fontFamily: "'Bebas Neue', cursive", fontSize: 20, letterSpacing: 3, cursor: canAdvanceStep2 ? "pointer" : "not-allowed" }}>
-                  Next: Services →
+                <button
+                  disabled={!canAdvanceStep2 || geoChecking}
+                  onClick={async () => {
+                    if (!canAdvanceStep2) return;
+                    setGeoChecking(true);
+                    setGeoWarning(false);
+                    const geo = await geocodeCityState(form.city.trim(), form.state.trim());
+                    setGeoChecking(false);
+                    if (geo) { setGeoCoords(geo); setStep(3); }
+                    else { setGeoCoords(null); setGeoWarning(true); }
+                  }}
+                  style={{ flex: 1, background: canAdvanceStep2 && !geoChecking ? "#FF4D00" : "rgba(255,77,0,0.3)", color: "#fff", border: "none", padding: "16px", fontFamily: "'Bebas Neue', cursive", fontSize: 20, letterSpacing: 3, cursor: canAdvanceStep2 && !geoChecking ? "pointer" : "not-allowed" }}
+                >
+                  {geoChecking ? "Verifying Location…" : "Next: Services →"}
                 </button>
               </div>
+              {geoWarning && (
+                <div style={{ display: "flex", justifyContent: "center", marginTop: 12 }}>
+                  <button onClick={() => setStep(3)} style={{ background: "none", border: "none", fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.35)", cursor: "pointer", textDecoration: "underline" }}>
+                    Continue anyway →
+                  </button>
+                </div>
+              )}
               {!canAdvanceStep2 && (
                 <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.25)", textAlign: "center", marginTop: 10 }}>Fill in Name, Phone, City and State to continue.</div>
               )}
