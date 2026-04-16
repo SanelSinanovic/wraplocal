@@ -206,8 +206,19 @@ export default function SearchPage({ nav, shops: liveShops, shopsLoading, search
               style={{ animationDelay: `${Math.min(i * 0.07, 0.42)}s` }}>
               <div className="shop-card-inner" style={{ display: "flex" }}>
                 <img className="shop-img" src={shop.image || shop.banner_url || 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=600&q=80'} alt={shop.name} style={{ width: 240, height: 160, objectFit: "cover", flexShrink: 0 }} />
-                <div style={{ padding: "20px 24px", flex: 1, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <div>
+                <div style={{ padding: "20px 24px", flex: 1, display: "flex", justifyContent: "space-between", alignItems: "center", position: "relative", overflow: "hidden" }}>
+                  {/* Diagonal stripe watermark */}
+                  <div aria-hidden="true" style={{
+                    position: "absolute", inset: 0, pointerEvents: "none",
+                    backgroundImage: "repeating-linear-gradient(118deg, transparent, transparent 18px, rgba(255,77,0,0.035) 18px, rgba(255,77,0,0.035) 20px)",
+                  }} />
+                  {/* WB monogram */}
+                  <div aria-hidden="true" style={{
+                    position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)",
+                    fontFamily: "'Bebas Neue', cursive", fontSize: 80, letterSpacing: 4,
+                    color: "rgba(255,77,0,0.045)", userSelect: "none", whiteSpace: "nowrap", pointerEvents: "none",
+                  }}>WRAPBRIDGE</div>
+                  <div style={{ position: "relative" }}>
                     <div style={{ fontSize: 26, letterSpacing: 1, marginBottom: 4 }}>{shop.name}</div>
                     <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)", marginBottom: 10 }}>
                       {(() => {
@@ -222,7 +233,12 @@ export default function SearchPage({ nav, shops: liveShops, shopsLoading, search
                       {(shop.tags || []).map(t => <span key={t} className="shop-tag">{t}</span>)}
                     </div>
                   </div>
-                  <div className="shop-card-right" style={{ textAlign: "right", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
+                  {/* Vertical divider */}
+                  <div aria-hidden="true" style={{
+                    position: "relative", alignSelf: "stretch", width: 1, flexShrink: 0, margin: "0 20px",
+                    background: "linear-gradient(to bottom, transparent, rgba(255,77,0,0.35) 30%, rgba(255,77,0,0.35) 70%, transparent)",
+                  }} />
+                  <div className="shop-card-right" style={{ textAlign: "right", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, position: "relative" }}>
                     {(shop.price ?? shop.price_from) ? (
                       <>
                         <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)" }}>From</div>
