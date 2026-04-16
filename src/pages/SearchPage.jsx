@@ -223,8 +223,14 @@ export default function SearchPage({ nav, shops: liveShops, shopsLoading, search
                     </div>
                   </div>
                   <div className="shop-card-right" style={{ textAlign: "right", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
-                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)" }}>From</div>
-                    <div style={{ fontSize: 32, color: "#FF4D00", marginBottom: 8 }}>${(shop.price ?? shop.price_from ?? 0).toLocaleString()}</div>
+                    {(shop.price ?? shop.price_from) ? (
+                      <>
+                        <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)" }}>From</div>
+                        <div style={{ fontSize: 32, color: "#FF4D00", marginBottom: 8 }}>${(shop.price ?? shop.price_from).toLocaleString()}</div>
+                      </>
+                    ) : (
+                      <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.5)", marginBottom: 12 }}>Get a Quote</div>
+                    )}
                     <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: shop.availability === "Today" ? "#10B981" : "#F59E0B", marginBottom: 8 }}>{shop.availability ? `● Available ${shop.availability}` : '● Contact for availability'}</div>
                     <button className="btn-main shop-book-btn" onClick={(e) => { e.stopPropagation(); nav("booking", { bookingShop: shop }); }}>Book Now</button>
                   </div>

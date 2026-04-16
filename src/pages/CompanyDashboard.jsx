@@ -596,7 +596,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
       phone: profileForm.phone.trim(),
       website: profileForm.website.trim(),
       bio: profileForm.bio.trim(),
-      price_from: profileForm.price_from ? parseFloat(profileForm.price_from) : 0,
+      price_from: profileForm.price_from ? parseFloat(profileForm.price_from) : null,
       tags: selectedServices,
       banner_url: profilePhotoUrl || userShop.banner_url || "",
       is_listed: isListed,
