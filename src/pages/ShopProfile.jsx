@@ -37,11 +37,13 @@ export default function ShopProfile({ nav, selectedShop, setBookingShop, current
   const handleBook = () => { nav("booking", { bookingShop: shop }); };
 
   return (
-    <div style={{ fontFamily: "'Bebas Neue', cursive", background: "#0A0A0A", minHeight: "100vh", color: "#fff" }}>
+    <div style={{ fontFamily: "'Bebas Neue', cursive", background: "linear-gradient(180deg, #0A0A0A 0%, #140A04 20%, #0A0A0A 55%, #05050C 100%)", minHeight: "100vh", color: "#fff", position: "relative" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
         @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes glow-breathe { 0%,100% { opacity: 0.5; transform: scale(1); } 50% { opacity: 0.8; transform: scale(1.08); } }
+        @keyframes orb-drift { 0%,100% { transform: translate(0,0); } 50% { transform: translate(30px,-20px); } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .sp-hero-anim { animation: fadeIn 0.5s ease both; }
         .sp-profile-anim { animation: fadeUp 0.5s 0.1s cubic-bezier(0.22,1,0.36,1) both; }
