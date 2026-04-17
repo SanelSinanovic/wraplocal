@@ -331,6 +331,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
   const [portfolioError, setPortfolioError] = useState("");
   const [dragOver, setDragOver] = useState(false);
   const [isListed, setIsListed] = useState(false);
+  const [hasInsurance, setHasInsurance] = useState(false);
   const today = new Date();
   const [calYear, setCalYear] = useState(today.getFullYear());
   const [calMonth, setCalMonth] = useState(today.getMonth());
@@ -365,6 +366,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
     setSelectedServices((shop.tags || []).filter(t => ALL_SERVICE_NAMES.includes(t)));
     setProfilePhotoUrl(shop.banner_url || "");
     setIsListed(!!shop.is_listed);
+    setHasInsurance(!!shop.insurance_verified);
     setStripeAccountId(shop.stripe_account_id || "");
     setStripeOnboarded(!!shop.stripe_onboarded);
   };
@@ -599,6 +601,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
       tags: selectedServices,
       banner_url: profilePhotoUrl || userShop.banner_url || "",
       is_listed: isListed,
+      insurance_verified: hasInsurance,
       ...geoUpdates,
     };
     const updated = await updateShop(userShop.id, updates);
@@ -1619,6 +1622,24 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
                   rows={4}
                   style={{ width: "100%", background: "#1A1A1A", border: "1px solid rgba(255,255,255,0.1)", padding: "12px 16px", color: "#fff", fontFamily: "'DM Sans', sans-serif", fontSize: 14, outline: "none", resize: "vertical" }}
                 />
+              </div>
+
+              <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)", paddingTop: 28 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                  <div>
+                    <div style={{ fontSize: 26, letterSpacing: 2 }}>BUSINESS INSURANCE</div>
+                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.35)", marginTop: 4 }}>Confirm your business carries valid liability insurance</div>
+                  </div>
+                  <div
+                    onClick={() => setHasInsurance(v => !v)}
+                    style={{ width: 52, height: 28, background: hasInsurance ? "#3B82F6" : "rgba(255,255,255,0.1)", borderRadius: 14, position: "relative", cursor: "pointer", transition: "background 0.2s", flexShrink: 0 }}
+                  >
+                    <div style={{ position: "absolute", top: 3, left: hasInsurance ? 27 : 3, width: 22, height: 22, background: "#fff", borderRadius: "50%", transition: "left 0.2s", boxShadow: "0 1px 4px rgba(0,0,0,0.4)" }} />
+                  </div>
+                </div>
+                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: hasInsurance ? "#3B82F6" : "rgba(255,255,255,0.4)", display: "flex", alignItems: "center", gap: 8 }}>
+                  {hasInsurance ? "🛡️ Insured — Badge will appear on your listing" : "● Not confirmed — No insurance badge shown"}
+                </div>
               </div>
 
               <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)", paddingTop: 28 }}>

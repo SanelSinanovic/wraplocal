@@ -174,6 +174,11 @@ export default function BookingFlow({
 
           <div className="booking-layout" style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: 32, alignItems: "start" }}>
             <div>
+              {!bookingShop?.insurance_verified && (
+                <div style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.3)", padding: "14px 20px", marginBottom: 20, fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.7)", lineHeight: 1.7 }}>
+                  ⚠️ <strong style={{ color: "#F59E0B" }}>This business has not confirmed insurance coverage.</strong> WrapBridge is a marketplace and does not guarantee service provider work. You may be responsible for verifying the provider's insurance and liability coverage before authorizing any work on your property or vehicle.
+                </div>
+              )}
               {bookingStep === 1 && (
                 <div className="step-content">
                   <div style={{ fontSize: 36, letterSpacing: 1, marginBottom: 6 }}>CHOOSE A SERVICE</div>

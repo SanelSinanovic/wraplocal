@@ -34,6 +34,7 @@ export default function CompanyOnboarding({ currentUser, userShop, onComplete, n
 
   // Step 4 — Launch
   const [goLive, setGoLive] = useState(false);
+  const [hasInsurance, setHasInsurance] = useState(!!userShop?.insurance_verified);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
 
@@ -80,6 +81,7 @@ export default function CompanyOnboarding({ currentUser, userShop, onComplete, n
       tags: selectedServices,
       banner_url: photoUrl || "",
       is_listed: goLive && !!photoUrl,
+      insurance_verified: hasInsurance,
       ...geoUpdates,
     };
     const updated = await updateShop(userShop.id, updates);
@@ -350,6 +352,20 @@ export default function CompanyOnboarding({ currentUser, userShop, onComplete, n
                     {label}
                   </div>
                 ))}
+              </div>
+
+              {/* Insurance checkbox */}
+              <div
+                onClick={() => setHasInsurance(v => !v)}
+                style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", border: `1px solid ${hasInsurance ? "#3B82F6" : "rgba(255,255,255,0.1)"}`, background: hasInsurance ? "rgba(59,130,246,0.07)" : "#111", cursor: "pointer", marginBottom: 12, transition: "all 0.2s" }}
+              >
+                <div>
+                  <div style={{ fontSize: 18, letterSpacing: 1, color: hasInsurance ? "#3B82F6" : "rgba(255,255,255,0.7)" }}>BUSINESS INSURANCE</div>
+                  <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.3)", marginTop: 2 }}>I confirm my business carries valid liability insurance</div>
+                </div>
+                <div style={{ width: 44, height: 24, borderRadius: 12, background: hasInsurance ? "#3B82F6" : "rgba(255,255,255,0.12)", position: "relative", transition: "background 0.2s", flexShrink: 0 }}>
+                  <div style={{ position: "absolute", top: 3, left: hasInsurance ? 23 : 3, width: 18, height: 18, borderRadius: "50%", background: "#fff", transition: "left 0.2s" }} />
+                </div>
               </div>
 
               {/* Go live toggle */}

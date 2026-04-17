@@ -219,7 +219,12 @@ export default function SearchPage({ nav, shops: liveShops, shopsLoading, search
                     color: "rgba(255,77,0,0.045)", userSelect: "none", whiteSpace: "nowrap", pointerEvents: "none",
                   }}>WRAPBRIDGE</div>
                   <div style={{ position: "relative" }}>
-                    <div style={{ fontSize: 26, letterSpacing: 1, marginBottom: 4 }}>{shop.name}</div>
+                    <div style={{ fontSize: 26, letterSpacing: 1, marginBottom: 4 }}>
+                      {shop.name}
+                      {shop.insurance_verified && (
+                        <span title="Insured Business" style={{ display: "inline-block", marginLeft: 10, fontSize: 11, fontFamily: "'DM Sans', sans-serif", letterSpacing: 1, color: "#3B82F6", border: "1px solid rgba(59,130,246,0.3)", background: "rgba(59,130,246,0.08)", padding: "2px 8px", verticalAlign: "middle", fontWeight: 500 }}>🛡️ INSURED</span>
+                      )}
+                    </div>
                     <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)", marginBottom: 10 }}>
                       {(() => {
                         const rc = shop.reviews ?? shop.review_count ?? 0;
