@@ -9,5 +9,6 @@ Disallow: /login
 Disallow: /business/login
 Disallow: /reset-password
 Disallow: /book/
+Disallow: /admin
 
 Sitemap: https://wrapbridge.com/sitemap.xml

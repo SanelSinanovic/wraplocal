@@ -60,6 +60,9 @@ function mergeMessages(existing = [], incoming = []) {
 // Defined at module level so React never remounts it when parent state changes
 function BookingDetailPanel({ selectedBooking, messagesMap, chatInput, setChatInput, quoteInput, setQuoteInput, sendQuoteOffer, sendCompanyMessage, sendCompanyFileMessage, chatEndRef, updateBookingStatus, setSelectedBooking, backLabel, onScheduled, shopUserId }) {
   const [cancelConfirm, setCancelConfirm] = useState(false);
+  const [refundConfirm, setRefundConfirm] = useState(false);
+  const [refundLoading, setRefundLoading] = useState(false);
+  const [refundError, setRefundError] = useState("");
   const [schedDate, setSchedDate] = useState("");
   const [schedTime, setSchedTime] = useState("");
   const [schedSaving, setSchedSaving] = useState(false);
@@ -134,6 +137,35 @@ function BookingDetailPanel({ selectedBooking, messagesMap, chatInput, setChatIn
                   <button onClick={() => { updateBookingStatus(b.id, "cancelled"); setCancelConfirm(false); }} style={{ background: "#FF4D00", color: "#fff", border: "none", padding: "6px 14px", fontFamily: "'Bebas Neue', cursive", fontSize: 13, letterSpacing: 1, cursor: "pointer" }}>Yes, Cancel</button>
                   <button onClick={() => setCancelConfirm(false)} style={{ background: "transparent", color: "rgba(255,255,255,0.4)", border: "1px solid rgba(255,255,255,0.1)", padding: "6px 14px", fontFamily: "'Bebas Neue', cursive", fontSize: 13, letterSpacing: 1, cursor: "pointer" }}>Keep</button>
                 </div>
+              )}
+              {/* ── Refund button ─────────────────────────────── */}
+              {b.payment_verified && b.refund_status !== "full" && b.status !== "cancelled" && !refundConfirm && (
+                <button onClick={() => setRefundConfirm(true)} style={{ background: "transparent", color: "rgba(168,85,247,0.7)", border: "1px solid rgba(168,85,247,0.25)", padding: "8px 16px", fontFamily: "'Bebas Neue', cursive", fontSize: 14, letterSpacing: 1, cursor: "pointer" }}>↩ Refund</button>
+              )}
+              {refundConfirm && (
+                <div style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(168,85,247,0.08)", border: "1px solid rgba(168,85,247,0.3)", padding: "8px 14px" }}>
+                  <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.7)" }}>Refund customer? (7% platform fee retained)</span>
+                  <button disabled={refundLoading} onClick={async () => {
+                    setRefundLoading(true); setRefundError("");
+                    const { data, error } = await supabase.functions.invoke("create-refund", { body: { bookingId: b.id } });
+                    if (error || !data?.success) {
+                      setRefundError(data?.error || error?.message || "Refund failed"); setRefundLoading(false); return;
+                    }
+                    updateBookingStatus(b.id, "cancelled");
+                    setRefundConfirm(false); setRefundLoading(false);
+                  }} style={{ background: "#A855F7", color: "#fff", border: "none", padding: "6px 14px", fontFamily: "'Bebas Neue', cursive", fontSize: 13, letterSpacing: 1, cursor: refundLoading ? "default" : "pointer", opacity: refundLoading ? 0.6 : 1 }}>{refundLoading ? "Processing…" : "Yes, Refund"}</button>
+                  <button onClick={() => { setRefundConfirm(false); setRefundError(""); }} style={{ background: "transparent", color: "rgba(255,255,255,0.4)", border: "1px solid rgba(255,255,255,0.1)", padding: "6px 14px", fontFamily: "'Bebas Neue', cursive", fontSize: 13, letterSpacing: 1, cursor: "pointer" }}>Keep</button>
+                  {refundError && <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#ef4444" }}>{refundError}</span>}
+                </div>
+              )}
+              {b.refund_status === "full" && (
+                <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#A855F7", padding: "8px 16px" }}>✓ Refunded</span>
+              )}
+              {b.refund_status === "partial" && (
+                <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#F59E0B", padding: "8px 16px" }}>⚡ Partial Refund</span>
+              )}
+              {b.dispute_status === "open" && (
+                <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#ef4444", padding: "8px 16px", fontWeight: 600 }}>⚠ DISPUTE OPEN</span>
               )}
             </div>
           </div>

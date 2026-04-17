@@ -393,6 +393,9 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
                   </div>
                   <div style={{ marginLeft: "auto", fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: b.status === "confirmed" ? "#10B981" : "rgba(255,255,255,0.4)" }}>
                     ● {b.status.charAt(0).toUpperCase() + b.status.slice(1)}
+                    {b.refund_status === "full" && <span style={{ marginLeft: 8, color: "#A855F7" }}>↩ Refunded</span>}
+                    {b.refund_status === "partial" && <span style={{ marginLeft: 8, color: "#F59E0B" }}>↩ Partial Refund</span>}
+                    {b.dispute_status === "open" && <span style={{ marginLeft: 8, color: "#ef4444" }}>⚠ Dispute</span>}
                   </div>
                 </div>
               </div>
@@ -837,6 +840,8 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
                 )}
                 <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: b.status === "confirmed" ? "#10B981" : "rgba(255,255,255,0.4)" }}>
                   ● {b.status.charAt(0).toUpperCase() + b.status.slice(1)}
+                  {b.refund_status === "full" && <span style={{ marginLeft: 6, color: "#A855F7" }}>↩ Refunded</span>}
+                  {b.dispute_status === "open" && <span style={{ marginLeft: 6, color: "#ef4444" }}>⚠</span>}
                 </div>
                 <div style={{ fontSize: 24, color: "#FF4D00" }}>${b.total.toFixed(2)}</div>
                 <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.3)" }}>View →</span>

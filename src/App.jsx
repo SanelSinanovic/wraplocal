@@ -14,6 +14,7 @@ import { fetchShops, fetchProfile, fetchShopById } from "./lib/queries";
 import TermsPage from "./pages/TermsPage";
 import PrivacyPage from "./pages/PrivacyPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
+import AdminDashboard from "./pages/AdminDashboard";
 
 // Map old hash-based view names to clean URL paths (backward compat for nav())
 const VIEW_TO_PATH = {
@@ -29,6 +30,7 @@ const VIEW_TO_PATH = {
   terms: "/terms",
   privacy: "/privacy",
   "reset-password": "/reset-password",
+  admin: "/admin",
 };
 
 // Map clean URL paths to SEO metadata
@@ -320,6 +322,7 @@ export default function App() {
       <Route path="/terms" element={<TermsPage nav={nav} />} />
       <Route path="/privacy" element={<PrivacyPage nav={nav} />} />
       <Route path="/reset-password" element={<ResetPasswordPage nav={nav} recoveryReady={recoveryReady} />} />
+      <Route path="/admin" element={<AdminDashboard {...commonProps} />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

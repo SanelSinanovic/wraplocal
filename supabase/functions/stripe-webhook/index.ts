@@ -35,6 +35,7 @@ Deno.serve(async (req) => {
     const fullAmount       = parseFloat(session.metadata?.full_amount || "0");
     const chargeAmount     = parseFloat(session.metadata?.charge_amount || "0");
     const isRemaining      = session.metadata?.is_remaining_balance === "1";
+    const paymentIntentId  = session.payment_intent || null;
 
     if (!bookingId) {
       console.warn("Webhook: no booking_id in metadata");
@@ -59,7 +60,7 @@ Deno.serve(async (req) => {
       await fetch(`${supabaseUrl}/rest/v1/bookings?id=eq.${bookingId}`, {
         method: "PATCH",
         headers,
-        body: JSON.stringify({ total: fullAmount, payment_verified: true }),
+        body: JSON.stringify({ total: fullAmount, payment_verified: true, stripe_payment_intent_id: paymentIntentId }),
       });
     } else {
       // Initial payment — check not already confirmed (idempotency)
@@ -83,11 +84,83 @@ Deno.serve(async (req) => {
           fee,
           total: chargeAmount,
           payment_verified: true,
+          stripe_payment_intent_id: paymentIntentId,
         }),
       });
     }
 
     console.log(`Webhook: booking ${bookingId} confirmed (remaining=${isRemaining})`);
+  }
+
+  // ── Handle charge.dispute.created ──────────────────────────────────────
+  if (event.type === "charge.dispute.created") {
+    const dispute = event.data.object;
+    const paymentIntentId = dispute.payment_intent;
+
+    if (paymentIntentId) {
+      const headers = {
+        apikey: supabaseService,
+        Authorization: `Bearer ${supabaseService}`,
+        "Content-Type": "application/json",
+        Prefer: "return=minimal",
+      };
+
+      await fetch(`${supabaseUrl}/rest/v1/bookings?stripe_payment_intent_id=eq.${paymentIntentId}`, {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify({ dispute_status: "open" }),
+      });
+
+      console.log(`Webhook: dispute opened for payment_intent ${paymentIntentId}`);
+    }
+  }
+
+  // ── Handle charge.dispute.closed ───────────────────────────────────────
+  if (event.type === "charge.dispute.closed") {
+    const dispute = event.data.object;
+    const paymentIntentId = dispute.payment_intent;
+    const status = dispute.status; // "won", "lost", "warning_closed"
+
+    if (paymentIntentId) {
+      const headers = {
+        apikey: supabaseService,
+        Authorization: `Bearer ${supabaseService}`,
+        "Content-Type": "application/json",
+        Prefer: "return=minimal",
+      };
+
+      await fetch(`${supabaseUrl}/rest/v1/bookings?stripe_payment_intent_id=eq.${paymentIntentId}`, {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify({ dispute_status: status === "lost" ? "lost" : "won" }),
+      });
+
+      console.log(`Webhook: dispute closed (${status}) for payment_intent ${paymentIntentId}`);
+    }
+  }
+
+  // ── Handle charge.refunded ─────────────────────────────────────────────
+  if (event.type === "charge.refunded") {
+    const charge = event.data.object;
+    const paymentIntentId = charge.payment_intent;
+    const fullyRefunded = charge.refunded; // true if fully refunded
+
+    if (paymentIntentId) {
+      const headers = {
+        apikey: supabaseService,
+        Authorization: `Bearer ${supabaseService}`,
+        "Content-Type": "application/json",
+        Prefer: "return=minimal",
+      };
+
+      await fetch(`${supabaseUrl}/rest/v1/bookings?stripe_payment_intent_id=eq.${paymentIntentId}`, {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify({ refund_status: fullyRefunded ? "full" : "partial" }),
+      });
+
+      console.log(`Webhook: refund (full=${fullyRefunded}) for payment_intent ${paymentIntentId}`);
+    }
   }
 
   // Always return 200 to acknowledge receipt (Stripe retries on non-2xx)
