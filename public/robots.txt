@@ -1,0 +1,13 @@
+# WrapBridge robots.txt
+User-agent: *
+Allow: /
+
+# Block dashboard and auth pages from indexing
+Disallow: /*#customer-dash
+Disallow: /*#company-dash
+Disallow: /*#customer-login
+Disallow: /*#company-login
+Disallow: /*#reset-password
+Disallow: /*#booking
+
+Sitemap: https://wrapbridge.com/sitemap.xml
