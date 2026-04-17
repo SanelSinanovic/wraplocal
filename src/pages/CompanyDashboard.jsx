@@ -721,7 +721,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
     setConnectLoading(true);
     setConnectError("");
     try {
-      const returnUrl = window.location.origin + window.location.pathname + "#company-dash?tab=payments";
+      const returnUrl = window.location.origin + "/company?tab=payments";
       const { data: { session } } = await supabase.auth.getSession();
       const accessToken = session?.access_token;
       if (!accessToken) throw new Error("Not logged in");

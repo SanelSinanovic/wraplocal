@@ -23,7 +23,7 @@ export default class ErrorBoundary extends Component {
           </div>
           <p style={{ color: "rgba(255,255,255,0.5)", fontSize: 16, marginBottom: 24 }}>Something went wrong. Please try again.</p>
           <button
-            onClick={() => { this.setState({ hasError: false }); window.location.hash = "#landing"; window.location.reload(); }}
+            onClick={() => { this.setState({ hasError: false }); window.location.href = "/"; }}
             style={{ background: "#FF4D00", color: "#fff", border: "none", padding: "12px 32px", borderRadius: 4, fontSize: 15, fontWeight: 700, cursor: "pointer", letterSpacing: 1 }}
           >
             Back to Home

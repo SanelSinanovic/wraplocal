@@ -132,6 +132,28 @@ export async function fetchShops() {
   }))
 }
 
+export async function fetchShopById(shopId) {
+  const { data, error } = await supabase
+    .from('shops')
+    .select('*, portfolio_images(url, display_order), shop_slots(label, is_active)')
+    .eq('id', shopId)
+    .single()
+  if (error) { console.error('fetchShopById:', error); return null }
+  if (!data) return null
+  return {
+    ...data,
+    reviews: data.review_count,
+    price: data.price_from,
+    about: data.bio,
+    portfolio: (data.portfolio_images || [])
+      .sort((a, b) => a.display_order - b.display_order)
+      .map(p => p.url),
+    slots: (data.shop_slots || [])
+      .filter(s => s.is_active)
+      .map(s => s.label),
+  }
+}
+
 export async function fetchUserShop(ownerId) {
   const { data, error } = await supabase
     .from('shops')

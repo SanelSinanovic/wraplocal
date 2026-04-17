@@ -3,11 +3,11 @@ User-agent: *
 Allow: /
 
 # Block dashboard and auth pages from indexing
-Disallow: /*#customer-dash
-Disallow: /*#company-dash
-Disallow: /*#customer-login
-Disallow: /*#company-login
-Disallow: /*#reset-password
-Disallow: /*#booking
+Disallow: /dashboard
+Disallow: /company
+Disallow: /login
+Disallow: /business/login
+Disallow: /reset-password
+Disallow: /book/
 
 Sitemap: https://wrapbridge.com/sitemap.xml
