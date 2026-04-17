@@ -81,7 +81,7 @@ export async function fetchPlatformStats() {
 export async function fetchAllShops() {
   const { data, error } = await supabase
     .from('shops')
-    .select('id, name, city, state, is_listed, stripe_onboarded, insurance_verified, rating, review_count, created_at, owner_id, banner_url, avatar')
+    .select('id, name, city, state, is_listed, stripe_onboarded, insurance_verified, insurance_status, insurance_doc_url, rating, review_count, created_at, owner_id, banner_url, avatar')
     .order('created_at', { ascending: false })
   if (error) { console.error('fetchAllShops:', error); return [] }
   return data || []
@@ -91,6 +91,15 @@ export async function adminToggleShopListed(shopId, isListed) {
   const { error } = await supabase
     .from('shops')
     .update({ is_listed: isListed })
+    .eq('id', shopId)
+  return !error
+}
+
+export async function adminSetInsuranceStatus(shopId, status) {
+  const verified = status === 'verified';
+  const { error } = await supabase
+    .from('shops')
+    .update({ insurance_status: status, insurance_verified: verified })
     .eq('id', shopId)
   return !error
 }

@@ -364,6 +364,11 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
   const [dragOver, setDragOver] = useState(false);
   const [isListed, setIsListed] = useState(false);
   const [hasInsurance, setHasInsurance] = useState(false);
+  const [insuranceStatus, setInsuranceStatus] = useState(null); // null | pending | verified | rejected
+  const [insuranceDocUrl, setInsuranceDocUrl] = useState("");
+  const [insuranceUploading, setInsuranceUploading] = useState(false);
+  const [insuranceError, setInsuranceError] = useState("");
+  const insuranceInputRef = useRef(null);
   const today = new Date();
   const [calYear, setCalYear] = useState(today.getFullYear());
   const [calMonth, setCalMonth] = useState(today.getMonth());
@@ -400,6 +405,8 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
     setProfilePhotoUrl(shop.banner_url || "");
     setIsListed(!!shop.is_listed);
     setHasInsurance(!!shop.insurance_verified);
+    setInsuranceStatus(shop.insurance_status || null);
+    setInsuranceDocUrl(shop.insurance_doc_url || "");
     setStripeAccountId(shop.stripe_account_id || "");
     setStripeOnboarded(!!shop.stripe_onboarded);
   };
@@ -636,7 +643,6 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
       tags: selectedServices,
       banner_url: profilePhotoUrl || userShop.banner_url || "",
       is_listed: isListed,
-      insurance_verified: hasInsurance,
       ...geoUpdates,
     };
     const updated = await updateShop(userShop.id, updates);
@@ -1664,17 +1670,58 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
                   <div>
                     <div style={{ fontSize: 26, letterSpacing: 2 }}>BUSINESS INSURANCE</div>
-                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.35)", marginTop: 4 }}>Confirm your business carries valid liability insurance</div>
+                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.35)", marginTop: 4 }}>Upload your certificate of insurance for verification</div>
                   </div>
-                  <div
-                    onClick={() => setHasInsurance(v => !v)}
-                    style={{ width: 52, height: 28, background: hasInsurance ? "#3B82F6" : "rgba(255,255,255,0.1)", borderRadius: 14, position: "relative", cursor: "pointer", transition: "background 0.2s", flexShrink: 0 }}
-                  >
-                    <div style={{ position: "absolute", top: 3, left: hasInsurance ? 27 : 3, width: 22, height: 22, background: "#fff", borderRadius: "50%", transition: "left 0.2s", boxShadow: "0 1px 4px rgba(0,0,0,0.4)" }} />
-                  </div>
+                  {insuranceStatus === "verified" && (
+                    <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#3B82F6", background: "rgba(59,130,246,0.1)", border: "1px solid rgba(59,130,246,0.3)", padding: "4px 12px", fontWeight: 600 }}>🛡️ VERIFIED</span>
+                  )}
+                  {insuranceStatus === "pending" && (
+                    <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#F59E0B", background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.3)", padding: "4px 12px", fontWeight: 600 }}>⏳ PENDING REVIEW</span>
+                  )}
+                  {insuranceStatus === "rejected" && (
+                    <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#EF4444", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", padding: "4px 12px", fontWeight: 600 }}>✗ REJECTED</span>
+                  )}
                 </div>
-                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: hasInsurance ? "#3B82F6" : "rgba(255,255,255,0.4)", display: "flex", alignItems: "center", gap: 8 }}>
-                  {hasInsurance ? "🛡️ Insured — Badge will appear on your listing" : "● Not confirmed — No insurance badge shown"}
+                {insuranceDocUrl && (
+                  <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.5)", marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
+                    <span>📄</span>
+                    <a href={insuranceDocUrl} target="_blank" rel="noopener noreferrer" style={{ color: "#3B82F6", textDecoration: "none" }}>View uploaded document</a>
+                  </div>
+                )}
+                {insuranceStatus !== "verified" && (
+                  <div>
+                    <input type="file" ref={insuranceInputRef} accept="image/jpeg,image/png,image/webp,application/pdf" style={{ display: "none" }} onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      e.target.value = "";
+                      const maxSize = 10 * 1024 * 1024;
+                      const allowedTypes = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
+                      if (file.size > maxSize) { setInsuranceError("File too large (max 10MB)"); return; }
+                      if (!allowedTypes.includes(file.type)) { setInsuranceError("Only JPG, PNG, WebP, or PDF accepted"); return; }
+                      setInsuranceUploading(true); setInsuranceError("");
+                      const ext = file.name.split(".").pop();
+                      const path = `${userShop.id}/insurance.${ext}`;
+                      const { error: upErr } = await supabase.storage.from("insurance-docs").upload(path, file, { upsert: true });
+                      if (upErr) { setInsuranceError("Upload failed: " + upErr.message); setInsuranceUploading(false); return; }
+                      const { data: { publicUrl } } = supabase.storage.from("insurance-docs").getPublicUrl(path);
+                      const { error: dbErr } = await supabase.from("shops").update({ insurance_doc_url: publicUrl, insurance_status: "pending", insurance_verified: false }).eq("id", userShop.id);
+                      setInsuranceUploading(false);
+                      if (dbErr) { setInsuranceError("Failed to save: " + dbErr.message); return; }
+                      setInsuranceDocUrl(publicUrl);
+                      setInsuranceStatus("pending");
+                      setHasInsurance(false);
+                    }} />
+                    <button onClick={() => insuranceInputRef.current?.click()} disabled={insuranceUploading} style={{ background: "rgba(59,130,246,0.1)", border: "1px solid rgba(59,130,246,0.3)", color: "#3B82F6", padding: "10px 20px", fontFamily: "'Bebas Neue', cursive", fontSize: 15, letterSpacing: 1, cursor: insuranceUploading ? "default" : "pointer", opacity: insuranceUploading ? 0.6 : 1 }}>
+                      {insuranceUploading ? "Uploading…" : insuranceDocUrl ? "↩ Re-upload Document" : "📄 Upload Insurance Certificate"}
+                    </button>
+                    {insuranceError && <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#EF4444", marginTop: 8 }}>{insuranceError}</div>}
+                    {insuranceStatus === "rejected" && (
+                      <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(239,68,68,0.8)", marginTop: 8 }}>Your document was rejected. Please upload a valid certificate of insurance.</div>
+                    )}
+                  </div>
+                )}
+                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.25)", marginTop: 10 }}>
+                  {insuranceStatus === "verified" ? "🛡️ Your insurance has been verified — badge is shown on your listing" : insuranceStatus === "pending" ? "Your document is under review. This usually takes 1–2 business days." : "Upload your COI (Certificate of Insurance) — JPG, PNG, or PDF up to 10MB"}
                 </div>
               </div>
 

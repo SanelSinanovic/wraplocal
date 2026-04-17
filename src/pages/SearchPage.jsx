@@ -235,7 +235,7 @@ export default function SearchPage({ nav, shops: liveShops, shopsLoading, search
                       <div style={{ position: "relative" }}>
                         <div style={{ fontSize: viewMode === "split" ? 18 : 26, letterSpacing: 1, marginBottom: 4 }}>
                           {shop.name}
-                          {shop.insurance_verified && viewMode !== "split" && (
+                          {shop.insurance_status === "verified" && viewMode !== "split" && (
                             <span title="Insured Business" style={{ display: "inline-block", marginLeft: 10, fontSize: 11, fontFamily: "'DM Sans', sans-serif", letterSpacing: 1, color: "#3B82F6", border: "1px solid rgba(59,130,246,0.3)", background: "rgba(59,130,246,0.08)", padding: "2px 8px", verticalAlign: "middle", fontWeight: 500 }}>🛡️ INSURED</span>
                           )}
                         </div>

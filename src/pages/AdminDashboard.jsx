@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { fetchPlatformStats, fetchAllShops, fetchAllBookings, fetchAllUsers, adminToggleShopListed, isAdmin } from "../lib/adminQueries";
+import { fetchPlatformStats, fetchAllShops, fetchAllBookings, fetchAllUsers, adminToggleShopListed, adminSetInsuranceStatus, isAdmin } from "../lib/adminQueries";
 
 export default function AdminDashboard({ nav, currentUser, currentProfile, onLogout }) {
   const [tab, setTab] = useState("overview");
@@ -128,7 +128,7 @@ export default function AdminDashboard({ nav, currentUser, currentProfile, onLog
         {loading ? <div style={{ color: "rgba(255,255,255,0.3)", fontFamily: "'DM Sans', sans-serif", padding: 40 }}>Loading platform data…</div> : (
           <>
             {tab === "overview" && <OverviewTab stats={stats} fmtUSD={fmtUSD} fmt={fmt} maxGMV={maxGMV} />}
-            {tab === "shops" && <ShopsTab shops={filteredShops} search={shopSearch} setSearch={setShopSearch} toggleListed={toggleListed} fmtDate={fmtDate} />}
+            {tab === "shops" && <ShopsTab shops={filteredShops} search={shopSearch} setSearch={setShopSearch} toggleListed={toggleListed} setShops={setShops} fmtDate={fmtDate} />}
             {tab === "bookings" && <BookingsTab bookings={filteredBookings} filter={bookingFilter} setFilter={setBookingFilter} fmtUSD={fmtUSD} fmtDate={fmtDate} fmt={fmt} />}
             {tab === "users" && <UsersTab users={filteredUsers} filter={userFilter} setFilter={setUserFilter} fmtDate={fmtDate} fmt={fmt} />}
           </>
@@ -236,7 +236,11 @@ function OverviewTab({ stats, fmtUSD, fmt, maxGMV }) {
 
 // ── SHOPS TAB ────────────────────────────────────────────────────────────────
 
-function ShopsTab({ shops, search, setSearch, toggleListed, fmtDate }) {
+function ShopsTab({ shops, search, setSearch, toggleListed, setShops, fmtDate }) {
+  const handleInsurance = async (shop, status) => {
+    const ok = await adminSetInsuranceStatus(shop.id, status);
+    if (ok) setShops(prev => prev.map(s => s.id === shop.id ? { ...s, insurance_status: status, insurance_verified: status === "verified" } : s));
+  };
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
@@ -270,7 +274,18 @@ function ShopsTab({ shops, search, setSearch, toggleListed, fmtDate }) {
                   <td style={td}>{s.rating ? `⭐ ${s.rating} (${s.review_count})` : "—"}</td>
                   <td style={td}><StatusPill ok={s.is_listed} yes="Listed" no="Unlisted" /></td>
                   <td style={td}><StatusPill ok={s.stripe_onboarded} yes="Active" no="Not Set" /></td>
-                  <td style={td}><StatusPill ok={s.insurance_verified} yes="Verified" no="No" /></td>
+                  <td style={td}>
+                    {s.insurance_status === "verified" && <span style={{ color: "#3B82F6", fontWeight: 600, fontSize: 11 }}>🛡️ Verified</span>}
+                    {s.insurance_status === "pending" && (
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        {s.insurance_doc_url && <a href={s.insurance_doc_url} target="_blank" rel="noopener noreferrer" style={{ color: "#F59E0B", fontSize: 11, textDecoration: "none", fontWeight: 600 }}>📄 Review</a>}
+                        <button onClick={() => handleInsurance(s, "verified")} style={{ background: "rgba(59,130,246,0.15)", border: "1px solid rgba(59,130,246,0.4)", color: "#3B82F6", padding: "2px 8px", fontSize: 10, cursor: "pointer", fontWeight: 600, fontFamily: "'DM Sans', sans-serif" }}>✓</button>
+                        <button onClick={() => handleInsurance(s, "rejected")} style={{ background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.4)", color: "#EF4444", padding: "2px 8px", fontSize: 10, cursor: "pointer", fontWeight: 600, fontFamily: "'DM Sans', sans-serif" }}>✗</button>
+                      </div>
+                    )}
+                    {s.insurance_status === "rejected" && <span style={{ color: "#EF4444", fontWeight: 600, fontSize: 11 }}>Rejected</span>}
+                    {!s.insurance_status && <span style={{ color: "rgba(255,255,255,0.25)", fontSize: 11 }}>None</span>}
+                  </td>
                   <td style={td}>{fmtDate(s.created_at)}</td>
                   <td style={td}>
                     <button onClick={() => toggleListed(s)} style={{ background: s.is_listed ? "rgba(239,68,68,0.15)" : "rgba(16,185,129,0.15)", border: `1px solid ${s.is_listed ? "rgba(239,68,68,0.4)" : "rgba(16,185,129,0.4)"}`, color: s.is_listed ? "#EF4444" : "#10B981", padding: "4px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 11, cursor: "pointer", fontWeight: 600 }}>

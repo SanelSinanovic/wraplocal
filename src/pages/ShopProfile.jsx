@@ -281,7 +281,7 @@ export default function ShopProfile({ nav, selectedShop, setBookingShop, current
                     Contact info not listed yet.
                   </div>
                 )}
-                {shop.insurance_verified && (
+                {shop.insurance_status === "verified" && (
                   <div className="sp-info-row">
                     <div className="sp-icon">🛡️</div>
                     <span style={{ color: "#3B82F6", fontWeight: 500 }}>Insured Business</span>
