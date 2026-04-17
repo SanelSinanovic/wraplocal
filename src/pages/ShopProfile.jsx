@@ -24,7 +24,9 @@ export default function ShopProfile({ nav, selectedShop, setBookingShop, current
     ? Math.round((reviews.reduce((sum, r) => sum + r.stars, 0) / reviews.length) * 10) / 10
     : 0;
   const reviewCount = reviews.length;
-  const location = shop.location || shop.city || "";
+  const location = shop.address
+    ? [shop.address, shop.city, shop.state].filter(Boolean).join(", ")
+    : (shop.location || shop.city || "");
   const priceFrom = shop.price ?? shop.price_from ?? null;
   const tags = shop.tags || [];
   const slots = shop.slots || [];

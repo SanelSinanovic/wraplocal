@@ -1,6 +1,9 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { SERVICE_CATEGORIES } from "../lib/services";
 import { haversineDistance, geocodeSearch } from "../lib/queries";
+import "leaflet/dist/leaflet.css";
+
+const ShopMap = lazy(() => import("../components/ShopMap"));
 
 export default function SearchPage({ nav, shops: liveShops, shopsLoading, searchQuery, setSearchQuery, serviceFilter, setServiceFilter, setSelectedShop, setBookingShop, currentUser, currentProfile, onLogout }) {
   const role = currentUser ? (currentProfile?.role || currentUser?.user_metadata?.role || "customer") : null;
@@ -11,6 +14,7 @@ export default function SearchPage({ nav, shops: liveShops, shopsLoading, search
   const [locationStatus, setLocationStatus] = useState("idle"); // idle | loading | ok | denied
   const [isGeocodingSearch, setIsGeocodingSearch] = useState(false);
   const [sortByDistance, setSortByDistance] = useState(true);
+  const [viewMode, setViewMode] = useState("list"); // "list" | "map" | "split"
   const PAGE_SIZE = 10;
   const [page, setPage] = useState(0);
   const geocodeTimer = useRef(null);
@@ -168,6 +172,12 @@ export default function SearchPage({ nav, shops: liveShops, shopsLoading, search
           )}
           {!searchCoords && locationStatus === "loading" && <span style={{ fontSize: 12, color: "rgba(255,255,255,0.25)" }}>📍 Detecting location…</span>}
           {!searchCoords && locationStatus === "denied" && <span style={{ fontSize: 12, color: "rgba(255,255,255,0.25)" }}>📍 Location unavailable — enable in browser to sort by distance</span>}
+          {/* View mode toggle */}
+          <div style={{ marginLeft: "auto", display: "flex", gap: 0, border: "1px solid rgba(255,255,255,0.12)", overflow: "hidden" }}>
+            {[["list", "☰ List"], ["split", "◨ Split"], ["map", "🗺 Map"]].map(([mode, label]) => (
+              <button key={mode} onClick={() => setViewMode(mode)} style={{ background: viewMode === mode ? "rgba(255,77,0,0.15)" : "transparent", border: "none", borderRight: mode !== "map" ? "1px solid rgba(255,255,255,0.08)" : "none", color: viewMode === mode ? "#FF4D00" : "rgba(255,255,255,0.4)", padding: "5px 14px", fontFamily: "'DM Sans', sans-serif", fontSize: 12, cursor: "pointer", transition: "all 0.15s", letterSpacing: 0.5 }}>{label}</button>
+            ))}
+          </div>
         </div>
         {/* ── LOADING SKELETON ── */}
         {shopsLoading && allShops.length === 0 && (
@@ -200,94 +210,121 @@ export default function SearchPage({ nav, shops: liveShops, shopsLoading, search
             )}
           </div>
         )}
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          {pagedShops.map((shop, i) => (
-            <div key={shop.id} className="shop-card shop-card-anim" onClick={() => nav("shop", { selectedShop: shop })}
-              style={{ animationDelay: `${Math.min(i * 0.07, 0.42)}s` }}>
-              <div className="shop-card-inner" style={{ display: "flex" }}>
-                <img className="shop-img" src={shop.image || shop.banner_url || 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=600&q=80'} alt={shop.name} style={{ width: 240, height: 160, objectFit: "cover", flexShrink: 0 }} />
-                <div style={{ padding: "20px 24px", flex: 1, display: "flex", justifyContent: "space-between", alignItems: "center", position: "relative", overflow: "hidden" }}>
-                  {/* Diagonal stripe watermark */}
-                  <div aria-hidden="true" style={{
-                    position: "absolute", inset: 0, pointerEvents: "none",
-                    backgroundImage: "repeating-linear-gradient(118deg, transparent, transparent 18px, rgba(255,77,0,0.035) 18px, rgba(255,77,0,0.035) 20px)",
-                  }} />
-                  {/* WB monogram */}
-                  <div aria-hidden="true" style={{
-                    position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)",
-                    fontFamily: "'Bebas Neue', cursive", fontSize: 80, letterSpacing: 4,
-                    color: "rgba(255,77,0,0.045)", userSelect: "none", whiteSpace: "nowrap", pointerEvents: "none",
-                  }}>WRAPBRIDGE</div>
-                  <div style={{ position: "relative" }}>
-                    <div style={{ fontSize: 26, letterSpacing: 1, marginBottom: 4 }}>
-                      {shop.name}
-                      {shop.insurance_verified && (
-                        <span title="Insured Business" style={{ display: "inline-block", marginLeft: 10, fontSize: 11, fontFamily: "'DM Sans', sans-serif", letterSpacing: 1, color: "#3B82F6", border: "1px solid rgba(59,130,246,0.3)", background: "rgba(59,130,246,0.08)", padding: "2px 8px", verticalAlign: "middle", fontWeight: 500 }}>🛡️ INSURED</span>
+        {/* ── RESULTS: List / Split / Map ── */}
+        <div style={{ display: "flex", gap: 16, ...(viewMode === "map" ? { height: "calc(100vh - 220px)" } : viewMode === "split" ? { height: "calc(100vh - 220px)" } : {}) }}>
+          {/* Left panel: shop cards (list + split modes) */}
+          {viewMode !== "map" && (
+            <div style={{ flex: viewMode === "split" ? "0 0 420px" : 1, overflowY: viewMode === "split" ? "auto" : "visible", display: "flex", flexDirection: "column", gap: 16 }}>
+              {pagedShops.map((shop, i) => (
+                <div key={shop.id} className="shop-card shop-card-anim" onClick={() => nav("shop", { selectedShop: shop })}
+                  style={{ animationDelay: `${Math.min(i * 0.07, 0.42)}s` }}>
+                  <div className="shop-card-inner" style={{ display: "flex" }}>
+                    <img className="shop-img" src={shop.image || shop.banner_url || 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=600&q=80'} alt={shop.name} style={{ width: viewMode === "split" ? 120 : 240, height: viewMode === "split" ? 100 : 160, objectFit: "cover", flexShrink: 0 }} />
+                    <div style={{ padding: viewMode === "split" ? "12px 14px" : "20px 24px", flex: 1, display: "flex", justifyContent: "space-between", alignItems: "center", position: "relative", overflow: "hidden" }}>
+                      {/* Diagonal stripe watermark */}
+                      <div aria-hidden="true" style={{
+                        position: "absolute", inset: 0, pointerEvents: "none",
+                        backgroundImage: "repeating-linear-gradient(118deg, transparent, transparent 18px, rgba(255,77,0,0.035) 18px, rgba(255,77,0,0.035) 20px)",
+                      }} />
+                      {/* WB monogram */}
+                      {viewMode !== "split" && <div aria-hidden="true" style={{
+                        position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)",
+                        fontFamily: "'Bebas Neue', cursive", fontSize: 80, letterSpacing: 4,
+                        color: "rgba(255,77,0,0.045)", userSelect: "none", whiteSpace: "nowrap", pointerEvents: "none",
+                      }}>WRAPBRIDGE</div>}
+                      <div style={{ position: "relative" }}>
+                        <div style={{ fontSize: viewMode === "split" ? 18 : 26, letterSpacing: 1, marginBottom: 4 }}>
+                          {shop.name}
+                          {shop.insurance_verified && viewMode !== "split" && (
+                            <span title="Insured Business" style={{ display: "inline-block", marginLeft: 10, fontSize: 11, fontFamily: "'DM Sans', sans-serif", letterSpacing: 1, color: "#3B82F6", border: "1px solid rgba(59,130,246,0.3)", background: "rgba(59,130,246,0.08)", padding: "2px 8px", verticalAlign: "middle", fontWeight: 500 }}>🛡️ INSURED</span>
+                          )}
+                        </div>
+                        <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: viewMode === "split" ? 11 : 13, color: "rgba(255,255,255,0.4)", marginBottom: viewMode === "split" ? 4 : 10 }}>
+                          {(() => {
+                            const rc = shop.reviews ?? shop.review_count ?? 0;
+                            const rt = shop.rating ?? 0;
+                            return rc > 0 && rt > 0 ? `★ ${rt} (${rc} review${rc !== 1 ? "s" : ""}) · ` : "";
+                          })()}
+                          {shop.location || [shop.city, shop.state].filter(Boolean).join(", ") || ""}
+                          {shop._distanceMi != null && <span style={{ color: "#FF4D00", marginLeft: 6 }}>· {shop._distanceMi < 10 ? shop._distanceMi.toFixed(1) : Math.round(shop._distanceMi)} mi away</span>}
+                        </div>
+                        {viewMode !== "split" && (
+                          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                            {(shop.tags || []).map(t => <span key={t} className="shop-tag">{t}</span>)}
+                          </div>
+                        )}
+                      </div>
+                      {viewMode !== "split" && <>
+                        {/* Vertical divider */}
+                        <div aria-hidden="true" style={{
+                          position: "relative", alignSelf: "stretch", width: 1, flexShrink: 0, margin: "0 20px",
+                          background: "linear-gradient(to bottom, transparent, rgba(255,77,0,0.35) 30%, rgba(255,77,0,0.35) 70%, transparent)",
+                        }} />
+                        <div className="shop-card-right" style={{ textAlign: "right", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, position: "relative" }}>
+                          {(shop.price ?? shop.price_from) ? (
+                            <>
+                              <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)" }}>From</div>
+                              <div style={{ fontSize: 32, color: "#FF4D00", marginBottom: 8 }}>${(shop.price ?? shop.price_from).toLocaleString()}</div>
+                            </>
+                          ) : (
+                            <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.5)", marginBottom: 12 }}>Get a Quote</div>
+                          )}
+                          <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: shop.availability === "Today" ? "#10B981" : "#F59E0B", marginBottom: 8 }}>{shop.availability ? `● Available ${shop.availability}` : '● Contact for availability'}</div>
+                          <button className="btn-main shop-book-btn" onClick={(e) => { e.stopPropagation(); nav("booking", { bookingShop: shop }); }}>Book Now</button>
+                        </div>
+                      </>}
+                      {viewMode === "split" && (
+                        <div style={{ position: "relative", textAlign: "right", flexShrink: 0 }}>
+                          {(shop.price ?? shop.price_from) ? (
+                            <div style={{ fontSize: 20, color: "#FF4D00", fontFamily: "'Bebas Neue', cursive" }}>${(shop.price ?? shop.price_from).toLocaleString()}</div>
+                          ) : (
+                            <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)" }}>Quote</div>
+                          )}
+                        </div>
                       )}
                     </div>
-                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)", marginBottom: 10 }}>
-                      {(() => {
-                        const rc = shop.reviews ?? shop.review_count ?? 0;
-                        const rt = shop.rating ?? 0;
-                        return rc > 0 && rt > 0 ? `★ ${rt} (${rc} review${rc !== 1 ? "s" : ""}) · ` : "";
-                      })()}
-                      {shop.location || [shop.city, shop.state].filter(Boolean).join(", ") || ""}
-                      {shop._distanceMi != null && <span style={{ color: "#FF4D00", marginLeft: 6 }}>· {shop._distanceMi < 10 ? shop._distanceMi.toFixed(1) : Math.round(shop._distanceMi)} mi away</span>}
-                    </div>
-                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                      {(shop.tags || []).map(t => <span key={t} className="shop-tag">{t}</span>)}
-                    </div>
-                  </div>
-                  {/* Vertical divider */}
-                  <div aria-hidden="true" style={{
-                    position: "relative", alignSelf: "stretch", width: 1, flexShrink: 0, margin: "0 20px",
-                    background: "linear-gradient(to bottom, transparent, rgba(255,77,0,0.35) 30%, rgba(255,77,0,0.35) 70%, transparent)",
-                  }} />
-                  <div className="shop-card-right" style={{ textAlign: "right", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, position: "relative" }}>
-                    {(shop.price ?? shop.price_from) ? (
-                      <>
-                        <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)" }}>From</div>
-                        <div style={{ fontSize: 32, color: "#FF4D00", marginBottom: 8 }}>${(shop.price ?? shop.price_from).toLocaleString()}</div>
-                      </>
-                    ) : (
-                      <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.5)", marginBottom: 12 }}>Get a Quote</div>
-                    )}
-                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: shop.availability === "Today" ? "#10B981" : "#F59E0B", marginBottom: 8 }}>{shop.availability ? `● Available ${shop.availability}` : '● Contact for availability'}</div>
-                    <button className="btn-main shop-book-btn" onClick={(e) => { e.stopPropagation(); nav("booking", { bookingShop: shop }); }}>Book Now</button>
                   </div>
                 </div>
-              </div>
+              ))}
+              {/* Pagination (list mode only) */}
+              {viewMode === "list" && totalPages > 1 && (
+                <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 10, marginTop: 32, fontFamily: "'DM Sans', sans-serif" }}>
+                  <button
+                    onClick={() => { setPage(p => p - 1); window.scrollTo(0, 0); }}
+                    disabled={page === 0}
+                    style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.15)", color: page === 0 ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.6)", padding: "8px 18px", cursor: page === 0 ? "default" : "pointer", fontFamily: "'DM Sans', sans-serif", fontSize: 13 }}
+                  >
+                    ← Prev
+                  </button>
+                  {Array.from({ length: totalPages }, (_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => { setPage(i); window.scrollTo(0, 0); }}
+                      style={{ background: i === page ? "#FF4D00" : "transparent", border: `1px solid ${i === page ? "#FF4D00" : "rgba(255,255,255,0.15)"}`, color: i === page ? "#fff" : "rgba(255,255,255,0.4)", padding: "8px 14px", cursor: "pointer", fontFamily: "'Bebas Neue', cursive", fontSize: 15, letterSpacing: 1, minWidth: 36 }}
+                    >
+                      {i + 1}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => { setPage(p => p + 1); window.scrollTo(0, 0); }}
+                    disabled={page === totalPages - 1}
+                    style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.15)", color: page === totalPages - 1 ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.6)", padding: "8px 18px", cursor: page === totalPages - 1 ? "default" : "pointer", fontFamily: "'DM Sans', sans-serif", fontSize: 13 }}
+                  >
+                    Next →
+                  </button>
+                </div>
+              )}
             </div>
-          ))}
+          )}
+          {/* Right panel: Map (split + map modes) */}
+          {viewMode !== "list" && (
+            <div style={{ flex: 1, minHeight: viewMode === "map" ? "100%" : 500, border: "1px solid rgba(255,255,255,0.07)", overflow: "hidden" }}>
+              <Suspense fallback={<div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", fontFamily: "'DM Sans', sans-serif", color: "rgba(255,255,255,0.3)" }}>Loading map…</div>}>
+                <ShopMap shops={shops} refCoords={refCoords} onShopClick={(shop) => nav("shop", { selectedShop: shop })} />
+              </Suspense>
+            </div>
+          )}
         </div>
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 10, marginTop: 32, fontFamily: "'DM Sans', sans-serif" }}>
-            <button
-              onClick={() => { setPage(p => p - 1); window.scrollTo(0, 0); }}
-              disabled={page === 0}
-              style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.15)", color: page === 0 ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.6)", padding: "8px 18px", cursor: page === 0 ? "default" : "pointer", fontFamily: "'DM Sans', sans-serif", fontSize: 13 }}
-            >
-              ← Prev
-            </button>
-            {Array.from({ length: totalPages }, (_, i) => (
-              <button
-                key={i}
-                onClick={() => { setPage(i); window.scrollTo(0, 0); }}
-                style={{ background: i === page ? "#FF4D00" : "transparent", border: `1px solid ${i === page ? "#FF4D00" : "rgba(255,255,255,0.15)"}`, color: i === page ? "#fff" : "rgba(255,255,255,0.4)", padding: "8px 14px", cursor: "pointer", fontFamily: "'Bebas Neue', cursive", fontSize: 15, letterSpacing: 1, minWidth: 36 }}
-              >
-                {i + 1}
-              </button>
-            ))}
-            <button
-              onClick={() => { setPage(p => p + 1); window.scrollTo(0, 0); }}
-              disabled={page === totalPages - 1}
-              style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.15)", color: page === totalPages - 1 ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.6)", padding: "8px 18px", cursor: page === totalPages - 1 ? "default" : "pointer", fontFamily: "'DM Sans', sans-serif", fontSize: 13 }}
-            >
-              Next →
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );

@@ -341,7 +341,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
   const [dashboardBookings, setDashboardBookings] = useState([]);
   const [userShop, setUserShop] = useState(null);
   const [isNewShop, setIsNewShop] = useState(false);
-  const [profileForm, setProfileForm] = useState({ name: "", city: "", state: "", zip: "", phone: "", website: "", bio: "", price_from: "" });
+  const [profileForm, setProfileForm] = useState({ name: "", address: "", city: "", state: "", zip: "", phone: "", website: "", bio: "", price_from: "" });
   const [selectedServices, setSelectedServices] = useState([]);
   const [saveStatus, setSaveStatus] = useState("");
   const [shopError, setShopError] = useState("");
@@ -387,6 +387,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
   const syncProfileForm = (shop) => {
     setProfileForm({
       name: shop.name || "",
+      address: shop.address || "",
       city: shop.city || "",
       state: shop.state || "",
       zip: shop.zip || "",
@@ -613,16 +614,18 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
   const handleSaveProfile = async () => {
     if (!userShop) return;
     setSaveStatus("saving");
+    const address = profileForm.address.trim();
     const city = profileForm.city.trim();
     const state = profileForm.state.trim();
-    // Geocode whenever city or state changes
+    // Geocode using full address for accurate map pins
     let geoUpdates = {};
     if (city || state) {
-      const geo = await geocodeCityState(city, state);
+      const geo = await geocodeCityState(city, state, address);
       if (geo) geoUpdates = { latitude: geo.lat, longitude: geo.lon };
     }
     const updates = {
       name: profileForm.name.trim() || userShop.name,
+      address,
       city,
       state,
       zip: profileForm.zip.trim(),
@@ -1612,12 +1615,13 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
               {/* City / State / Zip on one row */}
               <div>
                 <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", letterSpacing: 1, marginBottom: 6 }}>LOCATION</div>
+                <input placeholder="Street address  (e.g. 1234 Peachtree St NW)" value={profileForm.address} onChange={e => setProfileForm(f => ({ ...f, address: e.target.value }))} style={{ width: "100%", background: "#1A1A1A", border: "1px solid rgba(255,255,255,0.1)", padding: "12px 16px", color: "#fff", fontFamily: "'DM Sans', sans-serif", fontSize: 14, outline: "none", marginBottom: 8 }} />
                 <div className="location-grid" style={{ display: "grid", gridTemplateColumns: "1fr 80px 120px", gap: 8 }}>
                   <input placeholder="City  (e.g. Atlanta)" value={profileForm.city} onChange={e => setProfileForm(f => ({ ...f, city: e.target.value }))} style={{ background: "#1A1A1A", border: "1px solid rgba(255,255,255,0.1)", padding: "12px 16px", color: "#fff", fontFamily: "'DM Sans', sans-serif", fontSize: 14, outline: "none" }} />
                   <input placeholder="State" maxLength={2} value={profileForm.state} onChange={e => setProfileForm(f => ({ ...f, state: e.target.value.toUpperCase() }))} style={{ background: "#1A1A1A", border: "1px solid rgba(255,255,255,0.1)", padding: "12px 16px", color: "#fff", fontFamily: "'DM Sans', sans-serif", fontSize: 14, outline: "none", textTransform: "uppercase" }} />
                   <input placeholder="Zip code" value={profileForm.zip} onChange={e => setProfileForm(f => ({ ...f, zip: e.target.value }))} style={{ background: "#1A1A1A", border: "1px solid rgba(255,255,255,0.1)", padding: "12px 16px", color: "#fff", fontFamily: "'DM Sans', sans-serif", fontSize: 14, outline: "none" }} />
                 </div>
-                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.25)", marginTop: 5 }}>Used to show your shop to nearby customers. Save your profile to update.</div>
+                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.25)", marginTop: 5 }}>Full address gives your shop an accurate map pin. Save your profile to update.</div>
               </div>
               <div>
                 <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", letterSpacing: 1, marginBottom: 10 }}>SERVICES OFFERED</div>

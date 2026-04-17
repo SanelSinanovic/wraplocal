@@ -23,6 +23,7 @@ export default function CompanyOnboarding({ currentUser, userShop, onComplete, n
   const [form, setForm] = useState({
     name: userShop?.name || currentUser?.user_metadata?.business_name || "",
     phone: userShop?.phone || "",
+    address: userShop?.address || "",
     city: userShop?.city || "",
     state: userShop?.state || "",
     zip: userShop?.zip || "",
@@ -68,12 +69,13 @@ export default function CompanyOnboarding({ currentUser, userShop, onComplete, n
     // Use pre-fetched coords from step 2 check; if unavailable, try one more time
     let resolvedGeo = geoCoords;
     if (!resolvedGeo && (form.city || form.state)) {
-      resolvedGeo = await geocodeCityState(form.city.trim(), form.state.trim());
+      resolvedGeo = await geocodeCityState(form.city.trim(), form.state.trim(), form.address.trim());
     }
     if (resolvedGeo) geoUpdates = { latitude: resolvedGeo.lat, longitude: resolvedGeo.lon };
     const updates = {
       name: form.name.trim() || userShop.name,
       phone: form.phone.trim(),
+      address: form.address.trim(),
       city: form.city.trim(),
       state: form.state.trim(),
       zip: form.zip.trim(),
@@ -206,12 +208,13 @@ export default function CompanyOnboarding({ currentUser, userShop, onComplete, n
                   <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", letterSpacing: 1, marginBottom: 6 }}>
                     LOCATION <span style={{ color: "#FF4D00" }}>*</span>
                   </div>
+                  <input className="ob-input" placeholder="Street address  (e.g. 1234 Peachtree St NW)" value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} style={{ marginBottom: 8 }} />
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 70px 120px", gap: 8 }}>
                     <input className="ob-input" placeholder="City" value={form.city} onChange={e => setForm(f => ({ ...f, city: e.target.value }))} />
                     <input className="ob-input" placeholder="ST" maxLength={2} value={form.state} onChange={e => setForm(f => ({ ...f, state: e.target.value.toUpperCase() }))} style={{ textTransform: "uppercase" }} />
                     <input className="ob-input" placeholder="Zip code" value={form.zip} onChange={e => setForm(f => ({ ...f, zip: e.target.value }))} />
                   </div>
-                  <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.2)", marginTop: 5 }}>City and State are used to show your shop to nearby customers.</div>
+                  <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.2)", marginTop: 5 }}>Full address gives your shop an accurate map pin.</div>
                 </div>
               </div>
               {geoWarning && (
@@ -222,7 +225,7 @@ export default function CompanyOnboarding({ currentUser, userShop, onComplete, n
                     onClick={async () => {
                       setGeoChecking(true);
                       setGeoWarning(false);
-                      const geo = await geocodeCityState(form.city.trim(), form.state.trim());
+                      const geo = await geocodeCityState(form.city.trim(), form.state.trim(), form.address.trim());
                       setGeoChecking(false);
                       if (geo) { setGeoCoords(geo); setStep(3); }
                       else setGeoWarning(true);
@@ -238,7 +241,7 @@ export default function CompanyOnboarding({ currentUser, userShop, onComplete, n
                     if (!canAdvanceStep2) return;
                     setGeoChecking(true);
                     setGeoWarning(false);
-                    const geo = await geocodeCityState(form.city.trim(), form.state.trim());
+                    const geo = await geocodeCityState(form.city.trim(), form.state.trim(), form.address.trim());
                     setGeoChecking(false);
                     if (geo) { setGeoCoords(geo); setStep(3); }
                     else { setGeoCoords(null); setGeoWarning(true); }

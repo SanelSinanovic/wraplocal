@@ -26,9 +26,10 @@ export function haversineDistance(lat1, lon1, lat2, lon2) {
 
 /** Geocode a city + state string via Nominatim (free, no API key).
  *  Returns { lat, lon } or null on failure. */
-export async function geocodeCityState(city, state) {
+export async function geocodeCityState(city, state, address) {
   if (!city && !state) return null;
-  const q = encodeURIComponent([city, state].filter(Boolean).join(', ') + ', USA');
+  const parts = [address, city, state].filter(Boolean).join(', ');
+  const q = encodeURIComponent(parts + ', USA');
   try {
     const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1`, {
       headers: { 'User-Agent': 'WrapBridge/1.0' },
