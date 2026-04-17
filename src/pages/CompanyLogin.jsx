@@ -30,7 +30,8 @@ export default function CompanyLogin({ nav, loginForm, setLoginForm, loginError,
     if (!businessName.trim()) return setSignupError("Please enter your business name.");
     if (!name.trim()) return setSignupError("Please enter your name.");
     if (!email.includes("@")) return setSignupError("Please enter a valid email.");
-    if (password.length < 6) return setSignupError("Password must be at least 6 characters.");
+    if (password.length < 8) return setSignupError("Password must be at least 8 characters.");
+    if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password)) return setSignupError("Password must include uppercase, lowercase, and a number.");
     if (password !== confirm) return setSignupError("Passwords do not match.");
     if (!tosAccepted) return setSignupError("You must agree to the Terms of Service to create an account.");
     setLoading(true);

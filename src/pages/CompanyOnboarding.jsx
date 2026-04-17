@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { supabase } from "../lib/supabase";
-import { updateShop, geocodeCityState } from "../lib/queries";
+import { updateShop, geocodeCityState, validateUploadFile } from "../lib/queries";
 import { SERVICE_CATEGORIES } from "../lib/services";
 
 const STEPS = [
@@ -44,6 +44,8 @@ export default function CompanyOnboarding({ currentUser, userShop, onComplete, n
 
   const handlePhotoUpload = async (file) => {
     if (!file) return;
+    const valErr = validateUploadFile(file);
+    if (valErr) { setPhotoError(valErr); return; }
     setPhotoUploading(true);
     setPhotoError("");
     const ext = file.name.split(".").pop();

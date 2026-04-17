@@ -1,7 +1,7 @@
 // @ts-nocheck
 // Deno edge function - verify a shop's Stripe Connect account and update stripe_onboarded
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": "https://wrapbridge.com",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-user-token",
 };
 

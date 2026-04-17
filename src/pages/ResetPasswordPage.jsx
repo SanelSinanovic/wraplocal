@@ -11,6 +11,7 @@ export default function ResetPasswordPage({ nav, recoveryReady }) {
   const handleReset = async () => {
     setError("");
     if (password.length < 8) return setError("Password must be at least 8 characters.");
+    if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password)) return setError("Password must include uppercase, lowercase, and a number.");
     if (password !== confirm) return setError("Passwords do not match.");
     setLoading(true);
     const { error: err } = await supabase.auth.updateUser({ password });

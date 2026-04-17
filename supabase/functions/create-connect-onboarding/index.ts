@@ -1,7 +1,7 @@
 // @ts-nocheck
 // Deno edge function - no special unicode in comments to avoid dashboard editor encoding bugs
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": "https://wrapbridge.com",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-user-token",
 };
 

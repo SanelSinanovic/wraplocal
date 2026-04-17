@@ -1,4 +1,16 @@
-import { supabase } from './supabase'
+import { supabase, supabaseUrl, supabaseAnonKey } from './supabase'
+
+// ── FILE UPLOAD VALIDATION ───────────────────────────────────────────────────
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
+const ALLOWED_CHAT_TYPES = [...ALLOWED_IMAGE_TYPES, 'application/pdf'];
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+
+export function validateUploadFile(file, { allowedTypes = ALLOWED_IMAGE_TYPES, maxSize = MAX_FILE_SIZE } = {}) {
+  if (!file) return 'No file selected.';
+  if (file.size > maxSize) return `File too large. Maximum size is ${Math.round(maxSize / 1024 / 1024)}MB.`;
+  if (!allowedTypes.includes(file.type)) return `File type not allowed. Accepted: ${allowedTypes.map(t => t.split('/')[1]).join(', ')}.`;
+  return null;
+}
 
 // ── GEO HELPERS ──────────────────────────────────────────────────────────────
 
@@ -393,6 +405,8 @@ export async function sendMessage({ bookingId, senderId, senderRole, text }) {
 }
 
 export async function uploadChatFile(file, bookingId) {
+  const valErr = validateUploadFile(file, { allowedTypes: ALLOWED_CHAT_TYPES });
+  if (valErr) { console.error('uploadChatFile:', valErr); return null; }
   const ext = file.name.split('.').pop().toLowerCase();
   const path = `chat/${bookingId}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
   const { error } = await supabase.storage.from('shop-images').upload(path, file, { upsert: true });
@@ -402,6 +416,8 @@ export async function uploadChatFile(file, bookingId) {
 }
 
 export async function uploadDesignFile(file) {
+  const valErr = validateUploadFile(file);
+  if (valErr) { console.error('uploadDesignFile:', valErr); return null; }
   const ext = file.name.split('.').pop().toLowerCase();
   const path = `booking-designs/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
   const { error } = await supabase.storage.from('shop-images').upload(path, file, { upsert: true });
@@ -494,15 +510,14 @@ export async function saveShopAvailability(shopId, workingDays, blockedDates) {
 
 // ── EMAIL NOTIFICATIONS ───────────────────────────────────────────────────────
 // Fire-and-forget: errors are swallowed so they never block the booking flow.
-const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN4bXpjdm92Z3p0cG5reG5vbXVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5ODQ1NjMsImV4cCI6MjA4ODU2MDU2M30.bEul8TJAuwlXGQusLVvLbvuauTan02IJm8ktwwqF7so";
 export async function sendNotification(type, bookingId) {
   try {
-    await fetch("https://cxmzcvovgztpnkxnomun.supabase.co/functions/v1/send-notification", {
+    await fetch(`${supabaseUrl}/functions/v1/send-notification`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": "Bearer " + ANON_KEY,
-        "apikey": ANON_KEY,
+        "Authorization": "Bearer " + supabaseAnonKey,
+        "apikey": supabaseAnonKey,
       },
       body: JSON.stringify({ type, bookingId }),
     });

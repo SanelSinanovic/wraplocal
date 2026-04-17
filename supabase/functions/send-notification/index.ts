@@ -1,7 +1,7 @@
 // @ts-nocheck
 // WrapBridge - Email notification edge function (Resend)
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": "https://wrapbridge.com",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
@@ -10,6 +10,12 @@ function jsonResp(body, status) {
     status: status || 200,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
+}
+
+// HTML-escape user content to prevent XSS in email clients
+function esc(str) {
+  if (!str) return "";
+  return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
 // Branded email wrapper
@@ -65,16 +71,18 @@ function divider() {
 
 function detail(label, value) {
   return `<tr>
-    <td style="padding:6px 0;font-size:13px;color:#999;width:140px;vertical-align:top;">${label}</td>
-    <td style="padding:6px 0;font-size:13px;color:#222;font-weight:600;">${value || "—"}</td>
+    <td style="padding:6px 0;font-size:13px;color:#999;width:140px;vertical-align:top;">${esc(label)}</td>
+    <td style="padding:6px 0;font-size:13px;color:#222;font-weight:600;">${esc(value) || "—"}</td>
   </tr>`;
 }
 
 function buildEmail(type, b, customerName, shopName, customerEmail, shopEmail, appUrl) {
-  const service = b.service || "your service";
+  const service = esc(b.service || "your service");
   const amount = b.amount ? `$${Number(b.amount).toFixed(2)}` : null;
-  const dateStr = b.date ? b.date : null;
-  const timeStr = b.time_slot || b.time || null;
+  const dateStr = b.date ? esc(b.date) : null;
+  const timeStr = esc(b.time_slot || b.time || null);
+  customerName = esc(customerName);
+  shopName = esc(shopName);
 
   switch (type) {
     case "booking_created": {
@@ -293,6 +301,14 @@ Deno.serve(async (req) => {
     if (!resendKey)       return jsonResp({ error: "RESEND_API_KEY not configured" }, 500);
     if (!supabaseUrl)     return jsonResp({ error: "SUPABASE_URL not configured" }, 500);
     if (!supabaseService) return jsonResp({ error: "SUPABASE_SERVICE_ROLE_KEY not configured" }, 500);
+
+    // ── Verify the calling user is authenticated ──────────────────────────
+    const authHeader = req.headers.get("Authorization") || "";
+    const userRes = await fetch(supabaseUrl + "/auth/v1/user", {
+      headers: { apikey: supabaseService, Authorization: authHeader },
+    });
+    const userData = await userRes.json().catch(() => ({}));
+    if (!userData?.id) return jsonResp({ error: "Unauthorized" }, 401);
 
     // Fetch booking + shop info
     const bookingRes = await fetch(

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { supabase } from "../lib/supabase";
-import { fetchUserShop, fetchCompanyBookings, createShop, updateShop, fetchMessages, sendMessage as dbSendMessage, subscribeToMessages, subscribeToShopBookings, fetchPortfolioImages, addPortfolioImage, deletePortfolioImage, setHeroPortfolioImage, scheduleBooking, uploadChatFile, geocodeCityState, fetchShopAvailability, saveShopAvailability, sendNotification } from "../lib/queries";
+import { supabase, supabaseUrl, supabaseAnonKey } from "../lib/supabase";
+import { fetchUserShop, fetchCompanyBookings, createShop, updateShop, fetchMessages, sendMessage as dbSendMessage, subscribeToMessages, subscribeToShopBookings, fetchPortfolioImages, addPortfolioImage, deletePortfolioImage, setHeroPortfolioImage, scheduleBooking, uploadChatFile, geocodeCityState, fetchShopAvailability, saveShopAvailability, sendNotification, validateUploadFile } from "../lib/queries";
 import { SERVICE_CATEGORIES, ALL_SERVICE_NAMES } from "../lib/services";
 import CompanyOnboarding from "./CompanyOnboarding";
 
@@ -469,10 +469,9 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
       if (!token) return;
-      const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN4bXpjdm92Z3p0cG5reG5vbXVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5ODQ1NjMsImV4cCI6MjA4ODU2MDU2M30.bEul8TJAuwlXGQusLVvLbvuauTan02IJm8ktwwqF7so";
-      const res = await fetch("https://cxmzcvovgztpnkxnomun.supabase.co/functions/v1/verify-stripe-account", {
+      const res = await fetch(`${supabaseUrl}/functions/v1/verify-stripe-account`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + ANON_KEY, "apikey": ANON_KEY, "x-user-token": token },
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + supabaseAnonKey, "apikey": supabaseAnonKey, "x-user-token": token },
         body: JSON.stringify({ shopId }),
       });
       const vd = await res.json().catch(() => null);
@@ -627,6 +626,8 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
     const uploaded = [];
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
+      const valErr = validateUploadFile(file);
+      if (valErr) { setPortfolioError(valErr); break; }
       if (!file.type.startsWith('image/')) continue;
       const ext = file.name.split('.').pop();
       const path = `${currentUser.id}/portfolio/${Date.now()}_${i}.${ext}`;
@@ -664,6 +665,8 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
   const handlePhotoUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    const valErr = validateUploadFile(file);
+    if (valErr) { setPhotoError(valErr); return; }
     setPhotoUploading(true);
     setPhotoError("");
     const ext = file.name.split('.').pop();
@@ -719,15 +722,14 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
       const { data: { session } } = await supabase.auth.getSession();
       const accessToken = session?.access_token;
       if (!accessToken) throw new Error("Not logged in");
-      const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN4bXpjdm92Z3p0cG5reG5vbXVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5ODQ1NjMsImV4cCI6MjA4ODU2MDU2M30.bEul8TJAuwlXGQusLVvLbvuauTan02IJm8ktwwqF7so";
       const res = await fetch(
-        `https://cxmzcvovgztpnkxnomun.supabase.co/functions/v1/create-connect-onboarding`,
+        `${supabaseUrl}/functions/v1/create-connect-onboarding`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": "Bearer " + ANON_KEY,
-            "apikey": ANON_KEY,
+            "Authorization": "Bearer " + supabaseAnonKey,
+            "apikey": supabaseAnonKey,
             "x-user-token": accessToken,
           },
           body: JSON.stringify({ shopId: userShop.id, returnUrl, refreshUrl: returnUrl }),
@@ -1268,10 +1270,9 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
                     onClick={async () => {
                       try {
                         const { data: { session } } = await supabase.auth.getSession();
-                        const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN4bXpjdm92Z3p0cG5reG5vbXVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5ODQ1NjMsImV4cCI6MjA4ODU2MDU2M30.bEul8TJAuwlXGQusLVvLbvuauTan02IJm8ktwwqF7so";
-                        const res = await fetch("https://cxmzcvovgztpnkxnomun.supabase.co/functions/v1/create-express-login", {
+                        const res = await fetch(`${supabaseUrl}/functions/v1/create-express-login`, {
                           method: "POST",
-                          headers: { "Content-Type": "application/json", "Authorization": "Bearer " + ANON_KEY, "apikey": ANON_KEY, "x-user-token": session?.access_token || "" },
+                          headers: { "Content-Type": "application/json", "Authorization": "Bearer " + supabaseAnonKey, "apikey": supabaseAnonKey, "x-user-token": session?.access_token || "" },
                           body: JSON.stringify({ shopId: userShop.id }),
                         });
                         const data = await res.json();

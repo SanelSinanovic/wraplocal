@@ -1,6 +1,6 @@
 // @ts-nocheck — Deno edge function
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": "https://wrapbridge.com",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
@@ -20,6 +20,44 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({ error: "Stripe secret key not configured." }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // ── Verify the calling user is authenticated ──────────────────────────
+    const authHeader = req.headers.get("Authorization") || "";
+    if (supabaseUrl && supabaseService) {
+      const userRes = await fetch(supabaseUrl + "/auth/v1/user", {
+        headers: { apikey: supabaseService, Authorization: authHeader },
+      });
+      const userData = await userRes.json().catch(() => ({}));
+      if (!userData?.id) {
+        return new Response(
+          JSON.stringify({ error: "Unauthorized" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
+    // ── Validate redirect URLs (prevent open redirect) ────────────────────
+    const allowedOrigin = Deno.env.get("APP_URL") || null;
+    function isUrlSafe(url) {
+      if (!url) return false;
+      try {
+        const parsed = new URL(url);
+        if (!["http:", "https:"].includes(parsed.protocol)) return false;
+        if (allowedOrigin) {
+          const allowed = new URL(allowedOrigin);
+          return parsed.origin === allowed.origin;
+        }
+        return true;
+      } catch (_) {
+        return false;
+      }
+    }
+    if (!isUrlSafe(successUrl) || !isUrlSafe(cancelUrl)) {
+      return new Response(
+        JSON.stringify({ error: "Invalid redirect URL." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
