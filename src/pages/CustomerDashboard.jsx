@@ -256,6 +256,9 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
   const processingStripeReturn = useRef(false);
 
   // ── Consume Stripe return after bookings are loaded ────────────────────────────────
+  // The webhook (stripe-webhook edge function) is the source of truth for payment
+  // confirmation. After redirect, poll the booking status. Fall back to client-side
+  // confirmation if the webhook hasn't processed within 30 seconds.
   useEffect(() => {
     if (!stripeReturn || !bookingsLoaded) return;
     if (processingStripeReturn.current) return;
@@ -267,18 +270,34 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
     const normalizedCharge = Number(amount) || 0;
     const normalizedFull = Number(fullAmount) || normalizedCharge;
     const fee = Math.round(normalizedFull * 0.07 * 100) / 100;
-    if (isRemaining) {
-      // Remaining balance paid — mark total as fully paid, no fee change
-      (async () => {
-        await supabase.from("bookings").update({ total: normalizedFull }).eq("id", bookingId).eq("customer_id", currentUser.id);
+
+    // Poll for webhook confirmation, then fall back to client-side update
+    (async () => {
+      let confirmed = false;
+      for (let i = 0; i < 15; i++) {
+        await new Promise(r => setTimeout(r, 2000));
+        const { data } = await supabase.from("bookings").select("status, payment_verified, total").eq("id", bookingId).single();
+        if (data?.payment_verified) { confirmed = true; break; }
+        if (!isRemaining && data?.status === "confirmed") { confirmed = true; break; }
+        if (isRemaining && data?.total === normalizedFull) { confirmed = true; break; }
+      }
+      if (!confirmed) {
+        // Webhook hasn't fired yet — fall back to client-side update
+        if (isRemaining) {
+          await supabase.from("bookings").update({ total: normalizedFull }).eq("id", bookingId).eq("customer_id", currentUser.id);
+        } else {
+          await confirmBookingFromPayment(bookingId, normalizedCharge, normalizedFull);
+        }
+      }
+      // Update local state either way
+      if (isRemaining) {
         setBookings(prev => prev.map(b => String(b.id) === String(bookingId) ? { ...b, total: normalizedFull } : b));
         setSelectedBooking({ ...booking, total: normalizedFull });
-      })();
-    } else {
-      confirmBookingFromPayment(bookingId, normalizedCharge, normalizedFull).then(() => {
+      } else {
+        setBookings(prev => prev.map(b => String(b.id) === String(bookingId) ? { ...b, status: "confirmed", amount: normalizedFull, fee, total: normalizedCharge } : b));
         setSelectedBooking({ ...booking, status: "confirmed", amount: normalizedFull, fee, total: normalizedCharge });
-      });
-    }
+      }
+    })();
   }, [stripeReturn, bookingsLoaded]);
 
   // ── Redirect to Stripe Checkout ──────────────────────────────────────────

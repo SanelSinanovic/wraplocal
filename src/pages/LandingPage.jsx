@@ -28,13 +28,13 @@ export default function LandingPage({ nav, shops: liveShops, setBookingShop, set
 
   const SLIDES = [
     { label: "Full Color Change Wrap", category: "Vehicle Wraps", accent: "#FF4D00", img: "/images/color-change-wrap.jpg" },
-    { label: "Monument Signs", category: "Signage", accent: "#3B82F6", img: "/images/Monument-Sign.png" },
-    { label: "Channel Letters", category: "Signage", accent: "#3B82F6", img: "/images/Channel-Letters.png" },
-    { label: "PPF Paint Protection Film", category: "Vehicle Wraps", accent: "#FF4D00", img: "/images/PPF.png" },
-    { label: "LED Signs", category: "Signage", accent: "#3B82F6", img: "/images/LED.png" },
-    { label: "Custom Design Wrap", category: "Vehicle Wraps", accent: "#FF4D00", img: "/images/Custom-Design.png" },
-    { label: "Window Graphics", category: "Signage", accent: "#3B82F6", img: "/images/Window-Graphics.png" },
-    { label: "Window Tinting", category: "Signage", accent: "#3B82F6", img: "/images/Window-Tint.png" },
+    { label: "Monument Signs", category: "Signage", accent: "#3B82F6", img: "/images/Monument-Sign.jpg" },
+    { label: "Channel Letters", category: "Signage", accent: "#3B82F6", img: "/images/Channel-Letters.jpg" },
+    { label: "PPF Paint Protection Film", category: "Vehicle Wraps", accent: "#FF4D00", img: "/images/PPF.jpg" },
+    { label: "LED Signs", category: "Signage", accent: "#3B82F6", img: "/images/LED.jpg" },
+    { label: "Custom Design Wrap", category: "Vehicle Wraps", accent: "#FF4D00", img: "/images/Custom-Design.jpg" },
+    { label: "Window Graphics", category: "Signage", accent: "#3B82F6", img: "/images/Window-Graphics.jpg" },
+    { label: "Window Tinting", category: "Signage", accent: "#3B82F6", img: "/images/Window-Tint.jpg" },
   ];
 
   useEffect(() => {

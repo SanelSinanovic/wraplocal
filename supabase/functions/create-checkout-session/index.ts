@@ -116,6 +116,9 @@ Deno.serve(async (req) => {
     params.append("success_url", successUrl);
     params.append("cancel_url", cancelUrl);
     params.append("metadata[booking_id]", String(bookingId));
+    params.append("metadata[full_amount]", String(fullAmount || serviceAmount));
+    params.append("metadata[charge_amount]", String(serviceAmount));
+    params.append("metadata[is_remaining_balance]", isRemainingBalance ? "1" : "0");
 
     // ── Route 93% to shop only if their account is fully enabled ──────────
     let useConnect = false;
