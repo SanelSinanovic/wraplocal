@@ -50,8 +50,8 @@ export default function TermsPage({ nav }) {
         <p>When you pay for a service on WrapBridge, your payment flows <strong>directly to the Service Provider's Stripe account</strong>. WrapBridge collects a platform fee (currently 7%) deducted at the time of payment. WrapBridge never holds, controls, or is responsible for the Service Provider's funds.</p>
         <h3>5.3 No Refund Liability</h3>
         <p><strong>WrapBridge does not issue refunds.</strong> All refund, cancellation, and dispute requests must be directed to the Service Provider. Because funds are routed directly to the Service Provider and WrapBridge does not retain them, WrapBridge has no ability to process refunds on behalf of Service Providers.</p>
-        <h3>5.4 24-Hour Refund Window</h3>
-        <p><strong>Refund requests will not be accepted after 24 hours from the time of payment.</strong> Any request for a refund submitted more than 24 hours after a completed payment transaction is ineligible for consideration by either WrapBridge or the Service Provider through the Platform. Customers who believe they have a valid dispute after this window must resolve the matter directly with their card issuer or bank outside of WrapBridge.</p>
+        <h3>5.4 Refund Requests</h3>
+        <p>Customers are encouraged to submit any refund requests to the Service Provider within 24 hours of payment. After 24 hours, WrapBridge cannot facilitate refund requests through the Platform. <strong>Nothing in these Terms limits your rights under applicable consumer protection laws or your right to dispute a charge directly with your payment card issuer.</strong></p>
         <h3>5.5 Chargebacks and Disputes</h3>
         <p>Any payment disputes, chargebacks, or fraud claims are the responsibility of the Service Provider whose Stripe account received the funds. WrapBridge will cooperate with Stripe's dispute resolution process but is not financially liable for the outcome.</p>
         <h3>5.6 Platform Fee</h3>
@@ -112,13 +112,35 @@ export default function TermsPage({ nav }) {
         <h2>14. Termination</h2>
         <p>WrapBridge reserves the right to suspend or terminate your access to the Platform at any time, with or without notice, for any reason including violation of these Terms.</p>
 
-        <h2>15. Governing Law</h2>
-        <p>These Terms are governed by the laws of the <strong>State of Georgia</strong>, without regard to conflict of law provisions. Any dispute arising from these Terms or your use of the Platform shall be resolved exclusively in the courts located in Georgia, and you consent to personal jurisdiction in those courts.</p>
+        <h2>15. Intellectual Property</h2>
+        <p>All content, trademarks, logos, and software on the Platform — including the WrapBridge name, logo, and code — are the property of WrapBridge or its licensors and are protected by applicable intellectual property laws. You may not copy, modify, distribute, or create derivative works from any Platform content without our prior written permission.</p>
 
-        <h2>16. Changes to These Terms</h2>
+        <h2>16. Dispute Resolution</h2>
+        <h3>16.1 Informal Resolution</h3>
+        <p>Before filing any formal claim, you agree to contact us at <a href="mailto:support@wrapbridge.com">support@wrapbridge.com</a> and attempt to resolve the dispute informally for at least 30 days.</p>
+        <h3>16.2 Binding Arbitration</h3>
+        <p>If the dispute is not resolved informally, <strong>you and WrapBridge agree to resolve any dispute, claim, or controversy arising out of or relating to these Terms or the Platform through binding individual arbitration</strong> administered by the American Arbitration Association ("AAA") under its Consumer Arbitration Rules. Arbitration will take place in the State of Georgia or, at your election, by phone or video conference. The arbitrator's decision will be final and binding.</p>
+        <h3>16.3 Class Action Waiver</h3>
+        <p><strong>YOU AND WRAPBRIDGE AGREE THAT EACH PARTY MAY ONLY BRING CLAIMS AGAINST THE OTHER IN AN INDIVIDUAL CAPACITY, AND NOT AS A PLAINTIFF OR CLASS MEMBER IN ANY PURPORTED CLASS, CONSOLIDATED, OR REPRESENTATIVE ACTION.</strong> The arbitrator may not consolidate more than one person's claims and may not preside over any form of class or representative proceeding.</p>
+        <h3>16.4 Exceptions</h3>
+        <p>Either party may bring claims in small claims court if the claim qualifies. Either party may seek injunctive relief in any court of competent jurisdiction for intellectual property infringement or unauthorized access to the Platform.</p>
+
+        <h2>17. Governing Law</h2>
+        <p>These Terms are governed by the laws of the <strong>State of Georgia</strong>, without regard to conflict of law provisions.</p>
+
+        <h2>18. Force Majeure</h2>
+        <p>WrapBridge is not liable for any delay or failure to perform resulting from causes beyond our reasonable control, including but not limited to: natural disasters, war, terrorism, pandemics, power outages, internet or hosting provider failures, acts of government, or third-party service outages (including Stripe, Supabase, or Resend).</p>
+
+        <h2>19. Severability</h2>
+        <p>If any provision of these Terms is found to be invalid, illegal, or unenforceable by a court of competent jurisdiction, the remaining provisions shall continue in full force and effect. The invalid provision shall be modified to the minimum extent necessary to make it valid and enforceable.</p>
+
+        <h2>20. Entire Agreement</h2>
+        <p>These Terms, together with our <span onClick={() => nav("privacy")} style={{ color: "#FF4D00", cursor: "pointer" }}>Privacy Policy</span>, constitute the entire agreement between you and WrapBridge regarding your use of the Platform and supersede all prior agreements, representations, and understandings.</p>
+
+        <h2>21. Changes to These Terms</h2>
         <p>WrapBridge may update these Terms at any time. We will notify you of material changes by posting the updated Terms on the Platform with a new "Last Updated" date. Continued use of the Platform after changes constitutes acceptance of the updated Terms.</p>
 
-        <h2>17. Contact</h2>
+        <h2>22. Contact</h2>
         <p>For questions about these Terms, contact us at: <a href="mailto:support@wrapbridge.com">support@wrapbridge.com</a></p>
 
         <p style={{ marginTop: 60, color: "rgba(255,255,255,0.2)", fontSize: 12, borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 24 }}>

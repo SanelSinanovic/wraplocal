@@ -89,10 +89,27 @@ export default function PrivacyPage({ nav }) {
         <h2>10. Third-Party Links</h2>
         <p>The Platform may contain links to third-party websites (e.g., Service Provider websites). We are not responsible for the privacy practices of those sites. Review their privacy policies before sharing any personal information.</p>
 
-        <h2>11. Changes to This Policy</h2>
+        <h2>11. Data Location</h2>
+        <p>Your data is stored and processed in the <strong>United States</strong> through our infrastructure providers (Supabase and Stripe). By using the Platform, you consent to the transfer and processing of your data in the United States.</p>
+
+        <h2>12. Data Breach Notification</h2>
+        <p>In the event of a data breach that compromises your personal information, WrapBridge will notify affected users within 72 hours of becoming aware of the breach, or as otherwise required by applicable law. Notification will be sent to the email address associated with your account.</p>
+
+        <h2>13. California Residents (CCPA / CPRA)</h2>
+        <p>If you are a California resident, you have additional rights under the California Consumer Privacy Act (CCPA) and the California Privacy Rights Act (CPRA):</p>
+        <ul>
+          <li><strong>Right to Know:</strong> You may request the categories and specific pieces of personal information we have collected about you.</li>
+          <li><strong>Right to Delete:</strong> You may request deletion of your personal information, subject to certain legal exceptions.</li>
+          <li><strong>Right to Opt Out of Sale:</strong> <strong>We do not sell your personal information</strong> to third parties and have not done so in the preceding 12 months.</li>
+          <li><strong>Right to Non-Discrimination:</strong> We will not discriminate against you for exercising any of your privacy rights.</li>
+        </ul>
+        <p>To exercise these rights, contact us at <a href="mailto:support@wrapbridge.com">support@wrapbridge.com</a>. We will verify your identity before processing any request and respond within 45 days as required by law.</p>
+        <p><strong>Categories of personal information collected:</strong> Identifiers (name, email), commercial information (booking and payment history), internet activity (usage data), and geolocation data. See Section 1 for full details.</p>
+
+        <h2>14. Changes to This Policy</h2>
         <p>We may update this Privacy Policy from time to time. We will notify you of material changes by posting the updated Policy with a new "Last Updated" date. Continued use of the Platform after changes constitutes acceptance.</p>
 
-        <h2>12. Contact</h2>
+        <h2>15. Contact</h2>
         <p>For privacy questions or data requests, contact us at: <a href="mailto:support@wrapbridge.com">support@wrapbridge.com</a></p>
 
         <p style={{ marginTop: 60, color: "rgba(255,255,255,0.2)", fontSize: 12, borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 24 }}>
