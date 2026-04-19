@@ -53,14 +53,21 @@ create policy "Users can update own profile"
   using (auth.uid() = id);
 
 -- ── BOOKINGS ─────────────────────────────────────────────
--- Customers see their own bookings; shop owners see bookings for their shop
+-- Customers see their own bookings; shop owners see bookings for their shop; admins see all
 drop policy if exists "Customers can read own bookings" on bookings;
 create policy "Customers can read own bookings"
   on bookings for select
   using (
     auth.uid() = customer_id
     or auth.uid() = (select owner_id from shops where id = bookings.shop_id)
+    or exists (select 1 from profiles where id = auth.uid() and role = 'admin')
   );
+
+-- Admins can update any booking
+drop policy if exists "Admins can update bookings" on bookings;
+create policy "Admins can update bookings"
+  on bookings for update
+  using (exists (select 1 from profiles where id = auth.uid() and role = 'admin'));
 
 drop policy if exists "Customers can create bookings" on bookings;
 create policy "Customers can create bookings"
