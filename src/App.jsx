@@ -279,13 +279,17 @@ export default function App() {
         return;
       }
       const profile = await fetchProfile(data.user.id);
-      if (profile && profile.role && profile.role !== type) {
+      if (profile && profile.role && profile.role !== type && profile.role !== "admin") {
         setLoginError(`This account is registered as a ${profile.role}. Please use the correct login page.`);
         await supabase.auth.signOut();
         return;
       }
       setCurrentUser(data.user);
       setCurrentProfile(profile);
+      if (profile?.role === "admin") {
+        navigate("/admin", { replace: true });
+        return;
+      }
       if (postLoginNav && type === "customer") {
         const dest = postLoginNav;
         setPostLoginNav(null);
