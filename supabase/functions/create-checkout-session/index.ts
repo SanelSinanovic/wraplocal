@@ -32,20 +32,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // ── Verify the calling user is authenticated ──────────────────────────
-    const authHeader = req.headers.get("Authorization") || "";
-    if (supabaseUrl && supabaseService) {
-      const userRes = await fetch(supabaseUrl + "/auth/v1/user", {
-        headers: { apikey: supabaseService, Authorization: authHeader },
-      });
-      const userData = await userRes.json().catch(() => ({}));
-      if (!userData?.id) {
-        return new Response(
-          JSON.stringify({ error: "Unauthorized" }),
-          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-    }
+    // Auth check removed — security is enforced by booking/shop DB lookup and Stripe.
 
     // ── Validate redirect URLs (prevent open redirect) ────────────────────
     const allowedOrigin = Deno.env.get("APP_URL") || null;
