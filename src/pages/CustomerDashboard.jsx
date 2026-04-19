@@ -303,14 +303,22 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
         } else {
           await confirmBookingFromPayment(bookingId, normalizedCharge, normalizedFull);
         }
+      } else if (!isRemaining) {
+        // Payment confirmed server-side — send the QUOTE_RESPONSE message so chat reflects acceptance
+        const { data: existing } = await supabase.from("bookings").select("status").eq("id", bookingId).single();
+        if (existing?.status === "confirmed") {
+          const marker = `QUOTE_RESPONSE::accepted::${normalizedFull.toFixed(2)}`;
+          await dbSendMessage({ bookingId, senderId: currentUser.id, senderRole: "customer", text: marker });
+          sendNotification("payment_received", bookingId).catch(() => {});
+        }
       }
       // Update local state either way
       if (isRemaining) {
         setBookings(prev => prev.map(b => String(b.id) === String(bookingId) ? { ...b, total: normalizedFull } : b));
         setSelectedBooking({ ...booking, total: normalizedFull });
       } else {
-        setBookings(prev => prev.map(b => String(b.id) === String(bookingId) ? { ...b, status: "confirmed", amount: normalizedFull, fee, total: normalizedCharge } : b));
-        setSelectedBooking({ ...booking, status: "confirmed", amount: normalizedFull, fee, total: normalizedCharge });
+        setBookings(prev => prev.map(b => String(b.id) === String(bookingId) ? { ...b, status: "confirmed", amount: normalizedFull, fee, total: normalizedCharge, payment_verified: true } : b));
+        setSelectedBooking({ ...booking, status: "confirmed", amount: normalizedFull, fee, total: normalizedCharge, payment_verified: true });
       }
     })();
   }, [stripeReturn, bookingsLoaded]);
@@ -379,6 +387,8 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
     const pendingQuote = lastQuoteIndex >= 0
       ? (() => {
           const offerMessage = messages[lastQuoteIndex];
+          // Hide if booking is already paid/confirmed, or if a response message exists in chat
+          if (b.payment_verified || (b.status === "confirmed" && Number(b.amount) > 0)) return null;
           const alreadyResponded = messages.slice(lastQuoteIndex + 1).some(msg => msg?.quoteResponse === "accepted" || msg?.quoteResponse === "declined" || msg?.quoteResponse === "rejected");
           return alreadyResponded ? null : offerMessage;
         })()
