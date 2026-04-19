@@ -1,12 +1,14 @@
 // @ts-nocheck — Deno edge function
-const allowedOrigins = ["https://wrapbridge.com", "http://localhost:5173"];
+const allowedOrigins = ["https://wrapbridge.com", "https://www.wrapbridge.com", "http://localhost:5173", "http://localhost:4173"];
 
 function getCorsHeaders(req: Request) {
   const origin = req.headers.get("Origin") || "";
   const allowed = allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
   return {
     "Access-Control-Allow-Origin": allowed,
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Max-Age": "86400",
   };
 }
 
