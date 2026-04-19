@@ -265,7 +265,7 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
     const booking = bookings.find(b => String(b.id) === String(stripeReturn.bookingId));
     if (!booking) return;
     processingStripeReturn.current = true;
-    const { bookingId, amount, fullAmount, isRemaining } = stripeReturn;
+    const { bookingId, amount, fullAmount, isRemaining, sessionId } = stripeReturn;
     setStripeReturn(null);
     const normalizedCharge = Number(amount) || 0;
     const normalizedFull = Number(fullAmount) || normalizedCharge;
@@ -274,13 +274,28 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
     // Poll for webhook confirmation, then fall back to client-side update
     (async () => {
       let confirmed = false;
-      for (let i = 0; i < 15; i++) {
-        await new Promise(r => setTimeout(r, 2000));
-        const { data } = await supabase.from("bookings").select("status, payment_verified, total").eq("id", bookingId).single();
-        if (data?.payment_verified) { confirmed = true; break; }
-        if (!isRemaining && data?.status === "confirmed") { confirmed = true; break; }
-        if (isRemaining && data?.total === normalizedFull) { confirmed = true; break; }
+
+      // ── Primary: verify directly with Stripe via confirm-payment function ──
+      if (sessionId) {
+        try {
+          const { data: cfData } = await supabase.functions.invoke("confirm-payment", {
+            body: { bookingId, sessionId },
+          });
+          if (cfData?.confirmed) confirmed = true;
+        } catch (_) { /* fall through to polling */ }
       }
+
+      // ── Fallback: poll DB for webhook update (up to 30s) ─────────────────
+      if (!confirmed) {
+        for (let i = 0; i < 15; i++) {
+          await new Promise(r => setTimeout(r, 2000));
+          const { data } = await supabase.from("bookings").select("status, payment_verified, total").eq("id", bookingId).single();
+          if (data?.payment_verified) { confirmed = true; break; }
+          if (!isRemaining && data?.status === "confirmed") { confirmed = true; break; }
+          if (isRemaining && data?.total === normalizedFull) { confirmed = true; break; }
+        }
+      }
+
       if (!confirmed) {
         // Webhook hasn't fired yet — fall back to client-side update
         if (isRemaining) {
@@ -308,7 +323,7 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
     const { booking, fullAmount, chargeAmount, paymentType, isRemaining } = paymentBooking;
     const actualCharge = chargeAmount ?? fullAmount;
     const actualFull   = fullAmount ?? chargeAmount;
-    const successUrl = `${window.location.origin}/?stripe_success=1&booking_id=${booking.id}&amount=${actualCharge}&full_amount=${actualFull}${isRemaining ? "&remaining=1" : ""}`;
+    const successUrl = `${window.location.origin}/?stripe_success=1&booking_id=${booking.id}&amount=${actualCharge}&full_amount=${actualFull}${isRemaining ? "&remaining=1" : ""}&session_id={CHECKOUT_SESSION_ID}`;
     const cancelUrl  = `${window.location.origin}/?stripe_cancel=1`;
     const { data, error } = await supabase.functions.invoke("create-checkout-session", {
       body: { bookingId: booking.id, serviceAmount: actualCharge, fullAmount: actualFull, paymentType: paymentType || "full", isRemainingBalance: !!isRemaining, serviceName: booking.service, shopName: booking.shop, successUrl, cancelUrl },

@@ -190,7 +190,8 @@ export default function App() {
       const fullAmountRaw = parseFloat(urlParams.get('full_amount'));
       const fullAmount = isNaN(fullAmountRaw) ? amount : fullAmountRaw;
       const isRemaining = urlParams.get('remaining') === '1';
-      if (bookingId && !isNaN(amount)) setStripeReturn({ bookingId, amount, fullAmount, isRemaining });
+      const sessionId = urlParams.get('session_id') || null;
+      if (bookingId && !isNaN(amount)) setStripeReturn({ bookingId, amount, fullAmount, isRemaining, sessionId });
       navigate('/dashboard', { replace: true });
     }
 
