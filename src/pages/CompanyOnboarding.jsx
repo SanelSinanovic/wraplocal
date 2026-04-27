@@ -35,7 +35,6 @@ export default function CompanyOnboarding({ currentUser, userShop, onComplete, n
 
   // Step 4 — Launch
   const [goLive, setGoLive] = useState(false);
-  const [hasInsurance, setHasInsurance] = useState(!!userShop?.insurance_verified);
   const [insuranceStatus, setInsuranceStatus] = useState(userShop?.insurance_status || null);
   const [insuranceDocUrl, setInsuranceDocUrl] = useState(userShop?.insurance_doc_url || "");
   const [insuranceUploading, setInsuranceUploading] = useState(false);
@@ -388,13 +387,11 @@ export default function CompanyOnboarding({ currentUser, userShop, onComplete, n
                       const path = `${userShop.id}/insurance.${ext}`;
                       const { error: upErr } = await supabase.storage.from("insurance-docs").upload(path, file, { upsert: true });
                       if (upErr) { setInsuranceError("Upload failed: " + upErr.message); setInsuranceUploading(false); return; }
-                      const { data: { publicUrl } } = supabase.storage.from("insurance-docs").getPublicUrl(path);
-                      const { error: dbErr } = await supabase.from("shops").update({ insurance_doc_url: publicUrl, insurance_status: "pending", insurance_verified: false }).eq("id", userShop.id);
+                      const { error: dbErr } = await supabase.from("shops").update({ insurance_doc_url: path, insurance_status: "pending", insurance_verified: false }).eq("id", userShop.id);
                       setInsuranceUploading(false);
                       if (dbErr) { setInsuranceError("Failed to save: " + dbErr.message); return; }
-                      setInsuranceDocUrl(publicUrl);
+                      setInsuranceDocUrl(path);
                       setInsuranceStatus("pending");
-                      setHasInsurance(false);
                     }} />
                     <button onClick={() => insuranceInputRef.current?.click()} disabled={insuranceUploading} style={{ background: "rgba(59,130,246,0.08)", border: "1px solid rgba(59,130,246,0.2)", color: "#3B82F6", padding: "8px 16px", fontFamily: "'DM Sans', sans-serif", fontSize: 12, fontWeight: 600, cursor: insuranceUploading ? "default" : "pointer", opacity: insuranceUploading ? 0.6 : 1 }}>
                       {insuranceUploading ? "Uploading…" : insuranceDocUrl ? "↩ Re-upload" : "📄 Upload Certificate"}

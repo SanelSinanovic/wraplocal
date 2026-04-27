@@ -5,7 +5,7 @@ import "leaflet/dist/leaflet.css";
 
 const ShopMap = lazy(() => import("../components/ShopMap"));
 
-export default function SearchPage({ nav, shops: liveShops, shopsLoading, searchQuery, setSearchQuery, serviceFilter, setServiceFilter, setSelectedShop, setBookingShop, currentUser, currentProfile, onLogout }) {
+export default function SearchPage({ nav, shops: liveShops, shopsLoading, searchQuery, setSearchQuery, serviceFilter, setServiceFilter, currentUser, currentProfile, onLogout }) {
   const role = currentUser ? (currentProfile?.role || currentUser?.user_metadata?.role || "customer") : null;
   const allShops = liveShops || [];
   const [activeService, setActiveService] = useState(null);

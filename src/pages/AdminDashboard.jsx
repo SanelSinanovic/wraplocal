@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { fetchPlatformStats, fetchAllShops, fetchAllBookings, fetchAllUsers, adminToggleShopListed, adminSetInsuranceStatus, isAdmin } from "../lib/adminQueries";
+import { supabase } from "../lib/supabase";
 
-export default function AdminDashboard({ nav, currentUser, currentProfile, onLogout }) {
+export default function AdminDashboard({ nav, currentUser, onLogout }) {
   const [tab, setTab] = useState("overview");
   const [stats, setStats] = useState(null);
   const [shops, setShops] = useState([]);
@@ -13,16 +14,7 @@ export default function AdminDashboard({ nav, currentUser, currentProfile, onLog
   const [bookingFilter, setBookingFilter] = useState("all");
   const [userFilter, setUserFilter] = useState("all");
 
-  // Auth guard
-  useEffect(() => {
-    if (!currentUser) { setAuthorized(false); return; }
-    isAdmin(currentUser.id).then(ok => {
-      setAuthorized(ok);
-      if (ok) loadData();
-    });
-  }, [currentUser]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     const [s, sh, b, u] = await Promise.all([
       fetchPlatformStats(),
@@ -35,7 +27,16 @@ export default function AdminDashboard({ nav, currentUser, currentProfile, onLog
     setBookings(b);
     setUsers(u);
     setLoading(false);
-  };
+  }, []);
+
+  // Auth guard
+  useEffect(() => {
+    if (!currentUser) { setAuthorized(false); return; }
+    isAdmin(currentUser.id).then(ok => {
+      setAuthorized(ok);
+      if (ok) loadData();
+    });
+  }, [currentUser, loadData]);
 
   if (authorized === null) return <div style={fullPage}>Checking access…</div>;
   if (authorized === false) return (
@@ -69,6 +70,16 @@ export default function AdminDashboard({ nav, currentUser, currentProfile, onLog
   const toggleListed = async (shop) => {
     const ok = await adminToggleShopListed(shop.id, !shop.is_listed);
     if (ok) setShops(prev => prev.map(s => s.id === shop.id ? { ...s, is_listed: !s.is_listed } : s));
+  };
+
+  const openInsuranceDoc = async (docPathOrUrl) => {
+    if (!docPathOrUrl) return;
+    if (/^https?:\/\//i.test(docPathOrUrl)) {
+      window.open(docPathOrUrl, "_blank", "noopener,noreferrer");
+      return;
+    }
+    const { data, error } = await supabase.storage.from("insurance-docs").createSignedUrl(docPathOrUrl, 300);
+    if (!error && data?.signedUrl) window.open(data.signedUrl, "_blank", "noopener,noreferrer");
   };
 
   const maxGMV = stats?.months ? Math.max(...stats.months.map(m => m.gmv), 1) : 1;
@@ -128,7 +139,7 @@ export default function AdminDashboard({ nav, currentUser, currentProfile, onLog
         {loading ? <div style={{ color: "rgba(255,255,255,0.3)", fontFamily: "'DM Sans', sans-serif", padding: 40 }}>Loading platform data…</div> : (
           <>
             {tab === "overview" && <OverviewTab stats={stats} fmtUSD={fmtUSD} fmt={fmt} maxGMV={maxGMV} />}
-            {tab === "shops" && <ShopsTab shops={filteredShops} search={shopSearch} setSearch={setShopSearch} toggleListed={toggleListed} setShops={setShops} fmtDate={fmtDate} />}
+            {tab === "shops" && <ShopsTab shops={filteredShops} search={shopSearch} setSearch={setShopSearch} toggleListed={toggleListed} setShops={setShops} fmtDate={fmtDate} openInsuranceDoc={openInsuranceDoc} />}
             {tab === "bookings" && <BookingsTab bookings={filteredBookings} filter={bookingFilter} setFilter={setBookingFilter} fmtUSD={fmtUSD} fmtDate={fmtDate} fmt={fmt} />}
             {tab === "users" && <UsersTab users={filteredUsers} filter={userFilter} setFilter={setUserFilter} fmtDate={fmtDate} fmt={fmt} />}
           </>
@@ -236,7 +247,7 @@ function OverviewTab({ stats, fmtUSD, fmt, maxGMV }) {
 
 // ── SHOPS TAB ────────────────────────────────────────────────────────────────
 
-function ShopsTab({ shops, search, setSearch, toggleListed, setShops, fmtDate }) {
+function ShopsTab({ shops, search, setSearch, toggleListed, setShops, fmtDate, openInsuranceDoc }) {
   const handleInsurance = async (shop, status) => {
     const ok = await adminSetInsuranceStatus(shop.id, status);
     if (ok) setShops(prev => prev.map(s => s.id === shop.id ? { ...s, insurance_status: status, insurance_verified: status === "verified" } : s));
@@ -278,7 +289,7 @@ function ShopsTab({ shops, search, setSearch, toggleListed, setShops, fmtDate })
                     {s.insurance_status === "verified" && <span style={{ color: "#3B82F6", fontWeight: 600, fontSize: 11 }}>🛡️ Verified</span>}
                     {s.insurance_status === "pending" && (
                       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                        {s.insurance_doc_url && <a href={s.insurance_doc_url} target="_blank" rel="noopener noreferrer" style={{ color: "#F59E0B", fontSize: 11, textDecoration: "none", fontWeight: 600 }}>📄 Review</a>}
+                        {s.insurance_doc_url && <button onClick={() => openInsuranceDoc(s.insurance_doc_url)} style={{ color: "#F59E0B", fontSize: 11, textDecoration: "none", fontWeight: 600, background: "none", border: "none", padding: 0, cursor: "pointer" }}>📄 Review</button>}
                         <button onClick={() => handleInsurance(s, "verified")} style={{ background: "rgba(59,130,246,0.15)", border: "1px solid rgba(59,130,246,0.4)", color: "#3B82F6", padding: "2px 8px", fontSize: 10, cursor: "pointer", fontWeight: 600, fontFamily: "'DM Sans', sans-serif" }}>✓</button>
                         <button onClick={() => handleInsurance(s, "rejected")} style={{ background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.4)", color: "#EF4444", padding: "2px 8px", fontSize: 10, cursor: "pointer", fontWeight: 600, fontFamily: "'DM Sans', sans-serif" }}>✗</button>
                       </div>

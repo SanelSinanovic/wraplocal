@@ -54,6 +54,28 @@ function PageLoader() {
   return <div style={{ minHeight: "100vh", background: "#0A0A0A", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.3)", fontFamily: "'DM Sans', sans-serif" }}>Loading…</div>;
 }
 
+function NotFoundPage({ nav }) {
+  return (
+    <div style={{ minHeight: "100vh", background: "#0A0A0A", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center", padding: 24, fontFamily: "'DM Sans', sans-serif" }}>
+      <div>
+        <div style={{ fontFamily: "'Bebas Neue', cursive", fontSize: 72, letterSpacing: 3, color: "#FF4D00" }}>404</div>
+        <h1 style={{ fontFamily: "'Bebas Neue', cursive", fontSize: 42, letterSpacing: 2, margin: "0 0 8px" }}>Page not found</h1>
+        <p style={{ color: "rgba(255,255,255,0.55)", marginBottom: 24 }}>The page you’re looking for doesn’t exist or has moved.</p>
+        <button onClick={() => nav("landing")} style={{ background: "#FF4D00", color: "#fff", border: "none", padding: "12px 22px", fontFamily: "'Bebas Neue', cursive", fontSize: 17, letterSpacing: 2, cursor: "pointer" }}>Back Home</button>
+      </div>
+    </div>
+  );
+}
+
+function RequireAuth({ children, role, authReady, currentUser, currentProfile }) {
+  if (!authReady) return <PageLoader />;
+  if (!currentUser) return <Navigate to={role === "company" ? "/business/login" : "/login"} replace />;
+  const accountRole = currentProfile?.role || currentUser?.user_metadata?.role;
+  if (role === "company" && accountRole === "customer") return <Navigate to="/dashboard" replace />;
+  if (role === "customer" && accountRole === "company") return <Navigate to="/company" replace />;
+  return children;
+}
+
 // Wrapper: load shop from URL param for ShopProfile
 function ShopProfileLoader({ nav, setBookingShop, currentUser, currentProfile, onLogout, selectedShop, setSelectedShop }) {
   const { shopId } = useParams();
@@ -117,6 +139,7 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const [serviceFilter, setServiceFilter] = useState(null);
   const [stripeReturn, setStripeReturn] = useState(null);
+  const [stripeNotice, setStripeNotice] = useState("");
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
   const [loginError, setLoginError] = useState("");
   const [postLoginNav, setPostLoginNav] = useState(null);
@@ -166,6 +189,7 @@ export default function App() {
   const [shopsLoading, setShopsLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
   const [currentProfile, setCurrentProfile] = useState(null);
+  const [authReady, setAuthReady] = useState(false);
 
   useEffect(() => {
     if ('scrollRestoration' in window.history) window.history.scrollRestoration = 'manual';
@@ -180,18 +204,19 @@ export default function App() {
         setCurrentUser(session.user);
         fetchProfile(session.user.id).then(p => setCurrentProfile(p));
       }
+      setAuthReady(true);
     });
 
-    // Detect Stripe Checkout redirect (?stripe_success=1&booking_id=xxx&amount=xxx)
+    // Detect Stripe Checkout redirect. Payment amounts are never trusted from the URL.
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('stripe_success') === '1') {
       const bookingId = urlParams.get('booking_id');
-      const amount = parseFloat(urlParams.get('amount'));
-      const fullAmountRaw = parseFloat(urlParams.get('full_amount'));
-      const fullAmount = isNaN(fullAmountRaw) ? amount : fullAmountRaw;
       const isRemaining = urlParams.get('remaining') === '1';
       const sessionId = urlParams.get('session_id') || null;
-      if (bookingId && !isNaN(amount)) setStripeReturn({ bookingId, amount, fullAmount, isRemaining, sessionId });
+      if (bookingId && sessionId) setStripeReturn({ bookingId, isRemaining, sessionId });
+      navigate('/dashboard', { replace: true });
+    } else if (urlParams.get('stripe_cancel') === '1') {
+      setStripeNotice('Payment was cancelled. No charge was made.');
       navigate('/dashboard', { replace: true });
     }
 
@@ -215,6 +240,7 @@ export default function App() {
         setCurrentUser(null);
         setCurrentProfile(null);
       }
+      setAuthReady(true);
     });
 
     return () => { subscription.unsubscribe(); };
@@ -311,6 +337,7 @@ export default function App() {
     nav("landing");
   };
 
+  const refreshShops = useCallback(() => fetchShops().then(d => { if (d) setShops(d); }), []);
   const commonProps = { nav, currentUser, currentProfile, onLogout: handleLogout };
 
   return (
@@ -319,16 +346,16 @@ export default function App() {
       <Route path="/search" element={<SearchPage {...commonProps} shops={shops} shopsLoading={shopsLoading} searchQuery={searchQuery} setSearchQuery={setSearchQuery} serviceFilter={serviceFilter} setServiceFilter={setServiceFilter} setSelectedShop={setSelectedShop} setBookingShop={setBookingShop} />} />
       <Route path="/shop/:shopId" element={<ShopProfileLoader {...commonProps} selectedShop={selectedShop} setSelectedShop={setSelectedShop} setBookingShop={setBookingShop} />} />
       <Route path="/book/:shopId" element={<BookingFlowLoader {...commonProps} bookingShop={bookingShop} setBookingShop={setBookingShop} bookingStep={bookingStep} setBookingStep={setBookingStep} selectedSlot={selectedSlot} setSelectedSlot={setSelectedSlot} selectedDate={selectedDate} setSelectedDate={setSelectedDate} bookingConfirmed={bookingConfirmed} setBookingConfirmed={setBookingConfirmed} />} />
-      <Route path="/dashboard" element={<CustomerDashboard {...commonProps} stripeReturn={stripeReturn} setStripeReturn={setStripeReturn} />} />
-      <Route path="/company" element={<CompanyDashboard {...commonProps} dashTab={dashTab} setDashTab={setDashTab} refreshShops={() => fetchShops().then(d => { if (d) setShops(d); })} />} />
+      <Route path="/dashboard" element={<RequireAuth role="customer" authReady={authReady} currentUser={currentUser} currentProfile={currentProfile}><CustomerDashboard {...commonProps} stripeReturn={stripeReturn} setStripeReturn={setStripeReturn} stripeNotice={stripeNotice} setStripeNotice={setStripeNotice} /></RequireAuth>} />
+      <Route path="/company" element={<RequireAuth role="company" authReady={authReady} currentUser={currentUser} currentProfile={currentProfile}><CompanyDashboard {...commonProps} dashTab={dashTab} setDashTab={setDashTab} refreshShops={refreshShops} /></RequireAuth>} />
       <Route path="/pricing" element={<PricingPage nav={nav} currentUser={currentUser} currentProfile={currentProfile} />} />
       <Route path="/login" element={<CustomerLogin nav={nav} loginForm={loginForm} setLoginForm={setLoginForm} loginError={loginError} setLoginError={setLoginError} handleLogin={handleLogin} bookingContext={!!postLoginNav} />} />
       <Route path="/business/login" element={<CompanyLogin nav={nav} loginForm={loginForm} setLoginForm={setLoginForm} loginError={loginError} setLoginError={setLoginError} handleLogin={handleLogin} />} />
       <Route path="/terms" element={<TermsPage nav={nav} />} />
       <Route path="/privacy" element={<PrivacyPage nav={nav} />} />
       <Route path="/reset-password" element={<ResetPasswordPage nav={nav} recoveryReady={recoveryReady} />} />
-      <Route path="/admin" element={<AdminDashboard {...commonProps} />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="/admin" element={<RequireAuth authReady={authReady} currentUser={currentUser} currentProfile={currentProfile}><AdminDashboard {...commonProps} /></RequireAuth>} />
+      <Route path="*" element={<NotFoundPage nav={nav} />} />
     </Routes>
   );
 }

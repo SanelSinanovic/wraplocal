@@ -19,7 +19,7 @@ function mergeMessages(existing = [], incoming = []) {
   return merged;
 }
 
-export default function CustomerDashboard({ nav, currentUser, currentProfile, onLogout, stripeReturn, setStripeReturn }) {
+export default function CustomerDashboard({ nav, currentUser, currentProfile, onLogout, stripeReturn, setStripeReturn, stripeNotice, setStripeNotice }) {
   const [bookings, setBookings] = useState([]);
   const [bookingsLoaded, setBookingsLoaded] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState(null);
@@ -38,6 +38,7 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
   const [paymentBooking, setPaymentBooking] = useState(null); // { booking, amount }
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [paymentError, setPaymentError] = useState("");
+  const [stripeStatusMessage, setStripeStatusMessage] = useState("");
 
   // ── Reschedule modal state ───────────────────────────────
   const [rescheduleBooking, setRescheduleBooking] = useState(null);
@@ -116,6 +117,12 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
   }, [selectedBooking?.id]);
 
   useEffect(() => {
+    if (!stripeNotice) return;
+    setStripeStatusMessage(stripeNotice);
+    setStripeNotice?.("");
+  }, [stripeNotice, setStripeNotice]);
+
+  useEffect(() => {
     if (selectedBooking) chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messagesMap, selectedBooking]);
 
@@ -171,18 +178,12 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
     if (result) await sendMessageText(`FILE::${result.url}::${result.name}`);
   };
 
-  const handleQuoteDecision = async (decision, amount) => {
+  const handleQuoteDecision = async (decision, amount, quoteId) => {
     if (!currentUser || !selectedBooking) return;
     const normalizedAmount = Number(amount) || 0;
-    const nextStatus = decision === "accepted" ? "confirmed" : "cancelled";
-    const updatePayload = decision === "accepted"
-      ? {
-          status: nextStatus,
-          amount: normalizedAmount,
-          fee: Math.round(normalizedAmount * 0.07 * 100) / 100,
-          total: normalizedAmount,
-        }
-      : { status: nextStatus };
+    if (decision !== "rejected" && decision !== "declined") return;
+    const nextStatus = "cancelled";
+    const updatePayload = { status: nextStatus };
 
     const { error } = await supabase
       .from("bookings")
@@ -190,7 +191,10 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
       .eq("id", selectedBooking.id)
       .eq("customer_id", currentUser.id);
     if (error) return;
-    if (decision === "accepted") sendNotification("quote_accepted", selectedBooking.id);
+    if (quoteId) {
+      await supabase.from("booking_quotes").update({ status: "declined" }).eq("id", quoteId).eq("booking_id", selectedBooking.id);
+    }
+    sendNotification("booking_cancelled", selectedBooking.id).catch(() => {});
 
     const marker = `QUOTE_RESPONSE::${decision}::${normalizedAmount.toFixed(2)}`;
     const result = await dbSendMessage({
@@ -200,27 +204,18 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
       text: marker,
     });
 
-    const nextTotal = decision === "accepted"
-      ? normalizedAmount
-      : selectedBooking.total;
-    const nextFee = decision === "accepted"
-      ? Math.round(normalizedAmount * 0.07 * 100) / 100
-      : selectedBooking.fee;
-
     setBookings(prev => prev.map(b => b.id === selectedBooking.id
-      ? { ...b, status: nextStatus, amount: decision === "accepted" ? normalizedAmount : b.amount, fee: nextFee, total: nextTotal }
+      ? { ...b, status: nextStatus }
       : b
     ));
     setSelectedBooking(prev => prev
-      ? { ...prev, status: nextStatus, amount: decision === "accepted" ? normalizedAmount : prev.amount, fee: nextFee, total: nextTotal }
+      ? { ...prev, status: nextStatus }
       : prev
     );
 
     if (result) {
       const time = new Date(result.sent_at || Date.now()).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
-      const decisionText = decision === "accepted"
-        ? `Quote accepted ($${normalizedAmount.toFixed(2)})`
-        : `Quote declined ($${normalizedAmount.toFixed(2)})`;
+      const decisionText = `Quote declined ($${normalizedAmount.toFixed(2)})`;
       setMessagesMap(prev => ({
         ...prev,
         [selectedBooking.id]: mergeMessages(prev[selectedBooking.id] || [], {
@@ -236,21 +231,35 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
     }
   };
 
-  // ── Confirm booking after Stripe payment (doesn't depend on selectedBooking state) ──
-  const confirmBookingFromPayment = async (bookingId, chargeAmount, fullAmount) => {
+  // ── Add a chat receipt after Stripe payment (server-side DB writes are source of truth) ──
+  const sendPaymentAcceptanceMessage = async (bookingId, fullAmount) => {
     if (!currentUser) return;
-    const normalizedCharge = Number(chargeAmount) || 0;
-    const normalizedFull = Number(fullAmount) || normalizedCharge;
-    const fee = Math.round(normalizedFull * 0.07 * 100) / 100;  // 7% of full job price
-    const total = normalizedCharge;                              // what was actually paid now
-    // Guard: if already confirmed don't re-send the message (prevents duplicates on re-render)
-    const { data: existing } = await supabase.from("bookings").select("status").eq("id", bookingId).single();
-    if (existing?.status === "confirmed") return;
-    await supabase.from("bookings").update({ status: "confirmed", amount: normalizedFull, fee, total }).eq("id", bookingId).eq("customer_id", currentUser.id);
+    const normalizedFull = Number(fullAmount) || 0;
+    const { data: existingMessage } = await supabase
+      .from("messages")
+      .select("id")
+      .eq("booking_id", bookingId)
+      .like("text", "QUOTE_RESPONSE::accepted::%")
+      .maybeSingle();
+    if (existingMessage) return;
     const marker = `QUOTE_RESPONSE::accepted::${normalizedFull.toFixed(2)}`;
-    await dbSendMessage({ bookingId, senderId: currentUser.id, senderRole: "customer", text: marker });
+    const result = await dbSendMessage({ bookingId, senderId: currentUser.id, senderRole: "customer", text: marker });
     sendNotification("payment_received", bookingId).catch(() => {});
-    setBookings(prev => prev.map(b => String(b.id) === String(bookingId) ? { ...b, status: "confirmed", amount: normalizedFull, fee, total } : b));
+    if (result) {
+      const time = new Date(result.sent_at || Date.now()).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+      setMessagesMap(prev => ({
+        ...prev,
+        [bookingId]: mergeMessages(prev[bookingId] || [], {
+          id: result.id,
+          from: "me",
+          text: `Quote accepted ($${normalizedFull.toFixed(2)})`,
+          time,
+          quoteResponse: "accepted",
+          quoteAmount: normalizedFull,
+          rawText: marker,
+        }),
+      }));
+    }
   };
 
   const processingStripeReturn = useRef(false);
@@ -265,11 +274,8 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
     const booking = bookings.find(b => String(b.id) === String(stripeReturn.bookingId));
     if (!booking) return;
     processingStripeReturn.current = true;
-    const { bookingId, amount, fullAmount, isRemaining, sessionId } = stripeReturn;
+    const { bookingId, isRemaining, sessionId } = stripeReturn;
     setStripeReturn(null);
-    const normalizedCharge = Number(amount) || 0;
-    const normalizedFull = Number(fullAmount) || normalizedCharge;
-    const fee = Math.round(normalizedFull * 0.07 * 100) / 100;
 
     // Poll for webhook confirmation, then fall back to client-side update
     (async () => {
@@ -292,35 +298,35 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
           const { data } = await supabase.from("bookings").select("status, payment_verified, total").eq("id", bookingId).single();
           if (data?.payment_verified) { confirmed = true; break; }
           if (!isRemaining && data?.status === "confirmed") { confirmed = true; break; }
-          if (isRemaining && data?.total === normalizedFull) { confirmed = true; break; }
         }
       }
 
       if (!confirmed) {
-        // Webhook hasn't fired yet — fall back to client-side update
-        if (isRemaining) {
-          await supabase.from("bookings").update({ total: normalizedFull }).eq("id", bookingId).eq("customer_id", currentUser.id);
-        } else {
-          await confirmBookingFromPayment(bookingId, normalizedCharge, normalizedFull);
-        }
-      } else if (!isRemaining) {
-        // Payment confirmed server-side — send the QUOTE_RESPONSE message so chat reflects acceptance
-        const { data: existing } = await supabase.from("bookings").select("status").eq("id", bookingId).single();
-        if (existing?.status === "confirmed") {
-          const marker = `QUOTE_RESPONSE::accepted::${normalizedFull.toFixed(2)}`;
-          await dbSendMessage({ bookingId, senderId: currentUser.id, senderRole: "customer", text: marker });
-          sendNotification("payment_received", bookingId).catch(() => {});
+        setStripeStatusMessage("Payment submitted. Stripe is still confirming it; refresh in a moment if your booking has not updated.");
+        processingStripeReturn.current = false;
+        return;
+      }
+
+      const refreshed = await fetchCustomerBookings(currentUser.id);
+      const updatedBooking = refreshed?.find(item => String(item.id) === String(bookingId));
+      if (refreshed) {
+        setBookings(refreshed);
+        setMessagesMap(prev => ({
+          ...Object.fromEntries(refreshed.map(item => [item.id, prev[item.id] || []])),
+        }));
+      }
+      if (updatedBooking) {
+        setSelectedBooking(updatedBooking);
+        setStripeStatusMessage(isRemaining ? "Remaining balance paid successfully." : "Payment successful. Your booking is confirmed.");
+        if (!isRemaining) {
+          await sendPaymentAcceptanceMessage(bookingId, updatedBooking.amount);
         }
       }
-      // Update local state either way
-      if (isRemaining) {
-        setBookings(prev => prev.map(b => String(b.id) === String(bookingId) ? { ...b, total: normalizedFull } : b));
-        setSelectedBooking({ ...booking, total: normalizedFull });
-      } else {
-        setBookings(prev => prev.map(b => String(b.id) === String(bookingId) ? { ...b, status: "confirmed", amount: normalizedFull, fee, total: normalizedCharge, payment_verified: true } : b));
-        setSelectedBooking({ ...booking, status: "confirmed", amount: normalizedFull, fee, total: normalizedCharge, payment_verified: true });
-      }
-    })();
+      processingStripeReturn.current = false;
+    })().catch(() => {
+      setStripeStatusMessage("Payment verification is still processing. Refresh in a moment if your booking has not updated.");
+      processingStripeReturn.current = false;
+    });
   }, [stripeReturn, bookingsLoaded]);
 
   // ── Redirect to Stripe Checkout ──────────────────────────────────────────
@@ -328,13 +334,16 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
     if (!paymentBooking) return;
     setPaymentLoading(true);
     setPaymentError("");
-    const { booking, fullAmount, chargeAmount, paymentType, isRemaining } = paymentBooking;
-    const actualCharge = chargeAmount ?? fullAmount;
-    const actualFull   = fullAmount ?? chargeAmount;
-    const successUrl = `${window.location.origin}/?stripe_success=1&booking_id=${booking.id}&amount=${actualCharge}&full_amount=${actualFull}${isRemaining ? "&remaining=1" : ""}&session_id={CHECKOUT_SESSION_ID}`;
-    const cancelUrl  = `${window.location.origin}/?stripe_cancel=1`;
+    const { booking, quoteId, paymentType, isRemaining } = paymentBooking;
+    if (!isRemaining && !quoteId) {
+      setPaymentError("This older quote must be resent by the shop before online payment.");
+      setPaymentLoading(false);
+      return;
+    }
+    const successUrl = `${window.location.origin}/dashboard?stripe_success=1&booking_id=${booking.id}${isRemaining ? "&remaining=1" : ""}&session_id={CHECKOUT_SESSION_ID}`;
+    const cancelUrl  = `${window.location.origin}/dashboard?stripe_cancel=1`;
     const { data, error } = await supabase.functions.invoke("create-checkout-session", {
-      body: { bookingId: booking.id, serviceAmount: actualCharge, fullAmount: actualFull, paymentType: paymentType || "full", isRemainingBalance: !!isRemaining, serviceName: booking.service, shopName: booking.shop, successUrl, cancelUrl },
+      body: { bookingId: booking.id, quoteId, paymentType: isRemaining ? "remaining" : paymentType || "full", successUrl, cancelUrl },
     });
     if (error || !data?.url) {
       const msg = data?.error || error?.message || error?.toString() || "Unknown error";
@@ -397,6 +406,9 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
       <div style={{ fontFamily: "'Bebas Neue', cursive", background: "#0A0A0A", minHeight: "100vh", color: "#fff" }}>
         <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap'); * { box-sizing: border-box; } .chat-input { background: #1A1A1A; border: 1px solid rgba(255,255,255,0.1); padding: 12px 16px; color: #fff; font-family: 'DM Sans', sans-serif; font-size: 14px; outline: none; flex: 1; } .chat-input:focus { border-color: #FF4D00; } .send-btn { background: #FF4D00; color: #fff; border: none; padding: 12px 24px; font-family: 'Bebas Neue', cursive; font-size: 16px; letter-spacing: 2px; cursor: pointer; flex-shrink: 0; } @media (max-width: 768px) { .detail-wrap { padding: 16px !important; } .detail-layout { grid-template-columns: 1fr !important; gap: 16px !important; } .detail-back { font-size: 13px !important; } } @media (max-width: 420px) { .detail-wrap { padding: 12px !important; } }`}</style>
         <Navbar />
+        {stripeStatusMessage && (
+          <div style={{ maxWidth: 900, margin: "18px auto 0", padding: "12px 16px", background: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.25)", color: "#A7F3D0", fontFamily: "'DM Sans', sans-serif", fontSize: 13 }}>{stripeStatusMessage}</div>
+        )}
         <div className="detail-wrap" style={{ maxWidth: 900, margin: "0 auto", padding: "36px 40px" }}>
           {/* Back */}
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 28, cursor: "pointer" }} onClick={() => setSelectedBooking(null)}>
@@ -475,24 +487,36 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
                   <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                     <button
                       onClick={() => {
+                        if (!pendingQuote.quoteId) {
+                          setPaymentError("This older quote must be resent by the shop before online payment.");
+                          return;
+                        }
                         const fullAmt = pendingQuote.quoteOffer;
                         const pType = pendingQuote.paymentType || "full";
                         const dPct = pendingQuote.depositPct || 100;
                         const chargeAmt = pType === "deposit" ? Math.round(fullAmt * dPct) / 100 : fullAmt;
-                        setPaymentBooking({ booking: selectedBooking, fullAmount: fullAmt, chargeAmount: chargeAmt, paymentType: pType, depositPct: dPct });
+                        setPaymentBooking({ booking: selectedBooking, quoteId: pendingQuote.quoteId, fullAmount: fullAmt, chargeAmount: chargeAmt, paymentType: pType, depositPct: dPct });
                       }}
-                      style={{ background: "#10B981", color: "#fff", border: "none", padding: "9px 14px", fontFamily: "'Bebas Neue', cursive", fontSize: 14, letterSpacing: 1, cursor: "pointer" }}
+                      style={{ background: pendingQuote.quoteId ? "#10B981" : "#2a2a2a", color: "#fff", border: "none", padding: "9px 14px", fontFamily: "'Bebas Neue', cursive", fontSize: 14, letterSpacing: 1, cursor: pendingQuote.quoteId ? "pointer" : "default", opacity: pendingQuote.quoteId ? 1 : 0.65 }}
                     >
                       {pendingQuote.paymentType === "deposit"
                         ? `Accept & Pay Deposit ($${(pendingQuote.quoteOffer * pendingQuote.depositPct / 100).toFixed(2)}) →`
                         : "Accept & Pay →"}
                     </button>
-                    <button onClick={() => handleQuoteDecision("rejected", pendingQuote.quoteOffer)} style={{ background: "transparent", color: "rgba(255,77,0,0.9)", border: "1px solid rgba(255,77,0,0.4)", padding: "9px 14px", fontFamily: "'Bebas Neue', cursive", fontSize: 14, letterSpacing: 1, cursor: "pointer" }}>Decline Quote</button>
+                    <button onClick={() => handleQuoteDecision("rejected", pendingQuote.quoteOffer, pendingQuote.quoteId)} style={{ background: "transparent", color: "rgba(255,77,0,0.9)", border: "1px solid rgba(255,77,0,0.4)", padding: "9px 14px", fontFamily: "'Bebas Neue', cursive", fontSize: 14, letterSpacing: 1, cursor: "pointer" }}>Decline Quote</button>
                   </div>
+                  {!pendingQuote.quoteId && (
+                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "#F59E0B", marginTop: 8 }}>
+                      Ask the shop to resend this quote before paying online.
+                    </div>
+                  )}
                   {pendingQuote.paymentType === "deposit" && (
                     <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 8 }}>
                       Remaining ${(pendingQuote.quoteOffer * (1 - pendingQuote.depositPct / 100)).toFixed(2)} is due directly to the shop at pickup.
                     </div>
+                  )}
+                  {paymentError && !paymentBooking && (
+                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#EF4444", marginTop: 8 }}>{paymentError}</div>
                   )}
                 </div>
               )}
@@ -807,6 +831,9 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
       <div aria-hidden="true" style={{ position: "fixed", bottom: "-10%", left: "-8%", width: 500, height: 500, background: "radial-gradient(circle, rgba(59,130,246,0.14) 0%, transparent 65%)", borderRadius: "50%", pointerEvents: "none", animation: "orb-drift 14s ease-in-out infinite", zIndex: 0 }} />
       <Navbar />
       <div className="dash-pad" style={{ padding: "40px" }}>
+        {stripeStatusMessage && (
+          <div style={{ marginBottom: 18, padding: "12px 16px", background: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.25)", color: "#A7F3D0", fontFamily: "'DM Sans', sans-serif", fontSize: 13 }}>{stripeStatusMessage}</div>
+        )}
         <div className="dash-title" style={{ fontSize: 48, letterSpacing: 2, marginBottom: 8 }}>MY BOOKINGS</div>
         <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.4)", marginBottom: 32 }}>Click a booking to view details and chat with the shop</div>
         {!bookingsLoaded ? (

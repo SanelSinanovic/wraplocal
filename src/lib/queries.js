@@ -1,4 +1,4 @@
-import { supabase, supabaseUrl, supabaseAnonKey } from './supabase'
+import { supabase } from './supabase'
 
 // ── FILE UPLOAD VALIDATION ───────────────────────────────────────────────────
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
@@ -237,6 +237,9 @@ export async function fetchCustomerBookings(customerId) {
   // Normalize to match component expectations
   return data.map(b => ({
     ...b,
+    amount: Number(b.amount) || 0,
+    fee: Number(b.fee) || 0,
+    total: Number(b.total) || 0,
     shop: b.shop?.name || '',
     shopAvatar: b.shop?.avatar || (b.shop?.name ? b.shop.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() : '??'),
     shopColor: b.shop?.color || '#FF4D00',
@@ -300,8 +303,11 @@ export async function fetchCompanyBookings(shopId) {
         'Customer'
       return {
         ...b,
+        amount: Number(b.amount) || 0,
+        fee: Number(b.fee) || 0,
+        total: Number(b.total) || 0,
         customer: resolvedName,
-        payout: b.amount ? Math.round(b.amount * 0.93 * 100) / 100 : 0,
+        payout: b.amount ? Math.round(Number(b.amount) * 0.93 * 100) / 100 : 0,
       }
     }),
     error: null,
@@ -320,7 +326,7 @@ export function subscribeToShopBookings(shopId, callback) {
     .subscribe()
 }
 
-export async function createBooking({ shopId, customerId, service, date, timeSlot, preferredDates, vehicle, designOption, designFileUrl, amount = 0, customerName, customerPhone }) {
+export async function createBooking({ shopId, customerId, service, date, timeSlot, preferredDates, vehicle, designOption, designFileUrl }) {
   // Build the row with only the required columns first
   const row = {
     shop_id: shopId,
@@ -329,25 +335,57 @@ export async function createBooking({ shopId, customerId, service, date, timeSlo
     date,
     time_slot: timeSlot,
     status: 'pending',
+    amount: 0,
+    fee: 0,
+    total: 0,
   }
   // Add optional columns — these only work if the columns exist in your DB
   if (vehicle) row.vehicle = vehicle
   if (designOption) row.design_option = designOption
   if (designFileUrl) row.design_file_url = designFileUrl
   if (preferredDates) row.preferred_dates = preferredDates
-  if (amount != null) {
-    const fee = Math.round(amount * 0.07 * 100) / 100
-    const total = Math.round((amount + fee) * 100) / 100
-    row.amount = amount
-    row.fee = fee
-    row.total = total
-  }
   const { data, error } = await supabase
     .from('bookings')
     .insert(row)
     .select()
     .single()
   if (error) { console.error('createBooking:', error); return { data: null, error } }
+  return { data, error: null }
+}
+
+// ── BOOKING QUOTES ─────────────────────────────────────────────────────────
+
+export async function createBookingQuote({ bookingId, shopId, amount, paymentType = 'full', depositPct = 100, createdBy }) {
+  const normalizedAmount = Math.round(Number(amount) * 100) / 100
+  const normalizedPaymentType = paymentType === 'deposit' ? 'deposit' : 'full'
+  const normalizedDepositPct = normalizedPaymentType === 'deposit'
+    ? Math.min(100, Math.max(10, Number(depositPct) || 50))
+    : 100
+
+  if (!Number.isFinite(normalizedAmount) || normalizedAmount <= 0) {
+    return { data: null, error: new Error('Quote amount must be greater than $0.') }
+  }
+
+  await supabase
+    .from('booking_quotes')
+    .update({ status: 'cancelled' })
+    .eq('booking_id', bookingId)
+    .eq('status', 'active')
+
+  const { data, error } = await supabase
+    .from('booking_quotes')
+    .insert({
+      booking_id: bookingId,
+      shop_id: shopId,
+      amount: normalizedAmount,
+      payment_type: normalizedPaymentType,
+      deposit_pct: normalizedDepositPct,
+      created_by: createdBy,
+    })
+    .select()
+    .single()
+
+  if (error) { console.error('createBookingQuote:', error); return { data: null, error } }
   return { data, error: null }
 }
 
@@ -370,6 +408,28 @@ function normalizeMessageRow(m) {
     month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
   })
 
+  if (text.startsWith('QUOTE_OFFER_V2::')) {
+    const parts = text.split('::')
+    const quoteId = parts[1]
+    const amount = Number(parts[2])
+    const paymentType = parts[3] || 'full'
+    const depositPct = parts[4] ? Number(parts[4]) : 100
+    const depositStr = paymentType === 'deposit'
+      ? ` · ${depositPct}% deposit ($${(amount * depositPct / 100).toFixed(2)}) due now`
+      : ''
+    return {
+      id: m.id,
+      from,
+      text: Number.isFinite(amount) ? `Quote offer: $${amount.toFixed(2)}${depositStr}` : 'Quote offer received',
+      time,
+      quoteId,
+      quoteOffer: Number.isFinite(amount) ? amount : null,
+      paymentType,
+      depositPct,
+      rawText: text,
+    }
+  }
+
   if (text.startsWith('QUOTE_OFFER::')) {
     const parts = text.split('::')
     const amount = Number(parts[1])
@@ -383,6 +443,7 @@ function normalizeMessageRow(m) {
       from,
       text: Number.isFinite(amount) ? `Quote offer: $${amount.toFixed(2)}${depositStr}` : 'Quote offer received',
       time,
+      quoteId: null,
       quoteOffer: Number.isFinite(amount) ? amount : null,
       paymentType,
       depositPct,
@@ -441,8 +502,10 @@ export async function uploadChatFile(file, bookingId) {
 export async function uploadDesignFile(file) {
   const valErr = validateUploadFile(file);
   if (valErr) { console.error('uploadDesignFile:', valErr); return null; }
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) { console.error('uploadDesignFile: user must be signed in'); return null; }
   const ext = file.name.split('.').pop().toLowerCase();
-  const path = `booking-designs/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+  const path = `booking-designs/${user.id}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
   const { error } = await supabase.storage.from('shop-images').upload(path, file, { upsert: true });
   if (error) { console.error('uploadDesignFile:', error); return null; }
   const { data } = supabase.storage.from('shop-images').getPublicUrl(path);
@@ -535,15 +598,10 @@ export async function saveShopAvailability(shopId, workingDays, blockedDates) {
 // Fire-and-forget: errors are swallowed so they never block the booking flow.
 export async function sendNotification(type, bookingId) {
   try {
-    await fetch(`${supabaseUrl}/functions/v1/send-notification`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + supabaseAnonKey,
-        "apikey": supabaseAnonKey,
-      },
-      body: JSON.stringify({ type, bookingId }),
-    });
+    const { error } = await supabase.functions.invoke('send-notification', {
+      body: { type, bookingId },
+    })
+    if (error) console.warn('sendNotification failed:', error)
   } catch (e) {
     console.warn('sendNotification failed:', e);
   }

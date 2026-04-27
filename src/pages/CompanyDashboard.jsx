@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase, supabaseUrl, supabaseAnonKey } from "../lib/supabase";
-import { fetchUserShop, fetchCompanyBookings, createShop, updateShop, fetchMessages, sendMessage as dbSendMessage, subscribeToMessages, subscribeToShopBookings, fetchPortfolioImages, addPortfolioImage, deletePortfolioImage, setHeroPortfolioImage, scheduleBooking, uploadChatFile, geocodeCityState, fetchShopAvailability, saveShopAvailability, sendNotification, validateUploadFile } from "../lib/queries";
+import { fetchUserShop, fetchCompanyBookings, createShop, updateShop, fetchMessages, sendMessage as dbSendMessage, subscribeToMessages, subscribeToShopBookings, fetchPortfolioImages, addPortfolioImage, deletePortfolioImage, setHeroPortfolioImage, scheduleBooking, uploadChatFile, geocodeCityState, fetchShopAvailability, saveShopAvailability, sendNotification, validateUploadFile, createBookingQuote } from "../lib/queries";
 import { SERVICE_CATEGORIES, ALL_SERVICE_NAMES } from "../lib/services";
 import CompanyOnboarding from "./CompanyOnboarding";
 
@@ -115,7 +115,7 @@ function BookingDetailPanel({ selectedBooking, messagesMap, chatInput, setChatIn
             </div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
               {b.status === "pending" && (
-                <button onClick={() => updateBookingStatus(b.id, "confirmed")} style={{ background: "#10B981", color: "#fff", border: "none", padding: "8px 16px", fontFamily: "'Bebas Neue', cursive", fontSize: 14, letterSpacing: 1, cursor: "pointer" }}>✓ Confirm</button>
+                <span style={{ background: "rgba(245,158,11,0.12)", color: "#F59E0B", border: "1px solid rgba(245,158,11,0.25)", padding: "8px 16px", fontFamily: "'Bebas Neue', cursive", fontSize: 14, letterSpacing: 1 }}>Send Quote</span>
               )}
               {b.status !== "completed" && b.status !== "cancelled" && (() => {
                 const canComplete = b.status === "confirmed" && Number(b.amount) > 0;
@@ -348,7 +348,6 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
   const [bookingsError, setBookingsError] = useState("");
   const [bookingsLoaded, setBookingsLoaded] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState(null);
-  const [selectedBookingSource, setSelectedBookingSource] = useState("bookings");
   const [messagesMap, setMessagesMap] = useState({});
   const [chatInput, setChatInput] = useState("");
   const [quoteInput, setQuoteInput] = useState("");
@@ -363,7 +362,6 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
   const [portfolioError, setPortfolioError] = useState("");
   const [dragOver, setDragOver] = useState(false);
   const [isListed, setIsListed] = useState(false);
-  const [hasInsurance, setHasInsurance] = useState(false);
   const [insuranceStatus, setInsuranceStatus] = useState(null); // null | pending | verified | rejected
   const [insuranceDocUrl, setInsuranceDocUrl] = useState("");
   const [insuranceUploading, setInsuranceUploading] = useState(false);
@@ -388,6 +386,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
   const [connectLoading, setConnectLoading] = useState(false);
   const [connectError, setConnectError] = useState("");
   const [verifyLoading, setVerifyLoading] = useState(false);
+  const stripeVerifyInFlightRef = useRef(false);
 
   const syncProfileForm = (shop) => {
     setProfileForm({
@@ -404,11 +403,20 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
     setSelectedServices((shop.tags || []).filter(t => ALL_SERVICE_NAMES.includes(t)));
     setProfilePhotoUrl(shop.banner_url || "");
     setIsListed(!!shop.is_listed);
-    setHasInsurance(!!shop.insurance_verified);
     setInsuranceStatus(shop.insurance_status || null);
     setInsuranceDocUrl(shop.insurance_doc_url || "");
     setStripeAccountId(shop.stripe_account_id || "");
     setStripeOnboarded(!!shop.stripe_onboarded);
+  };
+
+  const openInsuranceDoc = async () => {
+    if (!insuranceDocUrl) return;
+    if (/^https?:\/\//i.test(insuranceDocUrl)) {
+      window.open(insuranceDocUrl, "_blank", "noopener,noreferrer");
+      return;
+    }
+    const { data, error } = await supabase.storage.from("insurance-docs").createSignedUrl(insuranceDocUrl, 300);
+    if (!error && data?.signedUrl) window.open(data.signedUrl, "_blank", "noopener,noreferrer");
   };
 
   useEffect(() => {
@@ -504,10 +512,12 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
 
   // Shared Stripe verification helper — fetches fresh account_id from DB then calls edge fn
   const runVerifyStripe = useCallback(async (shopId) => {
-    if (!shopId) return;
+    if (!shopId || stripeVerifyInFlightRef.current) return;
+    stripeVerifyInFlightRef.current = true;
     try {
       const { data } = await supabase.from("shops").select("stripe_account_id,stripe_onboarded").eq("id", shopId).single();
-      if (data?.stripe_account_id) setStripeAccountId(data.stripe_account_id);
+      const wasOnboarded = !!data?.stripe_onboarded;
+      setStripeAccountId(data?.stripe_account_id || "");
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
       if (!token) return;
@@ -517,18 +527,26 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
         body: JSON.stringify({ shopId }),
       });
       const vd = await res.json().catch(() => null);
-      if (vd != null) {
-        setStripeOnboarded(!!vd.onboarded);
-        if (vd.onboarded) { setIsListed(true); refreshShops?.(); }
+      if (vd != null && !vd.error) {
+        const nextOnboarded = !!vd.onboarded;
+        setStripeOnboarded(nextOnboarded);
+        if (nextOnboarded && !wasOnboarded) {
+          setIsListed(true);
+          refreshShops?.();
+        }
       }
-    } catch (_) {}
+    } catch (_) {
+      // Keep the currently displayed Stripe/shop state if verification cannot complete.
+    } finally {
+      stripeVerifyInFlightRef.current = false;
+    }
   }, [refreshShops]);
 
   // Refresh Stripe status whenever the payments tab is opened
   useEffect(() => {
     if (dashTab !== "payments" || !userShop?.id) return;
     runVerifyStripe(userShop.id);
-  }, [dashTab, userShop?.id]);
+  }, [dashTab, userShop?.id, runVerifyStripe]);
 
   // Also re-verify when the user returns to this tab (e.g. after completing Stripe onboarding)
   useEffect(() => {
@@ -560,17 +578,27 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
   };
 
   const sendQuoteOffer = async (payType = "full", depositPct = 100) => {
-    if (!selectedBooking || !["pending", "confirmed"].includes(selectedBooking.status)) return;
+    if (!selectedBooking || selectedBooking.status !== "pending") return;
     const amount = Number(quoteInput);
     if (!Number.isFinite(amount) || amount <= 0) return;
 
-    const marker = `QUOTE_OFFER::${amount.toFixed(2)}::${payType}::${depositPct}`;
+    const { data: quote, error: quoteError } = await createBookingQuote({
+      bookingId: selectedBooking.id,
+      shopId: selectedBooking.shop_id,
+      amount,
+      paymentType: payType,
+      depositPct,
+      createdBy: currentUser.id,
+    });
+    if (quoteError || !quote) return;
+
+    const marker = `QUOTE_OFFER_V2::${quote.id}::${Number(quote.amount).toFixed(2)}::${quote.payment_type}::${quote.deposit_pct}`;
     const result = await dbSendMessage({ bookingId: selectedBooking.id, senderId: currentUser.id, senderRole: "shop", text: marker });
     if (!result) return;
     sendNotification("quote_sent", selectedBooking.id);
 
-    const depositStr = payType === "deposit"
-      ? ` · ${depositPct}% deposit ($${(amount * depositPct / 100).toFixed(2)}) due now`
+    const depositStr = quote.payment_type === "deposit"
+      ? ` · ${quote.deposit_pct}% deposit ($${(Number(quote.amount) * quote.deposit_pct / 100).toFixed(2)}) due now`
       : "";
     const time = new Date(result.sent_at || Date.now()).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
     setMessagesMap(prev => ({
@@ -578,11 +606,12 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
       [selectedBooking.id]: mergeMessages(prev[selectedBooking.id] || [], {
         id: result.id,
         from: "shop",
-        text: `Quote offer: $${amount.toFixed(2)}${depositStr}`,
+        text: `Quote offer: $${Number(quote.amount).toFixed(2)}${depositStr}`,
         time,
-        quoteOffer: amount,
-        paymentType: payType,
-        depositPct,
+        quoteId: quote.id,
+        quoteOffer: Number(quote.amount),
+        paymentType: quote.payment_type,
+        depositPct: quote.deposit_pct,
         rawText: marker,
       }),
     }));
@@ -1404,7 +1433,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
                       return (
                         <div key={b.id}
                           style={{ display: "grid", gridTemplateColumns: "1.2fr 2fr 2fr 1.2fr 1fr", padding: "12px 16px", borderBottom: i < paid.length - 1 ? "1px solid rgba(255,255,255,0.05)" : "none", alignItems: "center", cursor: "pointer", transition: "background 0.15s" }}
-                          onClick={() => { setSelectedBooking(b); setSelectedBookingSource("bookings"); setDashTab("bookings"); setBookingsView("detail"); }}
+                          onClick={() => { setSelectedBooking(b); setDashTab("bookings"); setBookingsView("detail"); }}
                           onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.025)"}
                           onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
                           <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.45)" }}>{dateLabel}</div>
@@ -1685,7 +1714,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
                 {insuranceDocUrl && (
                   <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.5)", marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
                     <span>📄</span>
-                    <a href={insuranceDocUrl} target="_blank" rel="noopener noreferrer" style={{ color: "#3B82F6", textDecoration: "none" }}>View uploaded document</a>
+                    <button onClick={openInsuranceDoc} style={{ color: "#3B82F6", textDecoration: "none", background: "none", border: "none", padding: 0, fontFamily: "'DM Sans', sans-serif", fontSize: 13, cursor: "pointer" }}>View uploaded document</button>
                   </div>
                 )}
                 {insuranceStatus !== "verified" && (
@@ -1703,13 +1732,11 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
                       const path = `${userShop.id}/insurance.${ext}`;
                       const { error: upErr } = await supabase.storage.from("insurance-docs").upload(path, file, { upsert: true });
                       if (upErr) { setInsuranceError("Upload failed: " + upErr.message); setInsuranceUploading(false); return; }
-                      const { data: { publicUrl } } = supabase.storage.from("insurance-docs").getPublicUrl(path);
-                      const { error: dbErr } = await supabase.from("shops").update({ insurance_doc_url: publicUrl, insurance_status: "pending", insurance_verified: false }).eq("id", userShop.id);
+                      const { error: dbErr } = await supabase.from("shops").update({ insurance_doc_url: path, insurance_status: "pending", insurance_verified: false }).eq("id", userShop.id);
                       setInsuranceUploading(false);
                       if (dbErr) { setInsuranceError("Failed to save: " + dbErr.message); return; }
-                      setInsuranceDocUrl(publicUrl);
+                      setInsuranceDocUrl(path);
                       setInsuranceStatus("pending");
-                      setHasInsurance(false);
                     }} />
                     <button onClick={() => insuranceInputRef.current?.click()} disabled={insuranceUploading} style={{ background: "rgba(59,130,246,0.1)", border: "1px solid rgba(59,130,246,0.3)", color: "#3B82F6", padding: "10px 20px", fontFamily: "'Bebas Neue', cursive", fontSize: 15, letterSpacing: 1, cursor: insuranceUploading ? "default" : "pointer", opacity: insuranceUploading ? 0.6 : 1 }}>
                       {insuranceUploading ? "Uploading…" : insuranceDocUrl ? "↩ Re-upload Document" : "📄 Upload Insurance Certificate"}
@@ -1787,7 +1814,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
                     style={{ outline: dragOver ? "2px dashed #FF4D00" : "2px dashed transparent", outlineOffset: 4, borderRadius: 2, transition: "outline 0.15s" }}
                   >
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
-                      {portfolioImages.map((img, idx) => {
+                      {portfolioImages.map((img) => {
                         const isHero = img.display_order === -1;
                         return (
                           <div key={img.id} style={{ position: "relative", aspectRatio: "4/3", background: "#1A1A1A", overflow: "hidden" }}>
@@ -1855,7 +1882,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
           <div style={{ maxWidth: 600 }}>
             <div style={{ fontSize: 40, letterSpacing: 2, marginBottom: 32 }}>SETTINGS</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-              {[["Contact Email", currentUser?.email || ""], ["Notification Preferences", "Email + SMS"], ["Booking Window", "2 weeks in advance"], ["Cancellation Policy", "48-hour notice required"]].map(([l, v]) => (
+              {[["Contact Email", currentUser?.email || ""], ["Notification Preferences", "Email"], ["Booking Window", "2 weeks in advance"], ["Cancellation Policy", "48-hour notice required"]].map(([l, v]) => (
                 <div key={l}>
                   <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", letterSpacing: 1, marginBottom: 6 }}>{l.toUpperCase()}</div>
                   <input defaultValue={v} style={{ width: "100%", background: "#1A1A1A", border: "1px solid rgba(255,255,255,0.1)", padding: "12px 16px", color: "#fff", fontFamily: "'DM Sans', sans-serif", fontSize: 14, outline: "none" }} />

@@ -5,7 +5,7 @@ import { SERVICE_CATEGORIES } from "../lib/services";
 
 export default function BookingFlow({
   nav, bookingShop, bookingStep, setBookingStep,
-  selectedSlot, setSelectedSlot, selectedDate, setSelectedDate,
+  selectedSlot, selectedDate,
   bookingConfirmed, setBookingConfirmed, currentUser,
 }) {
   const [designOption, setDesignOption] = useState(null);
@@ -27,6 +27,7 @@ export default function BookingFlow({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [preferredDates, setPreferredDates] = useState([]);
+  const [requestRef] = useState(() => Math.floor(2000 + Math.random() * 1000));
 
   // ── Availability calendar ────────────────────────────────────────────────
   const initDate = new Date();
@@ -99,9 +100,6 @@ export default function BookingFlow({
           vehicle: vehicleString,
           designOption,
           designFileUrl: designFileUrl || designLinkInput || null,
-          amount: 0,
-          customerName: `${firstName.trim()} ${lastName.trim()}`,
-          customerPhone: customerPhone.trim(),
         });
         if (bookingError || !booking) {
           setSubmitError(bookingError?.message || bookingError?.details || JSON.stringify(bookingError) || "Could not save your request.");
@@ -123,7 +121,7 @@ export default function BookingFlow({
         }
       }
       setBookingConfirmed(true);
-    } catch (e) {
+    } catch {
       setSubmitError("Something went wrong. Please try again.");
     }
     setIsSubmitting(false);
@@ -150,7 +148,7 @@ export default function BookingFlow({
             Your request at <b style={{ color: "#fff" }}>{bookingShop.name}</b> has been received.
             {preferredDates.length > 0 && <span> Your preferred dates have been noted.</span>}
           </div>
-          <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.45)", marginBottom: 10 }}>Ref #WL-{Math.floor(2000 + Math.random() * 1000)}</div>
+          <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.45)", marginBottom: 10 }}>Ref #WL-{requestRef}</div>
           <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.3)", marginBottom: 40, maxWidth: 440, lineHeight: 1.6 }}>The shop will review your request and send a personalised quote. Once you agree and pay, they will schedule your appointment.</div>
           <div className="confirm-btns" style={{ display: "flex", gap: 16 }}>
             <button className="btn-main" onClick={() => nav("customer-dash")}>View My Bookings</button>
@@ -331,7 +329,6 @@ export default function BookingFlow({
                     {(() => {
                       const daysInMonth = new Date(bookingCalYear, bookingCalMonth + 1, 0).getDate();
                       const firstDow = new Date(bookingCalYear, bookingCalMonth, 1).getDay();
-                      const todayIso = new Date().toISOString().slice(0, 10);
                       const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
                       const tomorrowIso = tomorrow.toISOString().slice(0, 10);
                       const cells = [];

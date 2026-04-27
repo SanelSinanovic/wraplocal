@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { ALL_SERVICE_NAMES } from "../lib/services";
 import { fetchShopReviews } from "../lib/queries";
 
-export default function ShopProfile({ nav, selectedShop, setBookingShop, currentUser, currentProfile, onLogout }) {
+export default function ShopProfile({ nav, selectedShop, currentUser, currentProfile, onLogout }) {
   const [activeTab, setActiveTab] = useState("overview");
   const [lightboxImg, setLightboxImg] = useState(null);
   const [reviews, setReviews] = useState([]);
@@ -27,7 +27,6 @@ export default function ShopProfile({ nav, selectedShop, setBookingShop, current
   const location = shop.address
     ? [shop.address, shop.city, shop.state].filter(Boolean).join(", ")
     : (shop.location || shop.city || "");
-  const priceFrom = shop.price ?? shop.price_from ?? null;
   const tags = shop.tags || [];
   const slots = shop.slots || [];
   const phone = shop.phone || "";

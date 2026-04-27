@@ -1,35 +1,54 @@
 // @ts-nocheck
 // Deno edge function - verify a shop's Stripe Connect account and update stripe_onboarded
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "https://wrapbridge.com",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-user-token",
-};
+function allowedOrigins() {
+  const env = Deno.env.get("ALLOWED_ORIGINS");
+  const appUrl = Deno.env.get("APP_URL");
+  return (env ? env.split(",") : ["https://wrapbridge.com", "https://www.wrapbridge.com", "https://wraplocal.com", "https://www.wraplocal.com", "http://localhost:5173", "http://localhost:4173"])
+    .concat(appUrl ? [appUrl] : [])
+    .map(s => s.trim())
+    .map(s => {
+      try { return new URL(s).origin; } catch (_) { return null; }
+    })
+    .filter(Boolean);
+}
 
-function jsonResp(body, status) {
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get("Origin") || "";
+  const allowed = origin || allowedOrigins()[0] || "*";
+  return {
+    "Access-Control-Allow-Origin": allowed,
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-user-token",
+    "Access-Control-Max-Age": "86400",
+    "Vary": "Origin",
+  };
+}
+
+function jsonResp(req, body, status) {
   return new Response(JSON.stringify(body), {
     status: status || 200,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
   });
 }
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response("ok", { headers: getCorsHeaders(req) });
   }
 
   try {
     const body = await req.json().catch(() => ({}));
     const { shopId } = body;
 
-    if (!shopId) return jsonResp({ error: "shopId is required" });
+    if (!shopId) return jsonResp(req, { error: "shopId is required" });
 
     const stripeKey       = Deno.env.get("STRIPE_SECRET_KEY");
     const supabaseUrl     = Deno.env.get("SUPABASE_URL");
     const supabaseService = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-    if (!stripeKey)       return jsonResp({ error: "STRIPE_SECRET_KEY not configured" });
-    if (!supabaseUrl)     return jsonResp({ error: "SUPABASE_URL not configured" });
-    if (!supabaseService) return jsonResp({ error: "SUPABASE_SERVICE_ROLE_KEY not configured" });
+    if (!stripeKey)       return jsonResp(req, { error: "STRIPE_SECRET_KEY not configured" });
+    if (!supabaseUrl)     return jsonResp(req, { error: "SUPABASE_URL not configured" });
+    if (!supabaseService) return jsonResp(req, { error: "SUPABASE_SERVICE_ROLE_KEY not configured" });
 
     // Verify the requesting user via their JWT
     const userToken = req.headers.get("x-user-token") || req.headers.get("Authorization") || "";
@@ -39,7 +58,7 @@ Deno.serve(async (req) => {
     });
     const userData = await userRes.json().catch(() => ({}));
     const userId = userData && userData.id;
-    if (!userId) return jsonResp({ error: "Unauthorized" });
+    if (!userId) return jsonResp(req, { error: "Unauthorized" });
 
     // Fetch shop row (must be owned by this user)
     const shopRes = await fetch(
@@ -49,8 +68,8 @@ Deno.serve(async (req) => {
     const shops = await shopRes.json().catch(() => []);
     const shop = shops && shops[0];
 
-    if (!shop)                    return jsonResp({ error: "Shop not found" });
-    if (shop.owner_id !== userId) return jsonResp({ error: "Not authorized for this shop" });
+    if (!shop)                    return jsonResp(req, { error: "Shop not found" });
+    if (shop.owner_id !== userId) return jsonResp(req, { error: "Not authorized for this shop" });
 
     if (!shop.stripe_account_id) {
       // No account yet — ensure onboarded is false
@@ -64,7 +83,7 @@ Deno.serve(async (req) => {
         },
         body: JSON.stringify({ stripe_onboarded: false }),
       });
-      return jsonResp({ onboarded: false, charges_enabled: false, payouts_enabled: false });
+      return jsonResp(req, { onboarded: false, charges_enabled: false, payouts_enabled: false });
     }
 
     // Check the Stripe account status
@@ -94,8 +113,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    return jsonResp({ onboarded, charges_enabled, payouts_enabled });
+    return jsonResp(req, { onboarded, charges_enabled, payouts_enabled });
   } catch (err) {
-    return jsonResp({ error: err?.message || String(err) }, 500);
+    return jsonResp(req, { error: err?.message || String(err) }, 500);
   }
 });

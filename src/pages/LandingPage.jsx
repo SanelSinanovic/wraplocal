@@ -18,7 +18,7 @@ const CATEGORY_META = {
   },
 };
 
-export default function LandingPage({ nav, shops: liveShops, setBookingShop, setSelectedShop, setServiceFilter, currentUser, currentProfile, onLogout }) {
+export default function LandingPage({ nav, shops: liveShops, setServiceFilter, currentUser, currentProfile, onLogout }) {
   const role = currentUser ? (currentProfile?.role || currentUser?.user_metadata?.role || "customer") : null;
   const firstName = currentUser ? ((currentProfile?.name || currentUser?.user_metadata?.name || currentUser?.email || "").split(" ")[0].split("@")[0]) : null;
   const shops = liveShops || [];

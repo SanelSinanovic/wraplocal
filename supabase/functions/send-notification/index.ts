@@ -1,14 +1,33 @@
 // @ts-nocheck
 // WrapBridge - Email notification edge function (Resend)
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "https://wrapbridge.com",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+function allowedOrigins() {
+  const env = Deno.env.get("ALLOWED_ORIGINS");
+  const appUrl = Deno.env.get("APP_URL");
+  return (env ? env.split(",") : ["https://wrapbridge.com", "https://www.wrapbridge.com", "https://wraplocal.com", "https://www.wraplocal.com", "http://localhost:5173", "http://localhost:4173"])
+    .concat(appUrl ? [appUrl] : [])
+    .map(s => s.trim())
+    .map(s => {
+      try { return new URL(s).origin; } catch (_) { return null; }
+    })
+    .filter(Boolean);
+}
 
-function jsonResp(body, status) {
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get("Origin") || "";
+  const allowed = origin || allowedOrigins()[0] || "*";
+  return {
+    "Access-Control-Allow-Origin": allowed,
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Max-Age": "86400",
+    "Vary": "Origin",
+  };
+}
+
+function jsonResp(req, body, status) {
   return new Response(JSON.stringify(body), {
     status: status || 200,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
   });
 }
 
@@ -18,8 +37,14 @@ function esc(str) {
   return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
+function safeEq(value) {
+  return encodeURIComponent(String(value));
+}
+
 // Branded email wrapper
 function emailWrapper(content) {
+  const appUrl = Deno.env.get("APP_URL") || "https://wrapbridge.com";
+  const appHost = new URL(appUrl).host;
   return `<!DOCTYPE html>
 <html>
 <head>
@@ -46,7 +71,7 @@ function emailWrapper(content) {
           <td style="background:#f9f9f9;padding:20px 32px;border-top:1px solid #eee;">
             <p style="margin:0;font-size:12px;color:#999;line-height:1.6;">
               You received this email because you have an active booking on WrapBridge.<br>
-              Questions? Reply to this email or visit <a href="https://wrapbridge.com" style="color:#FF4D00;">wrapbridge.com</a>
+              Questions? Reply to this email or visit <a href="${appUrl}" style="color:#FF4D00;">${appHost}</a>
             </p>
           </td>
         </tr>
@@ -284,13 +309,14 @@ function buildEmail(type, b, customerName, shopName, customerEmail, shopEmail, a
 }
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method === "OPTIONS") return new Response("ok", { headers: getCorsHeaders(req) });
+  if (req.method !== "POST") return jsonResp(req, { error: "Method not allowed" }, 405);
 
   try {
     const body = await req.json().catch(() => ({}));
     const { type, bookingId } = body;
 
-    if (!type || !bookingId) return jsonResp({ error: "type and bookingId are required" }, 400);
+    if (!type || !bookingId) return jsonResp(req, { error: "type and bookingId are required" }, 400);
 
     const resendKey     = Deno.env.get("RESEND_API_KEY");
     const supabaseUrl   = Deno.env.get("SUPABASE_URL");
@@ -298,9 +324,9 @@ Deno.serve(async (req) => {
     const fromEmail     = Deno.env.get("RESEND_FROM") || "WrapBridge <onboarding@resend.dev>";
     const appUrl        = Deno.env.get("APP_URL") || "https://wrapbridge.com";
 
-    if (!resendKey)       return jsonResp({ error: "RESEND_API_KEY not configured" }, 500);
-    if (!supabaseUrl)     return jsonResp({ error: "SUPABASE_URL not configured" }, 500);
-    if (!supabaseService) return jsonResp({ error: "SUPABASE_SERVICE_ROLE_KEY not configured" }, 500);
+    if (!resendKey)       return jsonResp(req, { error: "RESEND_API_KEY not configured" }, 500);
+    if (!supabaseUrl)     return jsonResp(req, { error: "SUPABASE_URL not configured" }, 500);
+    if (!supabaseService) return jsonResp(req, { error: "SUPABASE_SERVICE_ROLE_KEY not configured" }, 500);
 
     // ── Verify the calling user is authenticated ──────────────────────────
     const authHeader = req.headers.get("Authorization") || "";
@@ -308,16 +334,34 @@ Deno.serve(async (req) => {
       headers: { apikey: supabaseService, Authorization: authHeader },
     });
     const userData = await userRes.json().catch(() => ({}));
-    if (!userData?.id) return jsonResp({ error: "Unauthorized" }, 401);
+    if (!userData?.id) return jsonResp(req, { error: "Unauthorized" }, 401);
 
     // Fetch booking + shop info
     const bookingRes = await fetch(
-      `${supabaseUrl}/rest/v1/bookings?id=eq.${bookingId}&select=*,shops(id,name,owner_id)`,
+      `${supabaseUrl}/rest/v1/bookings?id=eq.${safeEq(bookingId)}&select=*,shops(id,name,owner_id)`,
       { headers: { apikey: supabaseService, Authorization: `Bearer ${supabaseService}` } }
     );
     const bookings = await bookingRes.json().catch(() => []);
     const b = bookings?.[0];
-    if (!b) return jsonResp({ error: "Booking not found" }, 404);
+    if (!b) return jsonResp(req, { error: "Booking not found" }, 404);
+
+    const profileRes = await fetch(
+      `${supabaseUrl}/rest/v1/profiles?id=eq.${safeEq(userData.id)}&select=role`,
+      { headers: { apikey: supabaseService, Authorization: `Bearer ${supabaseService}` } }
+    );
+    const profiles = await profileRes.json().catch(() => []);
+    const isAdmin = profiles?.[0]?.role === "admin";
+    const isParticipant = userData.id === b.customer_id || userData.id === b.shops?.owner_id || isAdmin;
+    if (!isParticipant) return jsonResp(req, { error: "Forbidden" }, 403);
+
+    if (type === "quote_sent") {
+      const quoteRes = await fetch(
+        `${supabaseUrl}/rest/v1/booking_quotes?booking_id=eq.${safeEq(bookingId)}&status=eq.active&select=amount&order=created_at.desc&limit=1`,
+        { headers: { apikey: supabaseService, Authorization: `Bearer ${supabaseService}` } }
+      );
+      const quotes = await quoteRes.json().catch(() => []);
+      if (quotes?.[0]?.amount) b.amount = quotes[0].amount;
+    }
 
     // Fetch customer details from auth
     const custRes = await fetch(
@@ -344,7 +388,7 @@ Deno.serve(async (req) => {
     const shopName = b.shops?.name || shopOwnerName;
 
     const emailData = buildEmail(type, b, customerName, shopName, customerEmail, shopEmail, appUrl);
-    if (!emailData) return jsonResp({ error: `Unknown notification type: ${type}` }, 400);
+    if (!emailData) return jsonResp(req, { error: `Unknown notification type: ${type}` }, 400);
 
     const results = [];
 
@@ -392,8 +436,8 @@ Deno.serve(async (req) => {
       results.push({ to: emailData.customerEmail, ok: res3.ok, status: res3.status, id: data3.id, resend: data3 });
     }
 
-    return jsonResp({ sent: true, results });
+    return jsonResp(req, { sent: true, results });
   } catch (e) {
-    return jsonResp({ error: e?.message || String(e) }, 500);
+    return jsonResp(req, { error: e?.message || String(e) }, 500);
   }
 });

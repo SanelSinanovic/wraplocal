@@ -11,7 +11,6 @@ export async function isAdmin(userId) {
     .eq('id', userId)
     .single()
   if (error) console.error('isAdmin check failed:', error)
-  console.log('isAdmin:', userId, '→ role =', data?.role)
   return data?.role === 'admin'
 }
 
@@ -109,7 +108,7 @@ export async function adminSetInsuranceStatus(shopId, status) {
 export async function fetchAllBookings() {
   const { data, error } = await supabase
     .from('bookings')
-    .select('id, shop_id, customer_id, service, status, amount, fee, total, payment_verified, date, created_at')
+    .select('id, shop_id, customer_id, service, status, amount, fee, total, payment_verified, stripe_payment_intent_id, refund_status, dispute_status, payment_confirmed_at, date, created_at')
     .order('created_at', { ascending: false })
     .limit(200)
   if (error) { console.error('fetchAllBookings:', error); return [] }
