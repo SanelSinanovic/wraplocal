@@ -656,7 +656,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
     // Geocode using full address for accurate map pins
     let geoUpdates = {};
     if (city || state) {
-      const geo = await geocodeCityState(city, state, address);
+      const geo = await geocodeCityState(city, state, address, profileForm.zip.trim());
       if (geo) geoUpdates = { latitude: geo.lat, longitude: geo.lon };
     }
     const updates = {

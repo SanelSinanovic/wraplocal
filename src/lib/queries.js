@@ -24,22 +24,35 @@ export function haversineDistance(lat1, lon1, lat2, lon2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-/** Geocode a city + state string via Nominatim (free, no API key).
+async function geocodeNominatim(query) {
+  const q = encodeURIComponent(`${query}, USA`);
+  const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1&countrycodes=us`);
+  if (!res.ok) return null;
+  const data = await res.json();
+  if (!data.length) return null;
+  return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
+}
+
+/** Geocode a shop address via Nominatim (free, no API key).
  *  Returns { lat, lon } or null on failure. */
-export async function geocodeCityState(city, state, address) {
-  if (!city && !state) return null;
-  const parts = [address, city, state].filter(Boolean).join(', ');
-  const q = encodeURIComponent(parts + ', USA');
-  try {
-    const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1`, {
-      headers: { 'User-Agent': 'WrapBridge/1.0' },
-    });
-    const data = await res.json();
-    if (!data.length) return null;
-    return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
-  } catch {
-    return null;
+export async function geocodeCityState(city, state, address, zip) {
+  if (!city && !state && !address && !zip) return null;
+  const candidates = [
+    [address, city, state, zip].filter(Boolean).join(', '),
+    [city, state, zip].filter(Boolean).join(', '),
+    [zip].filter(Boolean).join(', '),
+    [city, state].filter(Boolean).join(', '),
+  ].filter(Boolean);
+
+  for (const query of [...new Set(candidates)]) {
+    try {
+      const coords = await geocodeNominatim(query);
+      if (coords) return coords;
+    } catch {
+      // Try the next fallback query.
+    }
   }
+  return null;
 }
 
 /** Geocode any free-form query (zip code, city, address) via Nominatim.

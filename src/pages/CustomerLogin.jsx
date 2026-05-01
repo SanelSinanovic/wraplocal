@@ -48,14 +48,16 @@ export default function CustomerLogin({ nav, loginForm, setLoginForm, loginError
   };
 
   const handleForgotPassword = async () => {
-    if (!forgotEmail.includes("@")) return;
+    const email = forgotEmail.trim();
+    if (!email.includes("@")) return setForgotError("Please enter a valid email address.");
     setForgotError("");
     setForgotLoading(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
-      redirectTo: window.location.href.split("#")[0],
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
     });
     setForgotLoading(false);
     if (error) return setForgotError(error.message);
+    setForgotEmail(email);
     setForgotSent(true);
   };
 

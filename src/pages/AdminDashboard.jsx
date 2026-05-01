@@ -98,7 +98,8 @@ export default function AdminDashboard({ nav, currentUser, onLogout }) {
         .adm-stat.blue { background: linear-gradient(135deg, rgba(59,130,246,0.1) 0%, rgba(59,130,246,0.03) 60%, #111 100%); border-color: rgba(59,130,246,0.22); }
         .adm-stat.amber { background: linear-gradient(135deg, rgba(245,158,11,0.1) 0%, rgba(245,158,11,0.03) 60%, #111 100%); border-color: rgba(245,158,11,0.22); }
         .adm-stat.orange { background: linear-gradient(135deg, rgba(255,77,0,0.12) 0%, rgba(255,77,0,0.04) 60%, #111 100%); border-color: rgba(255,77,0,0.3); }
-        .adm-row { display: flex; align-items: center; padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.04); font-family: 'DM Sans', sans-serif; font-size: 13px; color: rgba(255,255,255,0.6); transition: background 0.15s; }
+        .adm-row { border-bottom: 1px solid rgba(255,255,255,0.04); font-family: 'DM Sans', sans-serif; font-size: 13px; color: rgba(255,255,255,0.6); transition: background 0.15s; }
+        .adm-row > td { vertical-align: middle; }
         .adm-row:hover { background: rgba(139,92,246,0.06); }
         .adm-pill { display: inline-block; padding: 2px 10px; font-size: 11px; font-weight: 600; border-radius: 3px; letter-spacing: 0.5px; text-transform: uppercase; }
         .adm-input { background: #1A1A1A; border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 8px 14px; font-family: 'DM Sans', sans-serif; font-size: 13px; width: 100%; outline: none; }

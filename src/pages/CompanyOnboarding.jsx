@@ -46,7 +46,6 @@ export default function CompanyOnboarding({ currentUser, userShop, onComplete, n
   // Geocoding for step 2
   const [geoCoords, setGeoCoords] = useState(null);
   const [geoChecking, setGeoChecking] = useState(false);
-  const [geoWarning, setGeoWarning] = useState(false); // true = geocode failed, coords unknown
 
   const handlePhotoUpload = async (file) => {
     if (!file) return;
@@ -73,7 +72,7 @@ export default function CompanyOnboarding({ currentUser, userShop, onComplete, n
     // Use pre-fetched coords from step 2 check; if unavailable, try one more time
     let resolvedGeo = geoCoords;
     if (!resolvedGeo && (form.city || form.state)) {
-      resolvedGeo = await geocodeCityState(form.city.trim(), form.state.trim(), form.address.trim());
+      resolvedGeo = await geocodeCityState(form.city.trim(), form.state.trim(), form.address.trim(), form.zip.trim());
     }
     if (resolvedGeo) geoUpdates = { latitude: resolvedGeo.lat, longitude: resolvedGeo.lon };
     const updates = {
@@ -217,25 +216,9 @@ export default function CompanyOnboarding({ currentUser, userShop, onComplete, n
                     <input className="ob-input" placeholder="ST" maxLength={2} value={form.state} onChange={e => setForm(f => ({ ...f, state: e.target.value.toUpperCase() }))} style={{ textTransform: "uppercase" }} />
                     <input className="ob-input" placeholder="Zip code" value={form.zip} onChange={e => setForm(f => ({ ...f, zip: e.target.value }))} />
                   </div>
-                  <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.2)", marginTop: 5 }}>Full address gives your shop an accurate map pin.</div>
+                  <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.2)", marginTop: 5 }}>Full address gives your shop an accurate map pin. If map lookup misses it, you can still continue.</div>
                 </div>
               </div>
-              {geoWarning && (
-                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(245,158,11,0.9)", background: "rgba(245,158,11,0.07)", border: "1px solid rgba(245,158,11,0.3)", padding: "12px 16px", marginTop: 20, lineHeight: 1.6 }}>
-                  ⚠️ We couldn't verify your location coordinates — your shop may not appear in distance-sorted searches. Double-check your City &amp; State or{" "}
-                  <span
-                    style={{ textDecoration: "underline", cursor: "pointer" }}
-                    onClick={async () => {
-                      setGeoChecking(true);
-                      setGeoWarning(false);
-                      const geo = await geocodeCityState(form.city.trim(), form.state.trim(), form.address.trim());
-                      setGeoChecking(false);
-                      if (geo) { setGeoCoords(geo); setStep(3); }
-                      else setGeoWarning(true);
-                    }}
-                  >retry</span>. You can also fix this from your dashboard later.
-                </div>
-              )}
               <div style={{ display: "flex", gap: 12, marginTop: 20 }}>
                 <button onClick={() => setStep(1)} style={{ background: "transparent", color: "rgba(255,255,255,0.4)", border: "1px solid rgba(255,255,255,0.12)", padding: "14px 24px", fontFamily: "'Bebas Neue', cursive", fontSize: 17, letterSpacing: 2, cursor: "pointer" }}>← Back</button>
                 <button
@@ -243,24 +226,19 @@ export default function CompanyOnboarding({ currentUser, userShop, onComplete, n
                   onClick={async () => {
                     if (!canAdvanceStep2) return;
                     setGeoChecking(true);
-                    setGeoWarning(false);
-                    const geo = await geocodeCityState(form.city.trim(), form.state.trim(), form.address.trim());
-                    setGeoChecking(false);
-                    if (geo) { setGeoCoords(geo); setStep(3); }
-                    else { setGeoCoords(null); setGeoWarning(true); }
+                    try {
+                      const geo = await geocodeCityState(form.city.trim(), form.state.trim(), form.address.trim(), form.zip.trim());
+                      setGeoCoords(geo || null);
+                    } finally {
+                      setGeoChecking(false);
+                      setStep(3);
+                    }
                   }}
                   style={{ flex: 1, background: canAdvanceStep2 && !geoChecking ? "#FF4D00" : "rgba(255,77,0,0.3)", color: "#fff", border: "none", padding: "16px", fontFamily: "'Bebas Neue', cursive", fontSize: 20, letterSpacing: 3, cursor: canAdvanceStep2 && !geoChecking ? "pointer" : "not-allowed" }}
                 >
-                  {geoChecking ? "Verifying Location…" : "Next: Services →"}
+                  {geoChecking ? "Saving Location…" : "Next: Services →"}
                 </button>
               </div>
-              {geoWarning && (
-                <div style={{ display: "flex", justifyContent: "center", marginTop: 12 }}>
-                  <button onClick={() => setStep(3)} style={{ background: "none", border: "none", fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.35)", cursor: "pointer", textDecoration: "underline" }}>
-                    Continue anyway →
-                  </button>
-                </div>
-              )}
               {!canAdvanceStep2 && (
                 <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.25)", textAlign: "center", marginTop: 10 }}>Fill in Name, Phone, City and State to continue.</div>
               )}
