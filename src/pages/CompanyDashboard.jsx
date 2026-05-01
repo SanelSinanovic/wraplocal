@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase, supabaseUrl, supabaseAnonKey } from "../lib/supabase";
 import { fetchUserShop, fetchCompanyBookings, createShop, updateShop, fetchMessages, sendMessage as dbSendMessage, subscribeToMessages, subscribeToShopBookings, fetchPortfolioImages, addPortfolioImage, deletePortfolioImage, setHeroPortfolioImage, scheduleBooking, uploadChatFile, geocodeCityState, fetchShopAvailability, saveShopAvailability, sendNotification, validateUploadFile, createBookingQuote } from "../lib/queries";
 import { SERVICE_CATEGORIES, ALL_SERVICE_NAMES } from "../lib/services";
+import ChatImagePreview from "../components/ChatImagePreview";
 import CompanyOnboarding from "./CompanyOnboarding";
 
 // Parse "Mon DD, YYYY" → { month (0-indexed), day, year }
@@ -183,7 +184,7 @@ function BookingDetailPanel({ selectedBooking, messagesMap, chatInput, setChatIn
                       const url = msg.text.slice(6, idx);
                       const name = msg.text.slice(idx + 2);
                       const isImage = /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(name);
-                      if (isImage) return <img src={url} alt={name} style={{ maxWidth: '100%', maxHeight: 200, borderRadius: 4, display: 'block' }} />;
+                      if (isImage) return <ChatImagePreview src={url} alt={name} />;
                       return <a href={url} target="_blank" rel="noreferrer" style={{ color: '#fff', textDecoration: 'underline' }}>📄 {name}</a>;
                     }
                     return msg.text;

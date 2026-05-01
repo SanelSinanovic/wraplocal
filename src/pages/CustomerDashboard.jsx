@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 
 import { supabase } from "../lib/supabase";
 import { fetchCustomerBookings, fetchMessages, sendMessage as dbSendMessage, subscribeToMessages, submitReview, fetchBookingReview, uploadChatFile, sendNotification } from "../lib/queries";
+import ChatImagePreview from "../components/ChatImagePreview";
 
 function mergeMessages(existing = [], incoming = []) {
   const list = Array.isArray(incoming) ? incoming : [incoming];
@@ -460,7 +461,7 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
                           const url = msg.text.slice(6, idx);
                           const name = msg.text.slice(idx + 2);
                           const isImage = /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(name);
-                          if (isImage) return <img src={url} alt={name} style={{ maxWidth: '100%', maxHeight: 200, borderRadius: 4, display: 'block' }} />;
+                          if (isImage) return <ChatImagePreview src={url} alt={name} />;
                           return <a href={url} target="_blank" rel="noreferrer" style={{ color: '#fff', textDecoration: 'underline' }}>📄 {name}</a>;
                         }
                         return msg.text;
