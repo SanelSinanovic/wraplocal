@@ -85,7 +85,7 @@ export default function CompanyOnboarding({ currentUser, userShop, onComplete, n
       website: form.website.trim(),
       tags: selectedServices,
       banner_url: photoUrl || "",
-      is_listed: goLive && !!photoUrl,
+      is_listed: goLive && !!photoUrl && insuranceStatus === "verified",
       ...geoUpdates,
     };
     const updated = await updateShop(userShop.id, updates);
@@ -95,6 +95,8 @@ export default function CompanyOnboarding({ currentUser, userShop, onComplete, n
   };
 
   const canAdvanceStep2 = form.name.trim() && form.city.trim() && form.state.trim() && form.phone.trim();
+  const insuranceApproved = insuranceStatus === "verified";
+  const canGoLive = !!photoUrl && insuranceApproved;
 
   return (
     <div style={{ fontFamily: "'Bebas Neue', cursive", background: "linear-gradient(180deg, #0A0A0A 0%, #140A04 20%, #0A0A0A 55%, #05050C 100%)", minHeight: "100vh", color: "#fff", position: "relative", overflow: "hidden" }}>
@@ -344,7 +346,7 @@ export default function CompanyOnboarding({ currentUser, userShop, onComplete, n
                   <div>
                     <div style={{ fontSize: 18, letterSpacing: 1, color: insuranceStatus === "verified" ? "#3B82F6" : insuranceStatus === "pending" ? "#F59E0B" : "rgba(255,255,255,0.7)" }}>BUSINESS INSURANCE</div>
                     <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.3)", marginTop: 2 }}>
-                      {insuranceStatus === "verified" ? "🛡️ Verified — badge shown on your listing" : insuranceStatus === "pending" ? "Under review (1–2 business days)" : "Upload your certificate of insurance (optional)"}
+                      {insuranceStatus === "verified" ? "🛡️ Verified — your shop can be listed" : insuranceStatus === "pending" ? "Under review (1–2 business days)" : "Upload your certificate of insurance to go live"}
                     </div>
                   </div>
                   {insuranceStatus === "verified" && <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "#3B82F6", fontWeight: 600 }}>🛡️ VERIFIED</span>}
@@ -365,11 +367,12 @@ export default function CompanyOnboarding({ currentUser, userShop, onComplete, n
                       const path = `${userShop.id}/insurance.${ext}`;
                       const { error: upErr } = await supabase.storage.from("insurance-docs").upload(path, file, { upsert: true });
                       if (upErr) { setInsuranceError("Upload failed: " + upErr.message); setInsuranceUploading(false); return; }
-                      const { error: dbErr } = await supabase.from("shops").update({ insurance_doc_url: path, insurance_status: "pending", insurance_verified: false }).eq("id", userShop.id);
+                      const { error: dbErr } = await supabase.from("shops").update({ insurance_doc_url: path, insurance_status: "pending", insurance_verified: false, is_listed: false }).eq("id", userShop.id);
                       setInsuranceUploading(false);
                       if (dbErr) { setInsuranceError("Failed to save: " + dbErr.message); return; }
                       setInsuranceDocUrl(path);
                       setInsuranceStatus("pending");
+                      setGoLive(false);
                     }} />
                     <button onClick={() => insuranceInputRef.current?.click()} disabled={insuranceUploading} style={{ background: "rgba(59,130,246,0.08)", border: "1px solid rgba(59,130,246,0.2)", color: "#3B82F6", padding: "8px 16px", fontFamily: "'DM Sans', sans-serif", fontSize: 12, fontWeight: 600, cursor: insuranceUploading ? "default" : "pointer", opacity: insuranceUploading ? 0.6 : 1 }}>
                       {insuranceUploading ? "Uploading…" : insuranceDocUrl ? "↩ Re-upload" : "📄 Upload Certificate"}
@@ -382,12 +385,12 @@ export default function CompanyOnboarding({ currentUser, userShop, onComplete, n
 
               {/* Go live toggle */}
               <div
-                onClick={() => photoUrl && setGoLive(v => !v)}
-                style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", border: `1px solid ${goLive ? "#10B981" : "rgba(255,255,255,0.1)"}`, background: goLive ? "rgba(16,185,129,0.07)" : "#111", cursor: photoUrl ? "pointer" : "not-allowed", marginBottom: 8, transition: "all 0.2s", opacity: photoUrl ? 1 : 0.5 }}
+                onClick={() => canGoLive && setGoLive(v => !v)}
+                style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", border: `1px solid ${goLive ? "#10B981" : "rgba(255,255,255,0.1)"}`, background: goLive ? "rgba(16,185,129,0.07)" : "#111", cursor: canGoLive ? "pointer" : "not-allowed", marginBottom: 8, transition: "all 0.2s", opacity: canGoLive ? 1 : 0.5 }}
               >
                 <div>
                   <div style={{ fontSize: 18, letterSpacing: 1, color: goLive ? "#10B981" : "rgba(255,255,255,0.7)" }}>GO LIVE NOW</div>
-                  <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.3)", marginTop: 2 }}>Make your shop visible to customers immediately</div>
+                  <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.3)", marginTop: 2 }}>{insuranceApproved ? "Make your shop visible to customers immediately" : "Admin must approve insurance before your shop can be listed"}</div>
                 </div>
                 <div style={{ width: 44, height: 24, borderRadius: 12, background: goLive ? "#10B981" : "rgba(255,255,255,0.12)", position: "relative", transition: "background 0.2s", flexShrink: 0 }}>
                   <div style={{ position: "absolute", top: 3, left: goLive ? 23 : 3, width: 18, height: 18, borderRadius: "50%", background: "#fff", transition: "left 0.2s" }} />
@@ -395,6 +398,9 @@ export default function CompanyOnboarding({ currentUser, userShop, onComplete, n
               </div>
               {!photoUrl && (
                 <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.25)", marginBottom: 20 }}>⚠ Upload a profile photo to enable Go Live.</div>
+              )}
+              {photoUrl && !insuranceApproved && (
+                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(245,158,11,0.9)", marginBottom: 20 }}>⚠ Insurance approval is required before your shop appears in search.</div>
               )}
 
               {saveError && (
@@ -404,7 +410,7 @@ export default function CompanyOnboarding({ currentUser, userShop, onComplete, n
               <div style={{ display: "flex", gap: 12, marginTop: 16 }}>
                 <button onClick={() => setStep(3)} style={{ background: "transparent", color: "rgba(255,255,255,0.4)", border: "1px solid rgba(255,255,255,0.12)", padding: "14px 24px", fontFamily: "'Bebas Neue', cursive", fontSize: 17, letterSpacing: 2, cursor: "pointer" }}>← Back</button>
                 <button onClick={handleComplete} disabled={saving} style={{ flex: 1, background: saving ? "rgba(255,77,0,0.5)" : "#FF4D00", color: "#fff", border: "none", padding: "16px", fontFamily: "'Bebas Neue', cursive", fontSize: 20, letterSpacing: 3, cursor: saving ? "not-allowed" : "pointer" }}>
-                  {saving ? "Saving…" : goLive ? "🚀 Save & Go Live" : "Save & Go to Dashboard →"}
+                  {saving ? "Saving…" : goLive && insuranceApproved ? "🚀 Save & Go Live" : "Save & Go to Dashboard →"}
                 </button>
               </div>
             </div>

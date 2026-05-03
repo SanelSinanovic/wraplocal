@@ -364,6 +364,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
   const [dragOver, setDragOver] = useState(false);
   const [isListed, setIsListed] = useState(false);
   const [insuranceStatus, setInsuranceStatus] = useState(null); // null | pending | verified | rejected
+  const [insuranceVerified, setInsuranceVerified] = useState(false);
   const [insuranceDocUrl, setInsuranceDocUrl] = useState("");
   const [insuranceUploading, setInsuranceUploading] = useState(false);
   const [insuranceError, setInsuranceError] = useState("");
@@ -403,8 +404,10 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
     });
     setSelectedServices((shop.tags || []).filter(t => ALL_SERVICE_NAMES.includes(t)));
     setProfilePhotoUrl(shop.banner_url || "");
-    setIsListed(!!shop.is_listed);
+    const approvedInsurance = shop.insurance_verified === true && shop.insurance_status === "verified";
+    setIsListed(approvedInsurance && !!shop.is_listed);
     setInsuranceStatus(shop.insurance_status || null);
+    setInsuranceVerified(!!shop.insurance_verified);
     setInsuranceDocUrl(shop.insurance_doc_url || "");
     setStripeAccountId(shop.stripe_account_id || "");
     setStripeOnboarded(!!shop.stripe_onboarded);
@@ -516,9 +519,13 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
     if (!shopId || stripeVerifyInFlightRef.current) return;
     stripeVerifyInFlightRef.current = true;
     try {
-      const { data } = await supabase.from("shops").select("stripe_account_id,stripe_onboarded").eq("id", shopId).single();
+      const { data } = await supabase.from("shops").select("stripe_account_id,stripe_onboarded,insurance_verified,insurance_status,is_listed").eq("id", shopId).single();
       const wasOnboarded = !!data?.stripe_onboarded;
+      const insuranceIsApproved = data?.insurance_verified === true && data?.insurance_status === "verified";
       setStripeAccountId(data?.stripe_account_id || "");
+      setInsuranceVerified(!!data?.insurance_verified);
+      setInsuranceStatus(data?.insurance_status || null);
+      setIsListed(insuranceIsApproved && !!data?.is_listed);
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
       if (!token) return;
@@ -531,8 +538,12 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
       if (vd != null && !vd.error) {
         const nextOnboarded = !!vd.onboarded;
         setStripeOnboarded(nextOnboarded);
-        if (nextOnboarded && !wasOnboarded) {
-          setIsListed(true);
+        const { data: freshShop } = await supabase.from("shops").select("is_listed,insurance_verified,insurance_status").eq("id", shopId).single();
+        const freshInsuranceApproved = freshShop?.insurance_verified === true && freshShop?.insurance_status === "verified";
+        setInsuranceVerified(!!freshShop?.insurance_verified);
+        setInsuranceStatus(freshShop?.insurance_status || null);
+        setIsListed(freshInsuranceApproved && !!freshShop?.is_listed);
+        if (nextOnboarded && !wasOnboarded && freshInsuranceApproved && freshShop?.is_listed) {
           refreshShops?.();
         }
       }
@@ -672,12 +683,16 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
       price_from: profileForm.price_from ? parseFloat(profileForm.price_from) : null,
       tags: selectedServices,
       banner_url: profilePhotoUrl || userShop.banner_url || "",
-      is_listed: isListed,
+      is_listed: insuranceVerified && insuranceStatus === "verified" && isListed,
       ...geoUpdates,
     };
     const updated = await updateShop(userShop.id, updates);
     if (updated) {
       setUserShop(updated);
+      const updatedInsuranceApproved = updated.insurance_verified === true && updated.insurance_status === "verified";
+      setIsListed(updatedInsuranceApproved && !!updated.is_listed);
+      setInsuranceVerified(!!updated.insurance_verified);
+      setInsuranceStatus(updated.insurance_status || null);
       setIsNewShop(false);
       setSaveStatus("saved");
       setTimeout(() => setSaveStatus(""), 3000);
@@ -853,6 +868,14 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
   });
 
   const pendingCount = dashboardBookings.filter(b => b.status === "pending").length;
+  const insuranceApproved = insuranceVerified === true && insuranceStatus === "verified";
+  const insuranceListingMessage = !insuranceDocUrl
+    ? "Insurance required — submit your certificate of insurance before your shop can be listed. Admin approval is required after submission."
+    : insuranceStatus === "pending"
+      ? "Insurance review pending — your shop cannot be listed or shown in search until admin approves your certificate."
+      : insuranceStatus === "rejected"
+        ? "Insurance rejected — upload a valid certificate of insurance. Your shop will stay hidden until admin approval."
+        : "Insurance approval required — your shop cannot be listed or shown in search until admin approves your certificate.";
 
   // BookingDetailPanel is defined at module level — see top of file
 
@@ -909,6 +932,14 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
           <div style={{ background: "rgba(255,77,0,0.06)", border: "1px solid rgba(255,77,0,0.25)", padding: "12px 16px", marginBottom: 16, fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,120,60,0.9)", lineHeight: 1.6 }}>
             ⚠️ {bookingsError}
             <button onClick={() => setBookingsError("")} style={{ marginLeft: 12, background: "none", border: "none", color: "#FF4D00", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", fontSize: 12, textDecoration: "underline" }}>Dismiss</button>
+          </div>
+        )}
+        {userShop && !insuranceApproved && (
+          <div style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.35)", padding: "14px 20px", marginBottom: 20, fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(254,202,202,0.96)", lineHeight: 1.6, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+            <span>⚠️ <strong>Insurance approval required.</strong> {insuranceListingMessage}</span>
+            <button onClick={() => setDashTab("profile")} style={{ background: "#EF4444", border: "none", color: "#fff", padding: "7px 18px", fontFamily: "'Bebas Neue', cursive", fontSize: 14, letterSpacing: 1, cursor: "pointer", flexShrink: 0 }}>
+              {insuranceDocUrl ? "VIEW INSURANCE STATUS →" : "UPLOAD INSURANCE →"}
+            </button>
           </div>
         )}
         {userShop && !stripeOnboarded && (
@@ -1588,7 +1619,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
             )}
             {!isListed && (
               <div style={{ background: "rgba(245,158,11,0.07)", border: "1px solid rgba(245,158,11,0.3)", padding: "14px 20px", marginBottom: 24, fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.7)", lineHeight: 1.6 }}>
-                💳 <strong style={{ color: "#F59E0B" }}>Your shop is not listed.</strong> Toggle listing status below to be discoverable by customers.
+                💳 <strong style={{ color: "#F59E0B" }}>Your shop is not listed.</strong> {insuranceApproved ? "Toggle listing status below to be discoverable by customers." : "Submit insurance and wait for admin approval before your shop can be listed."}
               </div>
             )}
             <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
@@ -1733,11 +1764,13 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
                       const path = `${userShop.id}/insurance.${ext}`;
                       const { error: upErr } = await supabase.storage.from("insurance-docs").upload(path, file, { upsert: true });
                       if (upErr) { setInsuranceError("Upload failed: " + upErr.message); setInsuranceUploading(false); return; }
-                      const { error: dbErr } = await supabase.from("shops").update({ insurance_doc_url: path, insurance_status: "pending", insurance_verified: false }).eq("id", userShop.id);
+                      const { error: dbErr } = await supabase.from("shops").update({ insurance_doc_url: path, insurance_status: "pending", insurance_verified: false, is_listed: false }).eq("id", userShop.id);
                       setInsuranceUploading(false);
                       if (dbErr) { setInsuranceError("Failed to save: " + dbErr.message); return; }
                       setInsuranceDocUrl(path);
                       setInsuranceStatus("pending");
+                      setInsuranceVerified(false);
+                      setIsListed(false);
                     }} />
                     <button onClick={() => insuranceInputRef.current?.click()} disabled={insuranceUploading} style={{ background: "rgba(59,130,246,0.1)", border: "1px solid rgba(59,130,246,0.3)", color: "#3B82F6", padding: "10px 20px", fontFamily: "'Bebas Neue', cursive", fontSize: 15, letterSpacing: 1, cursor: insuranceUploading ? "default" : "pointer", opacity: insuranceUploading ? 0.6 : 1 }}>
                       {insuranceUploading ? "Uploading…" : insuranceDocUrl ? "↩ Re-upload Document" : "📄 Upload Insurance Certificate"}
@@ -1757,17 +1790,20 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
                   <div>
                     <div style={{ fontSize: 26, letterSpacing: 2 }}>LISTING STATUS</div>
-                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.35)", marginTop: 4 }}>Controls whether your shop appears in customer search results</div>
+                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.35)", marginTop: 4 }}>{insuranceApproved ? "Controls whether your shop appears in customer search results" : "Insurance must be approved before your shop can be listed"}</div>
                   </div>
-                  <div
+                  <button
+                    type="button"
+                    disabled={!insuranceApproved}
                     onClick={() => setIsListed(v => !v)}
-                    style={{ width: 52, height: 28, background: isListed ? "#10B981" : "rgba(255,255,255,0.1)", borderRadius: 14, position: "relative", cursor: "pointer", transition: "background 0.2s", flexShrink: 0 }}
+                    title={insuranceApproved ? "" : "Admin must approve insurance before listing"}
+                    style={{ width: 52, height: 28, background: isListed && insuranceApproved ? "#10B981" : "rgba(255,255,255,0.1)", border: "none", padding: 0, borderRadius: 14, position: "relative", cursor: insuranceApproved ? "pointer" : "not-allowed", transition: "background 0.2s", flexShrink: 0, opacity: insuranceApproved ? 1 : 0.55 }}
                   >
-                    <div style={{ position: "absolute", top: 3, left: isListed ? 27 : 3, width: 22, height: 22, background: "#fff", borderRadius: "50%", transition: "left 0.2s", boxShadow: "0 1px 4px rgba(0,0,0,0.4)" }} />
-                  </div>
+                    <div style={{ position: "absolute", top: 3, left: isListed && insuranceApproved ? 27 : 3, width: 22, height: 22, background: "#fff", borderRadius: "50%", transition: "left 0.2s", boxShadow: "0 1px 4px rgba(0,0,0,0.4)" }} />
+                  </button>
                 </div>
-                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: isListed ? "#10B981" : "rgba(245,158,11,0.9)", display: "flex", alignItems: "center", gap: 8 }}>
-                  {isListed ? "● Listed — Visible to customers" : "● Not listed — Hidden from search results"}
+                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: isListed && insuranceApproved ? "#10B981" : "rgba(245,158,11,0.9)", display: "flex", alignItems: "center", gap: 8 }}>
+                  {isListed && insuranceApproved ? "● Listed — Visible to customers" : insuranceApproved ? "● Not listed — Hidden from search results" : "● Not listed — Insurance approval required"}
                 </div>
               </div>
 

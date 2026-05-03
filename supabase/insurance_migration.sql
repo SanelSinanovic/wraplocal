@@ -5,6 +5,7 @@
 -- New columns on shops
 ALTER TABLE shops ADD COLUMN IF NOT EXISTS insurance_doc_url text;
 ALTER TABLE shops ADD COLUMN IF NOT EXISTS insurance_status text; -- null | 'pending' | 'verified' | 'rejected'
+ALTER TABLE shops ADD COLUMN IF NOT EXISTS insurance_verified boolean NOT NULL DEFAULT false;
 
 -- Storage bucket for insurance documents (private by default)
 INSERT INTO storage.buckets (id, name, public)

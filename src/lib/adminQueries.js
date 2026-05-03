@@ -18,7 +18,7 @@ export async function isAdmin(userId) {
 
 export async function fetchPlatformStats() {
   const [shops, bookings, profiles, reviews] = await Promise.all([
-    supabase.from('shops').select('id, is_listed, stripe_onboarded, created_at', { count: 'exact' }),
+    supabase.from('shops').select('id, is_listed, stripe_onboarded, insurance_verified, insurance_status, created_at', { count: 'exact' }),
     supabase.from('bookings').select('id, status, amount, fee, total, payment_verified, created_at', { count: 'exact' }),
     supabase.from('profiles').select('id, role, created_at', { count: 'exact' }),
     supabase.from('reviews').select('id', { count: 'exact' }),
@@ -29,7 +29,7 @@ export async function fetchPlatformStats() {
   const allProfiles = profiles.data || []
 
   const totalShops = allShops.length
-  const listedShops = allShops.filter(s => s.is_listed).length
+  const listedShops = allShops.filter(s => s.is_listed && s.stripe_onboarded && s.insurance_verified && s.insurance_status === 'verified').length
   const stripeShops = allShops.filter(s => s.stripe_onboarded).length
 
   const totalBookings = allBookings.length
@@ -87,6 +87,15 @@ export async function fetchAllShops() {
 }
 
 export async function adminToggleShopListed(shopId, isListed) {
+  if (isListed) {
+    const { data: shop, error: fetchError } = await supabase
+      .from('shops')
+      .select('insurance_verified, insurance_status')
+      .eq('id', shopId)
+      .single()
+    if (fetchError || !shop?.insurance_verified || shop.insurance_status !== 'verified') return false
+  }
+
   const { error } = await supabase
     .from('shops')
     .update({ is_listed: isListed })
@@ -98,7 +107,7 @@ export async function adminSetInsuranceStatus(shopId, status) {
   const verified = status === 'verified';
   const { error } = await supabase
     .from('shops')
-    .update({ insurance_status: status, insurance_verified: verified })
+    .update({ insurance_status: status, insurance_verified: verified, ...(verified ? {} : { is_listed: false }) })
     .eq('id', shopId)
   return !error
 }

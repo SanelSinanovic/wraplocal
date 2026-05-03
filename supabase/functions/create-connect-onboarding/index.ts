@@ -97,7 +97,7 @@ Deno.serve(async (req) => {
             "Content-Type": "application/json",
             Prefer: "return=minimal",
           },
-          body: JSON.stringify({ stripe_account_id: null, stripe_onboarded: false }),
+          body: JSON.stringify({ stripe_account_id: null, stripe_onboarded: false, is_listed: false }),
         });
         accountId = null;
       }

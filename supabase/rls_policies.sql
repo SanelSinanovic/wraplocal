@@ -4,11 +4,15 @@
 -- ============================================================
 
 -- ── SHOPS ────────────────────────────────────────────────
--- Anyone (including logged-out customers) can read all shops
+-- Anyone can read only shops that are fully approved for public listing.
+-- Owners can still read their own shops while pending setup/review.
 drop policy if exists "Public can read shops" on shops;
 create policy "Public can read shops"
   on shops for select
-  using (true);
+  using (
+    (is_listed = true and stripe_onboarded = true and insurance_verified = true and insurance_status = 'verified')
+    or auth.uid() = owner_id
+  );
 
 -- Only the shop owner can insert their own shop
 drop policy if exists "Owner can insert shop" on shops;
@@ -26,7 +30,16 @@ create policy "Owner can update shop"
 drop policy if exists "Public can read portfolio images" on portfolio_images;
 create policy "Public can read portfolio images"
   on portfolio_images for select
-  using (true);
+  using (
+    exists (
+      select 1 from shops
+      where shops.id = portfolio_images.shop_id
+        and (
+          (shops.is_listed = true and shops.stripe_onboarded = true and shops.insurance_verified = true and shops.insurance_status = 'verified')
+          or shops.owner_id = auth.uid()
+        )
+    )
+  );
 
 -- ── SHOP SLOTS ───────────────────────────────────────────
 drop policy if exists "Public can read shop slots" on shop_slots;

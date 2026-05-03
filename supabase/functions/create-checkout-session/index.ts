@@ -117,7 +117,7 @@ Deno.serve(async (req) => {
     if (!user) return jsonResp({ error: "Unauthorized." }, 401, corsHeaders);
 
     const bookings = await restJson(
-      `${supabaseUrl}/rest/v1/bookings?id=eq.${safeEq(bookingId)}&select=id,customer_id,shop_id,service,status,amount,total,payment_verified,shops(id,name,stripe_account_id)`,
+      `${supabaseUrl}/rest/v1/bookings?id=eq.${safeEq(bookingId)}&select=id,customer_id,shop_id,service,status,amount,total,payment_verified,shops(id,name,stripe_account_id,insurance_verified,insurance_status)`,
       supabaseService
     );
     const booking = bookings?.[0];
@@ -173,6 +173,10 @@ Deno.serve(async (req) => {
     }
 
     const shopStripeAccountId = booking.shops?.stripe_account_id || null;
+    if (booking.shops?.insurance_verified !== true || booking.shops?.insurance_status !== "verified") {
+      return jsonResp({ error: "This shop is not currently approved for online bookings. Please contact support." }, 400, corsHeaders);
+    }
+
     if (!shopStripeAccountId) {
       return jsonResp({ error: "This shop has not completed payment setup. Please contact the shop directly." }, 400, corsHeaders);
     }

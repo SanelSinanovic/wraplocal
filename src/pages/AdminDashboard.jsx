@@ -68,6 +68,10 @@ export default function AdminDashboard({ nav, currentUser, onLogout }) {
   const filteredUsers = users.filter(u => userFilter === "all" || u.role === userFilter);
 
   const toggleListed = async (shop) => {
+    if (!shop.is_listed && (!shop.insurance_verified || shop.insurance_status !== "verified")) {
+      window.alert("Insurance must be approved before this shop can be listed.");
+      return;
+    }
     const ok = await adminToggleShopListed(shop.id, !shop.is_listed);
     if (ok) setShops(prev => prev.map(s => s.id === shop.id ? { ...s, is_listed: !s.is_listed } : s));
   };
@@ -251,7 +255,7 @@ function OverviewTab({ stats, fmtUSD, fmt, maxGMV }) {
 function ShopsTab({ shops, search, setSearch, toggleListed, setShops, fmtDate, openInsuranceDoc }) {
   const handleInsurance = async (shop, status) => {
     const ok = await adminSetInsuranceStatus(shop.id, status);
-    if (ok) setShops(prev => prev.map(s => s.id === shop.id ? { ...s, insurance_status: status, insurance_verified: status === "verified" } : s));
+    if (ok) setShops(prev => prev.map(s => s.id === shop.id ? { ...s, insurance_status: status, insurance_verified: status === "verified", is_listed: status === "verified" ? s.is_listed : false } : s));
   };
   return (
     <div>
@@ -300,7 +304,7 @@ function ShopsTab({ shops, search, setSearch, toggleListed, setShops, fmtDate, o
                   </td>
                   <td style={td}>{fmtDate(s.created_at)}</td>
                   <td style={td}>
-                    <button onClick={() => toggleListed(s)} style={{ background: s.is_listed ? "rgba(239,68,68,0.15)" : "rgba(16,185,129,0.15)", border: `1px solid ${s.is_listed ? "rgba(239,68,68,0.4)" : "rgba(16,185,129,0.4)"}`, color: s.is_listed ? "#EF4444" : "#10B981", padding: "4px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 11, cursor: "pointer", fontWeight: 600 }}>
+                    <button disabled={!s.is_listed && (!s.insurance_verified || s.insurance_status !== "verified")} title={!s.is_listed && (!s.insurance_verified || s.insurance_status !== "verified") ? "Approve insurance before listing" : ""} onClick={() => toggleListed(s)} style={{ background: s.is_listed ? "rgba(239,68,68,0.15)" : "rgba(16,185,129,0.15)", border: `1px solid ${s.is_listed ? "rgba(239,68,68,0.4)" : "rgba(16,185,129,0.4)"}`, color: s.is_listed ? "#EF4444" : "#10B981", padding: "4px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 11, cursor: !s.is_listed && (!s.insurance_verified || s.insurance_status !== "verified") ? "not-allowed" : "pointer", fontWeight: 600, opacity: !s.is_listed && (!s.insurance_verified || s.insurance_status !== "verified") ? 0.45 : 1 }}>
                       {s.is_listed ? "Unlist" : "List"}
                     </button>
                   </td>

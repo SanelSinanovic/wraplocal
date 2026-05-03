@@ -129,6 +129,8 @@ export async function fetchShops() {
     .neq('banner_url', '')
     .eq('is_listed', true)
     .eq('stripe_onboarded', true)
+    .eq('insurance_verified', true)
+    .eq('insurance_status', 'verified')
     .order('rating', { ascending: false })
   if (error) { console.error('fetchShops:', error); return null }
   return data.map(shop => ({
@@ -151,6 +153,10 @@ export async function fetchShopById(shopId) {
     .from('shops')
     .select('*, portfolio_images(url, display_order), shop_slots(label, is_active)')
     .eq('id', shopId)
+    .eq('is_listed', true)
+    .eq('stripe_onboarded', true)
+    .eq('insurance_verified', true)
+    .eq('insurance_status', 'verified')
     .single()
   if (error) { console.error('fetchShopById:', error); return null }
   if (!data) return null

@@ -15,6 +15,44 @@ AS $$
   );
 $$;
 
+-- ── Insurance approval listing gate ───────────────────────
+ALTER TABLE shops ADD COLUMN IF NOT EXISTS insurance_doc_url text;
+ALTER TABLE shops ADD COLUMN IF NOT EXISTS insurance_status text;
+ALTER TABLE shops ADD COLUMN IF NOT EXISTS insurance_verified boolean NOT NULL DEFAULT false;
+
+UPDATE shops
+SET insurance_verified = (insurance_status = 'verified')
+WHERE insurance_verified IS DISTINCT FROM (insurance_status = 'verified');
+
+UPDATE shops
+SET is_listed = false
+WHERE COALESCE(insurance_verified, false) <> true
+   OR insurance_status IS DISTINCT FROM 'verified';
+
+CREATE OR REPLACE FUNCTION enforce_shop_listing_requirements()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  IF NEW.is_listed = true AND (
+    COALESCE(NEW.stripe_onboarded, false) <> true
+    OR COALESCE(NEW.insurance_verified, false) <> true
+    OR NEW.insurance_status IS DISTINCT FROM 'verified'
+  ) THEN
+    NEW.is_listed := false;
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_enforce_shop_listing_requirements ON shops;
+CREATE TRIGGER trg_enforce_shop_listing_requirements
+  BEFORE INSERT OR UPDATE OF is_listed, stripe_onboarded, insurance_status, insurance_verified
+  ON shops
+  FOR EACH ROW
+  EXECUTE FUNCTION enforce_shop_listing_requirements();
+
 ALTER TABLE bookings ADD COLUMN IF NOT EXISTS payment_confirmed_at timestamptz;
 
 CREATE TABLE IF NOT EXISTS booking_quotes (
@@ -231,7 +269,7 @@ DROP POLICY IF EXISTS "Public can read shops" ON shops;
 CREATE POLICY "Public can read listed shops"
   ON shops FOR SELECT
   USING (
-    (is_listed = true AND stripe_onboarded = true)
+    (is_listed = true AND stripe_onboarded = true AND insurance_verified = true AND insurance_status = 'verified')
     OR auth.uid() = owner_id
     OR is_admin()
   );
@@ -245,7 +283,7 @@ CREATE POLICY "Public can read listed shop portfolio images"
       SELECT 1 FROM shops
       WHERE shops.id = portfolio_images.shop_id
         AND (
-          (shops.is_listed = true AND shops.stripe_onboarded = true)
+          (shops.is_listed = true AND shops.stripe_onboarded = true AND shops.insurance_verified = true AND shops.insurance_status = 'verified')
           OR shops.owner_id = auth.uid()
           OR is_admin()
         )

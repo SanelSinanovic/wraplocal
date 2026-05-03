@@ -62,7 +62,7 @@ Deno.serve(async (req) => {
 
     // Fetch shop row (must be owned by this user)
     const shopRes = await fetch(
-      supabaseUrl + "/rest/v1/shops?id=eq." + shopId + "&select=id,owner_id,stripe_account_id,stripe_onboarded",
+      supabaseUrl + "/rest/v1/shops?id=eq." + shopId + "&select=id,owner_id,stripe_account_id,stripe_onboarded,is_listed,insurance_verified,insurance_status",
       { headers: { apikey: supabaseService, Authorization: "Bearer " + supabaseService } }
     );
     const shops = await shopRes.json().catch(() => []);
@@ -81,7 +81,7 @@ Deno.serve(async (req) => {
           "Content-Type": "application/json",
           Prefer: "return=minimal",
         },
-        body: JSON.stringify({ stripe_onboarded: false }),
+        body: JSON.stringify({ stripe_onboarded: false, is_listed: false }),
       });
       return jsonResp(req, { onboarded: false, charges_enabled: false, payouts_enabled: false });
     }
@@ -96,11 +96,13 @@ Deno.serve(async (req) => {
     const payouts_enabled  = !!(acct?.payouts_enabled);
     const onboarded        = charges_enabled && payouts_enabled;
 
-    // Update DB if status changed
-    if (onboarded !== shop.stripe_onboarded) {
-      // When first becoming onboarded, also auto-list the shop so it appears in search
-      const patch: Record<string, unknown> = { stripe_onboarded: onboarded };
-      if (onboarded) patch.is_listed = true;
+    const insuranceApproved = shop.insurance_verified === true && shop.insurance_status === "verified";
+    const listingAllowed = onboarded && insuranceApproved;
+    const nextIsListed = listingAllowed ? !!shop.is_listed : false;
+
+    // Update DB if Stripe status or listing eligibility changed.
+    if (onboarded !== shop.stripe_onboarded || shop.is_listed !== nextIsListed) {
+      const patch: Record<string, unknown> = { stripe_onboarded: onboarded, is_listed: nextIsListed };
       await fetch(supabaseUrl + "/rest/v1/shops?id=eq." + shopId, {
         method: "PATCH",
         headers: {
