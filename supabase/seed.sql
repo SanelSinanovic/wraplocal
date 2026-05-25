@@ -17,13 +17,16 @@ begin
   insert into public.profiles (id, role, name)
   values (
     new.id,
-    coalesce(new.raw_user_meta_data->>'role', 'customer'),
+    case
+      when new.raw_user_meta_data->>'role' in ('customer', 'company') then new.raw_user_meta_data->>'role'
+      else 'customer'
+    end,
     coalesce(new.raw_user_meta_data->>'name', split_part(new.email, '@', 1))
   )
   on conflict (id) do nothing;
   return new;
 end;
-$$ language plpgsql security definer;
+$$ language plpgsql security definer set search_path = public;
 
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
@@ -104,6 +107,6 @@ on conflict do nothing;
 
 -- Email existence check for signup validation
 CREATE OR REPLACE FUNCTION public.email_exists(email_address text)
-RETURNS boolean LANGUAGE sql SECURITY DEFINER AS $$
+RETURNS boolean LANGUAGE sql SECURITY DEFINER SET search_path = public AS $$
   SELECT EXISTS (SELECT 1 FROM auth.users WHERE email = email_address);
 $$;

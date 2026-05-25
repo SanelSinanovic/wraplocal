@@ -32,6 +32,10 @@ function jsonResp(req, body, status) {
   });
 }
 
+function safeEq(value) {
+  return encodeURIComponent(String(value));
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: getCorsHeaders(req) });
@@ -62,8 +66,9 @@ Deno.serve(async (req) => {
     if (!userId) return jsonResp(req, { error: "Unauthorized" });
 
     // Fetch shop row (must be owned by this user)
+    const encodedShopId = safeEq(shopId);
     const shopRes = await fetch(
-      supabaseUrl + "/rest/v1/shops?id=eq." + shopId + "&select=id,owner_id,stripe_account_id,stripe_onboarded,is_listed,insurance_verified,insurance_status",
+      supabaseUrl + "/rest/v1/shops?id=eq." + encodedShopId + "&select=id,owner_id,stripe_account_id,stripe_onboarded,is_listed,insurance_verified,insurance_status",
       { headers: { apikey: supabaseService, Authorization: "Bearer " + supabaseService } }
     );
     const shops = await shopRes.json().catch(() => []);
@@ -74,7 +79,7 @@ Deno.serve(async (req) => {
 
     if (!shop.stripe_account_id) {
       // No account yet — ensure onboarded is false
-      await fetch(supabaseUrl + "/rest/v1/shops?id=eq." + shopId, {
+      await fetch(supabaseUrl + "/rest/v1/shops?id=eq." + encodedShopId, {
         method: "PATCH",
         headers: {
           apikey: supabaseService,
@@ -104,7 +109,7 @@ Deno.serve(async (req) => {
     // Update DB if Stripe status or listing eligibility changed.
     if (onboarded !== shop.stripe_onboarded || shop.is_listed !== nextIsListed) {
       const patch: Record<string, unknown> = { stripe_onboarded: onboarded, is_listed: nextIsListed };
-      await fetch(supabaseUrl + "/rest/v1/shops?id=eq." + shopId, {
+      await fetch(supabaseUrl + "/rest/v1/shops?id=eq." + encodedShopId, {
         method: "PATCH",
         headers: {
           apikey: supabaseService,

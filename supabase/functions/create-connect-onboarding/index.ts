@@ -43,6 +43,10 @@ function isRedirectUrlSafe(url) {
   }
 }
 
+function safeEq(value) {
+  return encodeURIComponent(String(value));
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: getCorsHeaders(req) });
@@ -77,8 +81,9 @@ Deno.serve(async (req) => {
     if (!userId) return jsonResp(req, { error: "Unauthorized - invalid or missing JWT" });
 
     // Fetch the shop row
+    const encodedShopId = safeEq(shopId);
     const shopRes = await fetch(
-      supabaseUrl + "/rest/v1/shops?id=eq." + shopId + "&select=id,owner_id,stripe_account_id",
+      supabaseUrl + "/rest/v1/shops?id=eq." + encodedShopId + "&select=id,owner_id,stripe_account_id",
       { headers: { apikey: supabaseService, Authorization: "Bearer " + supabaseService } }
     );
     const shops = await shopRes.json().catch(() => []);
@@ -104,7 +109,7 @@ Deno.serve(async (req) => {
         ));
       if (isDeleted) {
         // Wipe stale account from DB so a fresh one is created below
-        await fetch(supabaseUrl + "/rest/v1/shops?id=eq." + shopId, {
+        await fetch(supabaseUrl + "/rest/v1/shops?id=eq." + encodedShopId, {
           method: "PATCH",
           headers: {
             apikey: supabaseService,
@@ -140,7 +145,7 @@ Deno.serve(async (req) => {
       accountId = account.id;
 
       // Save account ID to the shops row
-      await fetch(supabaseUrl + "/rest/v1/shops?id=eq." + shopId, {
+  await fetch(supabaseUrl + "/rest/v1/shops?id=eq." + encodedShopId, {
         method: "PATCH",
         headers: {
           apikey: supabaseService,

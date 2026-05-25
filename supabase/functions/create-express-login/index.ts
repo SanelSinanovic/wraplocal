@@ -31,6 +31,10 @@ function jsonResp(req, body, status) {
   });
 }
 
+function safeEq(value) {
+  return encodeURIComponent(String(value));
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: getCorsHeaders(req) });
@@ -62,7 +66,7 @@ Deno.serve(async (req) => {
 
     // Get shop's stripe_account_id
     const shopRes = await fetch(
-      supabaseUrl + "/rest/v1/shops?id=eq." + shopId + "&select=id,owner_id,stripe_account_id",
+      supabaseUrl + "/rest/v1/shops?id=eq." + safeEq(shopId) + "&select=id,owner_id,stripe_account_id",
       { headers: { apikey: supabaseService, Authorization: "Bearer " + supabaseService } }
     );
     const shops = await shopRes.json().catch(() => []);
