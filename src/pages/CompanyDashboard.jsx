@@ -908,9 +908,6 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
             )}
           </div>
         ))}
-        <div className="nav-item" onClick={() => nav("contractors")} style={{ justifyContent: "space-between" }}>
-          <span>🔎 Installers</span>
-        </div>
         <div style={{ flex: 1 }} />
         {currentUser && (
           <button onClick={onLogout} style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", background: "none", border: "1px solid rgba(255,255,255,0.1)", padding: "8px 12px", cursor: "pointer", marginBottom: 12, width: "100%" }}>Log Out</button>

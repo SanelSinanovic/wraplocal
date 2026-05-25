@@ -14,7 +14,8 @@ function allowedOrigins() {
 
 function getCorsHeaders(req: Request) {
   const origin = req.headers.get("Origin") || "";
-  const allowed = origin || allowedOrigins()[0] || "*";
+  const origins = allowedOrigins();
+  const allowed = origins.includes(origin) ? origin : origins[0] || "";
   return {
     "Access-Control-Allow-Origin": allowed,
     "Access-Control-Allow-Methods": "POST, OPTIONS",
@@ -31,6 +32,17 @@ function jsonResp(req, body, status) {
   });
 }
 
+function isRedirectUrlSafe(url) {
+  if (!url) return false;
+  try {
+    const parsed = new URL(url);
+    if (!["http:", "https:"].includes(parsed.protocol)) return false;
+    return new Set(allowedOrigins()).has(parsed.origin);
+  } catch (_) {
+    return false;
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: getCorsHeaders(req) });
@@ -41,6 +53,9 @@ Deno.serve(async (req) => {
     const { shopId, returnUrl, refreshUrl } = body;
 
     if (!shopId) return jsonResp(req, { error: "shopId is required" });
+    if (!isRedirectUrlSafe(returnUrl) || !isRedirectUrlSafe(refreshUrl || returnUrl)) {
+      return jsonResp(req, { error: "Invalid redirect URL" }, 400);
+    }
 
     const stripeKey       = Deno.env.get("STRIPE_SECRET_KEY");
     const supabaseUrl     = Deno.env.get("SUPABASE_URL");

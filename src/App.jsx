@@ -9,9 +9,6 @@ import PricingPage from "./pages/PricingPage";
 import CompanyDashboard from "./pages/CompanyDashboard";
 import CustomerLogin from "./pages/CustomerLogin";
 import CompanyLogin from "./pages/CompanyLogin";
-import ContractorLogin from "./pages/ContractorLogin";
-import ContractorDashboard from "./pages/ContractorDashboard";
-import ContractorFinderPage from "./pages/ContractorFinderPage";
 import { supabase } from "./lib/supabase";
 import { fetchShops, fetchProfile, fetchShopById } from "./lib/queries";
 import TermsPage from "./pages/TermsPage";
@@ -27,12 +24,9 @@ const VIEW_TO_PATH = {
   booking: "/book",
   "customer-dash": "/dashboard",
   "company-dash": "/company",
-  "contractor-dash": "/contractor",
-  contractors: "/contractors",
   pricing: "/pricing",
   "customer-login": "/login",
   "company-login": "/business/login",
-  "contractor-login": "/contractor/login",
   terms: "/terms",
   privacy: "/privacy",
   "reset-password": "/reset-password",
@@ -47,12 +41,9 @@ const PATH_META = {
   "/book":           { title: "Book a Service — WrapBridge",                                        description: "Request a quote and book your vehicle service through WrapBridge." },
   "/dashboard":      { title: "My Bookings — WrapBridge",                                          description: "Manage your vehicle service bookings on WrapBridge." },
   "/company":        { title: "Shop Dashboard — WrapBridge",                                       description: "Manage your shop, bookings, and payouts on WrapBridge." },
-  "/contractor":     { title: "Contractor Dashboard — WrapBridge",                                 description: "Manage your installer profile and company messages on WrapBridge." },
-  "/contractors":    { title: "Find Installers — WrapBridge",                                      description: "Browse independent wrap, tint, signage, and graphics installers available for direct contractor work." },
   "/pricing":        { title: "Pricing — WrapBridge",                                               description: "Simple, transparent pricing for vehicle wrap and tint shops listing on WrapBridge." },
   "/login":          { title: "Sign In — WrapBridge",                                               description: "Sign in to your WrapBridge customer account to manage bookings." },
   "/business/login": { title: "Shop Login — WrapBridge",                                            description: "Sign in to your WrapBridge shop dashboard." },
-  "/contractor/login": { title: "Contractor Login — WrapBridge",                                    description: "Sign in or create a WrapBridge contractor installer account." },
   "/terms":          { title: "Terms of Service \u2014 WrapBridge",                                  description: "Read WrapBridge's Terms of Service, including our payment, refund, and liability policies." },
   "/privacy":        { title: "Privacy Policy \u2014 WrapBridge",                                   description: "Read WrapBridge's Privacy Policy to understand how we collect, use, and protect your data." },
   "/reset-password": { title: "Reset Password \u2014 WrapBridge",                                   description: "Reset your WrapBridge account password." },
@@ -78,10 +69,10 @@ function NotFoundPage({ nav }) {
 
 function RequireAuth({ children, role, authReady, currentUser, currentProfile }) {
   if (!authReady) return <PageLoader />;
-  const loginPath = role === "company" ? "/business/login" : role === "contractor" ? "/contractor/login" : "/login";
+  const loginPath = role === "company" ? "/business/login" : "/login";
   if (!currentUser) return <Navigate to={loginPath} replace />;
   const accountRole = currentProfile?.role || currentUser?.user_metadata?.role;
-  const accountHome = accountRole === "company" ? "/company" : accountRole === "contractor" ? "/contractor" : accountRole === "admin" ? "/admin" : "/dashboard";
+  const accountHome = accountRole === "company" ? "/company" : accountRole === "admin" ? "/admin" : "/dashboard";
   if (role && accountRole && accountRole !== role && accountRole !== "admin") return <Navigate to={accountHome} replace />;
   return children;
 }
@@ -243,7 +234,7 @@ export default function App() {
           setCurrentProfile(p);
           if (event === "SIGNED_IN" && window.location.hash.includes("type=signup")) {
             const role = p?.role || session.user.user_metadata?.role;
-            navigate(role === "company" ? "/company" : role === "contractor" ? "/contractor" : "/dashboard", { replace: true });
+            navigate(role === "company" ? "/company" : "/dashboard", { replace: true });
           }
         });
       } else {
@@ -271,7 +262,6 @@ export default function App() {
         return;
       }
       if (role === "company") { navigate("/company"); return; }
-      if (role === "contractor") { navigate("/contractor"); return; }
     }
 
     // Update shop context state
@@ -337,7 +327,7 @@ export default function App() {
         }
         return;
       }
-      nav(type === "customer" ? "customer-dash" : type === "contractor" ? "contractor-dash" : "company-dash");
+      nav(type === "customer" ? "customer-dash" : "company-dash");
     } catch {
       setLoginError("Something went wrong. Please try again.");
     }
@@ -359,12 +349,9 @@ export default function App() {
       <Route path="/book/:shopId" element={<BookingFlowLoader {...commonProps} bookingShop={bookingShop} setBookingShop={setBookingShop} bookingStep={bookingStep} setBookingStep={setBookingStep} selectedSlot={selectedSlot} setSelectedSlot={setSelectedSlot} selectedDate={selectedDate} setSelectedDate={setSelectedDate} bookingConfirmed={bookingConfirmed} setBookingConfirmed={setBookingConfirmed} />} />
       <Route path="/dashboard" element={<RequireAuth role="customer" authReady={authReady} currentUser={currentUser} currentProfile={currentProfile}><CustomerDashboard {...commonProps} stripeReturn={stripeReturn} setStripeReturn={setStripeReturn} stripeNotice={stripeNotice} setStripeNotice={setStripeNotice} /></RequireAuth>} />
       <Route path="/company" element={<RequireAuth role="company" authReady={authReady} currentUser={currentUser} currentProfile={currentProfile}><CompanyDashboard {...commonProps} dashTab={dashTab} setDashTab={setDashTab} refreshShops={refreshShops} /></RequireAuth>} />
-      <Route path="/contractor" element={<RequireAuth role="contractor" authReady={authReady} currentUser={currentUser} currentProfile={currentProfile}><ContractorDashboard {...commonProps} /></RequireAuth>} />
-      <Route path="/contractors" element={<RequireAuth role="company" authReady={authReady} currentUser={currentUser} currentProfile={currentProfile}><ContractorFinderPage {...commonProps} /></RequireAuth>} />
       <Route path="/pricing" element={<PricingPage nav={nav} currentUser={currentUser} currentProfile={currentProfile} />} />
       <Route path="/login" element={<CustomerLogin nav={nav} loginForm={loginForm} setLoginForm={setLoginForm} loginError={loginError} setLoginError={setLoginError} handleLogin={handleLogin} bookingContext={!!postLoginNav} />} />
       <Route path="/business/login" element={<CompanyLogin nav={nav} loginForm={loginForm} setLoginForm={setLoginForm} loginError={loginError} setLoginError={setLoginError} handleLogin={handleLogin} />} />
-      <Route path="/contractor/login" element={<ContractorLogin nav={nav} loginForm={loginForm} setLoginForm={setLoginForm} loginError={loginError} setLoginError={setLoginError} handleLogin={handleLogin} />} />
       <Route path="/terms" element={<TermsPage nav={nav} />} />
       <Route path="/privacy" element={<PrivacyPage nav={nav} />} />
       <Route path="/reset-password" element={<ResetPasswordPage nav={nav} recoveryReady={recoveryReady} />} />

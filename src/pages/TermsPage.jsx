@@ -29,8 +29,8 @@ export default function TermsPage({ nav }) {
         <p>You are responsible for maintaining the confidentiality of your account credentials and for all activity that occurs under your account. Notify us immediately at <a href="mailto:support@wrapbridge.com">support@wrapbridge.com</a> if you suspect unauthorized access. We reserve the right to suspend or terminate accounts that violate these Terms.</p>
 
         <h2>4. Service Providers</h2>
-        <h3>4.1 Independent Contractors</h3>
-        <p>Service Providers are <strong>independent contractors</strong>, not employees, agents, or representatives of WrapBridge. WrapBridge does not supervise, direct, or control the work performed by Service Providers.</p>
+        <h3>4.1 Service Provider Status</h3>
+        <p>Service Providers operate independently and are not employees, agents, or representatives of WrapBridge. WrapBridge does not supervise, direct, or control the work performed by Service Providers.</p>
         <h3>4.2 Stripe Connect Requirement</h3>
         <p>Service Providers must complete Stripe Connect onboarding and maintain an active, fully enabled Stripe account to be listed on the Platform and receive payments.</p>
         <h3>4.3 Service Provider Responsibilities</h3>

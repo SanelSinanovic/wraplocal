@@ -14,7 +14,8 @@ function allowedOrigins() {
 
 function getCorsHeaders(req: Request) {
   const origin = req.headers.get("Origin") || "";
-  const allowed = origin || allowedOrigins()[0] || "*";
+  const origins = allowedOrigins();
+  const allowed = origins.includes(origin) ? origin : origins[0] || "";
   return {
     "Access-Control-Allow-Origin": allowed,
     "Access-Control-Allow-Methods": "POST, OPTIONS",
@@ -49,8 +50,6 @@ function isRedirectUrlSafe(url, req: Request) {
     const parsed = new URL(url);
     if (!["http:", "https:"].includes(parsed.protocol)) return false;
     const origins = new Set(allowedOrigins());
-    const requestOrigin = req.headers.get("Origin");
-    if (requestOrigin) origins.add(new URL(requestOrigin).origin);
     return origins.has(parsed.origin);
   } catch (_) {
     return false;

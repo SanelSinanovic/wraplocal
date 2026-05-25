@@ -10,7 +10,7 @@ alter table shops add column if not exists distance text;
 
 -- ── AUTO-CREATE PROFILE ON SIGNUP ─────────────────────────
 -- This trigger fires every time a new user signs up via Supabase Auth.
--- Pass { data: { role: 'customer' | 'company' | 'contractor', name: '...' } } in signUp options.
+-- Pass { data: { role: 'customer' | 'company', name: '...' } } in signUp options.
 create or replace function public.handle_new_user()
 returns trigger as $$
 begin
@@ -38,7 +38,7 @@ values
     'Chrome Kings Wraps', 4.9, 214,
     'Atlanta, GA', 'Atlanta', '30305', '2.1 mi', 1200, 'Today',
     ARRAY['Full Wraps', 'Color Change', 'PPF'],
-    'Atlanta''s premier wrap studio since 2015. Certified 3M installers with a 5-year warranty on all work.',
+    'Atlanta''s premier wrap studio since 2015. Certified 3M technicians with a 5-year warranty on all work.',
     '(404) 555-0123', 'chromekingswraps.com',
     'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=600&q=80',
     '#FF4D00', 'CK'
