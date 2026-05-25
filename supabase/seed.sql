@@ -10,7 +10,7 @@ alter table shops add column if not exists distance text;
 
 -- ── AUTO-CREATE PROFILE ON SIGNUP ─────────────────────────
 -- This trigger fires every time a new user signs up via Supabase Auth.
--- Pass { data: { role: 'customer' | 'company', name: '...' } } in signUp options.
+-- Pass { data: { role: 'customer' | 'company' | 'contractor', name: '...' } } in signUp options.
 create or replace function public.handle_new_user()
 returns trigger as $$
 begin

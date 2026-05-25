@@ -161,8 +161,11 @@ export default function LandingPage({ nav, shops: liveShops, setServiceFilter, c
         <img src="/images/Logo.png" alt="WrapBridge" style={{ height: 72, display: "block", cursor: "pointer" }} onClick={() => nav("landing")} />
         <div className="nav-links" style={{ display: "flex", gap: 32 }}>
           <span className="nav-link" onClick={() => nav("search")}>Find Shops</span>
+          {role === "company" && (
+            <span className="nav-link" onClick={() => nav("contractors")}>Find Contractors</span>
+          )}
           <span className="nav-link" onClick={() => nav("pricing")}>For Businesses</span>
-          {role !== "company" && (
+          {role !== "company" && role !== "contractor" && (
             <span className="nav-link" onClick={() => nav(currentUser ? "customer-dash" : "customer-login")}>My Bookings</span>
           )}
         </div>
@@ -170,13 +173,14 @@ export default function LandingPage({ nav, shops: liveShops, setServiceFilter, c
           {currentUser ? (
             <>
               <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.5)" }}>👤 {firstName}</span>
-              <button className="btn-ghost" onClick={() => nav(role === "company" ? "company-dash" : "customer-dash")}>{role === "company" ? "Dashboard" : "My Bookings"}</button>
+              <button className="btn-ghost" onClick={() => nav(role === "company" ? "company-dash" : role === "contractor" ? "contractor-dash" : "customer-dash")}>{role === "company" || role === "contractor" ? "Dashboard" : "My Bookings"}</button>
               <button className="btn-ghost" style={{ borderColor: "rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.5)" }} onClick={onLogout}>Sign Out</button>
             </>
           ) : (
             <>
               <button className="btn-ghost" onClick={() => nav("customer-login")}>Customer Login</button>
               <button className="btn-ghost" onClick={() => nav("company-login")}>Business Login</button>
+              <button className="btn-ghost" onClick={() => nav("contractor-login")}>Contractor Login</button>
               <button className="btn-main" onClick={() => nav("search")}>Find a Shop</button>
             </>
           )}
@@ -192,13 +196,16 @@ export default function LandingPage({ nav, shops: liveShops, setServiceFilter, c
       {menuOpen && (
         <div className="mobile-menu">
           <span onClick={() => { nav("search"); setMenuOpen(false); }}>Find Shops</span>
+          {role === "company" && (
+            <span onClick={() => { nav("contractors"); setMenuOpen(false); }}>Find Contractors</span>
+          )}
           <span onClick={() => { nav("pricing"); setMenuOpen(false); }}>For Businesses</span>
-          {role !== "company" && (
+          {role !== "company" && role !== "contractor" && (
             <span onClick={() => { nav(currentUser ? "customer-dash" : "customer-login"); setMenuOpen(false); }}>My Bookings</span>
           )}
           {currentUser ? (
             <>
-              <button className="mob-btn" onClick={() => { nav(role === "company" ? "company-dash" : "customer-dash"); setMenuOpen(false); }}>{role === "company" ? "My Dashboard →" : "My Bookings →"}</button>
+              <button className="mob-btn" onClick={() => { nav(role === "company" ? "company-dash" : role === "contractor" ? "contractor-dash" : "customer-dash"); setMenuOpen(false); }}>{role === "company" || role === "contractor" ? "My Dashboard →" : "My Bookings →"}</button>
               <button className="mob-btn-ghost" onClick={() => { onLogout(); setMenuOpen(false); }}>Sign Out</button>
             </>
           ) : (
@@ -206,6 +213,7 @@ export default function LandingPage({ nav, shops: liveShops, setServiceFilter, c
               <button className="mob-btn" onClick={() => { nav("search"); setMenuOpen(false); }}>Find a Shop →</button>
               <button className="mob-btn-ghost" onClick={() => { nav("customer-login"); setMenuOpen(false); }}>Customer Login</button>
               <button className="mob-btn-ghost" onClick={() => { nav("company-login"); setMenuOpen(false); }}>Business Login</button>
+              <button className="mob-btn-ghost" onClick={() => { nav("contractor-login"); setMenuOpen(false); }}>Contractor Login</button>
             </>
           )}
         </div>

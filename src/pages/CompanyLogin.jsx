@@ -133,6 +133,7 @@ export default function CompanyLogin({ nav, loginForm, setLoginForm, loginError,
                   <button onClick={() => handleLogin("company")} className="login-submit" style={{ marginBottom: 16 }}>Sign In to Dashboard</button>
                   <div style={{ display: "flex", gap: 16, justifyContent: "center", fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.3)" }}>
                     <span style={{ cursor: "pointer" }} onClick={() => nav("customer-login")}>Customer login →</span>
+                    <span style={{ cursor: "pointer" }} onClick={() => nav("contractor-login")}>Contractor login →</span>
                   </div>
                 </>
               )}
