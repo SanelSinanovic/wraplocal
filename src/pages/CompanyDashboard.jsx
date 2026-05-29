@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase, supabaseUrl, supabaseAnonKey } from "../lib/supabase";
 import { fetchUserShop, fetchCompanyBookings, createShop, updateShop, fetchMessages, sendMessage as dbSendMessage, subscribeToMessages, subscribeToShopBookings, fetchPortfolioImages, addPortfolioImage, deletePortfolioImage, setHeroPortfolioImage, scheduleBooking, uploadChatFile, geocodeCityState, fetchShopAvailability, saveShopAvailability, sendNotification, validateUploadFile, createBookingQuote } from "../lib/queries";
 import { SERVICE_CATEGORIES, ALL_SERVICE_NAMES } from "../lib/services";
-import { buildDataDeletionRequestHref } from "../lib/privacy";
+import { requestDataDeletion } from "../lib/privacy";
 import ChatImagePreview from "../components/ChatImagePreview";
 import CompanyOnboarding from "./CompanyOnboarding";
 
@@ -341,12 +341,6 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
   const [bookingsView, setBookingsView] = useState("list");
   const [showArchived, setShowArchived] = useState(false);
   const [dashboardBookings, setDashboardBookings] = useState([]);
-  const dataDeletionHref = buildDataDeletionRequestHref({
-    accountType: "Business Account",
-    email: currentUser?.email,
-    userId: currentUser?.id,
-    businessName: currentProfile?.business_name || currentProfile?.name,
-  });
   const [userShop, setUserShop] = useState(null);
   const [isNewShop, setIsNewShop] = useState(false);
   const [profileForm, setProfileForm] = useState({ name: "", address: "", city: "", state: "", zip: "", phone: "", website: "", bio: "", price_from: "" });
@@ -354,6 +348,8 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
   const [saveStatus, setSaveStatus] = useState("");
   const [shopError, setShopError] = useState("");
   const [bookingsError, setBookingsError] = useState("");
+  const [dataDeletionStatus, setDataDeletionStatus] = useState("");
+  const [dataDeletionError, setDataDeletionError] = useState("");
   const [bookingsLoaded, setBookingsLoaded] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [messagesMap, setMessagesMap] = useState({});
@@ -895,6 +891,21 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
     if (calMonth === 11) { setCalMonth(0); setCalYear(y => y + 1); }
     else setCalMonth(m => m + 1);
     setSelectedDay(null);
+  };
+
+  const handleDataDeletionRequest = async () => {
+    setDataDeletionStatus("sending");
+    setDataDeletionError("");
+    try {
+      await requestDataDeletion({
+        accountType: "Business Account",
+        businessName: userShop?.name || currentProfile?.business_name || currentProfile?.name,
+      });
+      setDataDeletionStatus("sent");
+    } catch (error) {
+      setDataDeletionStatus("");
+      setDataDeletionError(error?.message || "Could not send request. Please contact support@wrapbridge.com.");
+    }
   };
 
   return (
@@ -1938,9 +1949,11 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
                 <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.45)", lineHeight: 1.6, marginBottom: 14 }}>
                   Request removal of your business account data. Some payment, dispute, tax, accounting, security, or legal records may need to be retained.
                 </div>
-                <a href={dataDeletionHref} style={{ display: "inline-block", background: "transparent", color: "rgba(248,113,113,0.95)", border: "1px solid rgba(248,113,113,0.45)", padding: "10px 16px", fontFamily: "'Bebas Neue', cursive", fontSize: 15, letterSpacing: 1.5, textDecoration: "none" }}>
-                  Request Data Deletion
-                </a>
+                <button onClick={handleDataDeletionRequest} disabled={dataDeletionStatus === "sending" || dataDeletionStatus === "sent"} style={{ display: "inline-block", background: "transparent", color: "rgba(248,113,113,0.95)", border: "1px solid rgba(248,113,113,0.45)", padding: "10px 16px", fontFamily: "'Bebas Neue', cursive", fontSize: 15, letterSpacing: 1.5, cursor: dataDeletionStatus === "sending" || dataDeletionStatus === "sent" ? "default" : "pointer", opacity: dataDeletionStatus === "sending" ? 0.6 : 1 }}>
+                  {dataDeletionStatus === "sending" ? "Sending..." : dataDeletionStatus === "sent" ? "Request Sent" : "Request Data Deletion"}
+                </button>
+                {dataDeletionStatus === "sent" && <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#10B981", marginTop: 10 }}>Your request was sent to WrapBridge support.</div>}
+                {dataDeletionError && <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#EF4444", marginTop: 10 }}>{dataDeletionError}</div>}
               </div>
             </div>
           </div>

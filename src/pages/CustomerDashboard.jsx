@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 
 import { supabase } from "../lib/supabase";
 import { fetchCustomerBookings, fetchMessages, sendMessage as dbSendMessage, subscribeToMessages, submitReview, fetchBookingReview, uploadChatFile, sendNotification } from "../lib/queries";
-import { buildDataDeletionRequestHref } from "../lib/privacy";
+import { requestDataDeletion } from "../lib/privacy";
 import ChatImagePreview from "../components/ChatImagePreview";
 
 function mergeMessages(existing = [], incoming = []) {
@@ -24,11 +24,6 @@ function mergeMessages(existing = [], incoming = []) {
 
 export default function CustomerDashboard({ nav, currentUser, currentProfile, onLogout, stripeReturn, setStripeReturn, stripeNotice, setStripeNotice }) {
   const location = useLocation();
-  const dataDeletionHref = buildDataDeletionRequestHref({
-    accountType: "Customer Account",
-    email: currentUser?.email,
-    userId: currentUser?.id,
-  });
   const [bookings, setBookings] = useState([]);
   const [bookingsLoaded, setBookingsLoaded] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState(null);
@@ -58,9 +53,23 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
   // ── Cancel booking state ─────────────────────────────────
   const [cancelConfirmId, setCancelConfirmId] = useState(null);
   const [cancelSubmitting, setCancelSubmitting] = useState(false);
+  const [dataDeletionStatus, setDataDeletionStatus] = useState("");
+  const [dataDeletionError, setDataDeletionError] = useState("");
 
   // ── Unread messages state ────────────────────────────────
   const [unreadMap, setUnreadMap] = useState({});
+
+  const handleDataDeletionRequest = async () => {
+    setDataDeletionStatus("sending");
+    setDataDeletionError("");
+    try {
+      await requestDataDeletion({ accountType: "Customer Account" });
+      setDataDeletionStatus("sent");
+    } catch (error) {
+      setDataDeletionStatus("");
+      setDataDeletionError(error?.message || "Could not send request. Please contact support@wrapbridge.com.");
+    }
+  };
 
   // Load bookings: real data if logged in, static demo otherwise
   useEffect(() => {
@@ -928,9 +937,11 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
           <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.45)", lineHeight: 1.6, marginBottom: 14 }}>
             Need your account data removed? Send a deletion request to WrapBridge support.
           </div>
-          <a href={dataDeletionHref} style={{ display: "inline-block", background: "transparent", color: "rgba(255,255,255,0.75)", border: "1px solid rgba(255,255,255,0.16)", padding: "10px 16px", fontFamily: "'Bebas Neue', cursive", fontSize: 15, letterSpacing: 1.5, textDecoration: "none" }}>
-            Request Data Deletion
-          </a>
+          <button onClick={handleDataDeletionRequest} disabled={dataDeletionStatus === "sending" || dataDeletionStatus === "sent"} style={{ display: "inline-block", background: "transparent", color: "rgba(255,255,255,0.75)", border: "1px solid rgba(255,255,255,0.16)", padding: "10px 16px", fontFamily: "'Bebas Neue', cursive", fontSize: 15, letterSpacing: 1.5, cursor: dataDeletionStatus === "sending" || dataDeletionStatus === "sent" ? "default" : "pointer", opacity: dataDeletionStatus === "sending" ? 0.6 : 1 }}>
+            {dataDeletionStatus === "sending" ? "Sending..." : dataDeletionStatus === "sent" ? "Request Sent" : "Request Data Deletion"}
+          </button>
+          {dataDeletionStatus === "sent" && <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#10B981", marginTop: 10 }}>Your request was sent to WrapBridge support.</div>}
+          {dataDeletionError && <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#EF4444", marginTop: 10 }}>{dataDeletionError}</div>}
         </div>
       </div>
 
