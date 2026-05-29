@@ -323,7 +323,7 @@ Deno.serve(async (req) => {
     const supabaseUrl   = Deno.env.get("SUPABASE_URL");
     const supabaseService = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const fromEmail     = Deno.env.get("RESEND_FROM") || "WrapBridge <onboarding@resend.dev>";
-    const appUrl        = Deno.env.get("APP_URL") || "https://wrapbridge.com";
+    const appUrl        = Deno.env.get("APP_URL") || "https://www.wrapbridge.com";
 
     if (!resendKey)       return jsonResp(req, { error: "RESEND_API_KEY not configured" }, 500);
     if (!supabaseUrl)     return jsonResp(req, { error: "SUPABASE_URL not configured" }, 500);
