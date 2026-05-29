@@ -68,9 +68,10 @@ function NotFoundPage({ nav }) {
 }
 
 function RequireAuth({ children, role, authReady, currentUser, currentProfile }) {
+  const location = useLocation();
   if (!authReady) return <PageLoader />;
   const loginPath = role === "company" ? "/business/login" : "/login";
-  if (!currentUser) return <Navigate to={loginPath} replace />;
+  if (!currentUser) return <Navigate to={loginPath} state={{ from: location }} replace />;
   const accountRole = currentProfile?.role || currentUser?.user_metadata?.role;
   const accountHome = accountRole === "company" ? "/company" : accountRole === "admin" ? "/admin" : "/dashboard";
   if (role && accountRole && accountRole !== role && accountRole !== "admin") return <Navigate to={accountHome} replace />;
@@ -315,6 +316,12 @@ export default function App() {
       setCurrentProfile(profile);
       if (profile?.role === "admin") {
         navigate("/admin", { replace: true });
+        return;
+      }
+      // Redirect back to the page the user came from (e.g. /dashboard?booking=ID from email link)
+      const fromLocation = location.state?.from;
+      if (fromLocation?.pathname === "/dashboard" && type === "customer") {
+        navigate({ pathname: fromLocation.pathname, search: fromLocation.search }, { replace: true });
         return;
       }
       if (postLoginNav && type === "customer") {

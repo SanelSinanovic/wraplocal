@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 
 import { supabase } from "../lib/supabase";
 import { fetchCustomerBookings, fetchMessages, sendMessage as dbSendMessage, subscribeToMessages, submitReview, fetchBookingReview, uploadChatFile, sendNotification } from "../lib/queries";
@@ -21,6 +22,7 @@ function mergeMessages(existing = [], incoming = []) {
 }
 
 export default function CustomerDashboard({ nav, currentUser, currentProfile, onLogout, stripeReturn, setStripeReturn, stripeNotice, setStripeNotice }) {
+  const location = useLocation();
   const [bookings, setBookings] = useState([]);
   const [bookingsLoaded, setBookingsLoaded] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState(null);
@@ -69,6 +71,17 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
       setBookingsLoaded(true);
     }
   }, [currentUser]);
+
+  // Auto-select a booking when arriving from an email deep link (?booking=ID)
+  useEffect(() => {
+    if (!bookingsLoaded || !bookings.length) return;
+    const params = new URLSearchParams(location.search);
+    const bookingId = params.get("booking");
+    if (bookingId) {
+      const found = bookings.find(b => b.id === bookingId);
+      if (found) setSelectedBooking(found);
+    }
+  }, [bookingsLoaded, bookings, location.search]);
 
   // When a booking is selected, load its messages and subscribe to realtime
   useEffect(() => {

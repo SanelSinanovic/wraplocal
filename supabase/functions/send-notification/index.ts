@@ -128,7 +128,7 @@ function buildEmail(type, b, customerName, shopName, customerEmail, shopEmail, a
         <p style="margin:0;font-size:14px;color:#555;line-height:1.6;">
           Log in to your dashboard to review the request and send a quote.
         </p>
-        ${orangeBtn("View Request →", appUrl)}
+        ${orangeBtn("View Request →", `${appUrl}/company`)}
       `);
       const customerHtml = emailWrapper(`
         <h2 style="margin:0 0 8px;font-size:22px;color:#0A0A0A;font-weight:800;">Booking Request Sent!</h2>
@@ -145,7 +145,7 @@ function buildEmail(type, b, customerName, shopName, customerEmail, shopEmail, a
         <p style="margin:0;font-size:14px;color:#555;line-height:1.6;">
           We'll email you again once the shop sends your quote. You can also track your booking in your WrapBridge dashboard.
         </p>
-        ${orangeBtn("Track My Booking →", appUrl)}
+        ${orangeBtn("Track My Booking →", `${appUrl}/dashboard?booking=${b.id}`)}
       `);
       return {
         to: shopEmail, subject: `New booking request from ${customerName}`, html: shopHtml,
@@ -169,7 +169,7 @@ function buildEmail(type, b, customerName, shopName, customerEmail, shopEmail, a
         <p style="margin:0;font-size:14px;color:#555;line-height:1.6;">
           Log in to review the quote and accept or decline it. Once accepted, you'll complete payment and the shop will confirm your appointment.
         </p>
-        ${orangeBtn("Review Quote →", appUrl)}
+        ${orangeBtn("Review Quote →", `${appUrl}/dashboard?booking=${b.id}`)}
       `);
       return { to: customerEmail, subject: `${shopName} sent you a quote for ${service}`, html };
     }
@@ -190,7 +190,7 @@ function buildEmail(type, b, customerName, shopName, customerEmail, shopEmail, a
         <p style="margin:0;font-size:14px;color:#555;line-height:1.6;">
           Head to your dashboard to confirm the appointment date and time with the customer.
         </p>
-        ${orangeBtn("Go to Dashboard →", appUrl)}
+        ${orangeBtn("Go to Dashboard →", `${appUrl}/company`)}
       `);
       return { to: shopEmail, subject: `${customerName} accepted your quote — ${service}`, html };
     }
@@ -214,7 +214,7 @@ function buildEmail(type, b, customerName, shopName, customerEmail, shopEmail, a
         <p style="margin:0;font-size:14px;color:#555;line-height:1.6;">
           You can message the shop any time through your WrapBridge dashboard.
         </p>
-        ${orangeBtn("View My Booking →", appUrl)}
+        ${orangeBtn("View My Booking →", `${appUrl}/dashboard?booking=${b.id}`)}
       `);
       return { to: customerEmail, subject: `Your booking at ${shopName} is confirmed`, html };
     }
@@ -261,7 +261,7 @@ function buildEmail(type, b, customerName, shopName, customerEmail, shopEmail, a
         <p style="margin:0;font-size:14px;color:#555;line-height:1.6;">
           Your booking is confirmed. You can message the shop any time through your WrapBridge dashboard.
         </p>
-        ${orangeBtn("View My Booking \u2192", appUrl)}
+        ${orangeBtn("View My Booking \u2192", `${appUrl}/dashboard?booking=${b.id}`)}
       `);
       const shopHtml = emailWrapper(`
         <h2 style="margin:0 0 8px;font-size:22px;color:#0A0A0A;font-weight:800;">Payment Received ✓</h2>
@@ -278,7 +278,7 @@ function buildEmail(type, b, customerName, shopName, customerEmail, shopEmail, a
         <p style="margin:0;font-size:14px;color:#555;line-height:1.6;">
           Head to your dashboard to confirm the appointment date and time with the customer.
         </p>
-        ${orangeBtn("Go to Dashboard \u2192", appUrl)}
+        ${orangeBtn("Go to Dashboard \u2192", `${appUrl}/company`)}
       `);
       return { to: customerEmail, subject: `Payment confirmed — ${service} at ${shopName}`, html: customerHtml, shopHtml, shopSubject: `Payment received from ${customerName} — ${service}`, shopEmail };
     }
@@ -299,7 +299,7 @@ function buildEmail(type, b, customerName, shopName, customerEmail, shopEmail, a
         <p style="margin:0;font-size:14px;color:#555;line-height:1.6;">
           Please log in to your dashboard to message the customer and arrange a new time.
         </p>
-        ${orangeBtn("Go to Dashboard →", appUrl)}
+        ${orangeBtn("Go to Dashboard →", `${appUrl}/company`)}
       `);
       return { to: shopEmail, subject: `${customerName} requested a reschedule — ${service}`, html };
     }
