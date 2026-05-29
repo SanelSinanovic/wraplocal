@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase, supabaseUrl, supabaseAnonKey } from "../lib/supabase";
 import { fetchUserShop, fetchCompanyBookings, createShop, updateShop, fetchMessages, sendMessage as dbSendMessage, subscribeToMessages, subscribeToShopBookings, fetchPortfolioImages, addPortfolioImage, deletePortfolioImage, setHeroPortfolioImage, scheduleBooking, uploadChatFile, geocodeCityState, fetchShopAvailability, saveShopAvailability, sendNotification, validateUploadFile, createBookingQuote } from "../lib/queries";
 import { SERVICE_CATEGORIES, ALL_SERVICE_NAMES } from "../lib/services";
+import { buildDataDeletionRequestHref } from "../lib/privacy";
 import ChatImagePreview from "../components/ChatImagePreview";
 import CompanyOnboarding from "./CompanyOnboarding";
 
@@ -340,6 +341,12 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
   const [bookingsView, setBookingsView] = useState("list");
   const [showArchived, setShowArchived] = useState(false);
   const [dashboardBookings, setDashboardBookings] = useState([]);
+  const dataDeletionHref = buildDataDeletionRequestHref({
+    accountType: "Business Account",
+    email: currentUser?.email,
+    userId: currentUser?.id,
+    businessName: currentProfile?.business_name || currentProfile?.name,
+  });
   const [userShop, setUserShop] = useState(null);
   const [isNewShop, setIsNewShop] = useState(false);
   const [profileForm, setProfileForm] = useState({ name: "", address: "", city: "", state: "", zip: "", phone: "", website: "", bio: "", price_from: "" });
@@ -1926,6 +1933,15 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
                 </div>
               ))}
               <button style={{ background: "#FF4D00", color: "#fff", border: "none", padding: "14px", fontFamily: "'Bebas Neue', cursive", fontSize: 18, letterSpacing: 2, cursor: "pointer", marginTop: 8 }}>Save Changes</button>
+              <div style={{ marginTop: 18, background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.22)", padding: "18px 20px" }}>
+                <div style={{ fontSize: 22, letterSpacing: 1, marginBottom: 6 }}>DATA DELETION</div>
+                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.45)", lineHeight: 1.6, marginBottom: 14 }}>
+                  Request removal of your business account data. Some payment, dispute, tax, accounting, security, or legal records may need to be retained.
+                </div>
+                <a href={dataDeletionHref} style={{ display: "inline-block", background: "transparent", color: "rgba(248,113,113,0.95)", border: "1px solid rgba(248,113,113,0.45)", padding: "10px 16px", fontFamily: "'Bebas Neue', cursive", fontSize: 15, letterSpacing: 1.5, textDecoration: "none" }}>
+                  Request Data Deletion
+                </a>
+              </div>
             </div>
           </div>
         )}
