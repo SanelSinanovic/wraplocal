@@ -44,7 +44,7 @@ function safeEq(value) {
 
 // Branded email wrapper
 function emailWrapper(content) {
-  const appUrl = Deno.env.get("APP_URL") || "https://wrapbridge.com";
+  const appUrl = Deno.env.get("APP_URL") || "https://www.wrapbridge.com";
   const appHost = new URL(appUrl).host;
   return `<!DOCTYPE html>
 <html>
@@ -99,6 +99,13 @@ function detail(label, value) {
   return `<tr>
     <td style="padding:6px 0;font-size:13px;color:#999;width:140px;vertical-align:top;">${esc(label)}</td>
     <td style="padding:6px 0;font-size:13px;color:#222;font-weight:600;">${esc(value) || "—"}</td>
+  </tr>`;
+}
+
+function detailHtml(label, html) {
+  return `<tr>
+    <td style="padding:6px 0;font-size:13px;color:#999;width:140px;vertical-align:top;">${esc(label)}</td>
+    <td style="padding:6px 0;font-size:13px;color:#222;font-weight:600;">${html || "—"}</td>
   </tr>`;
 }
 
@@ -163,7 +170,7 @@ function buildEmail(type, b, customerName, shopName, customerEmail, shopEmail, a
         <table cellpadding="0" cellspacing="0" width="100%">
           ${detail("Shop", shopName)}
           ${detail("Service", service)}
-          ${amount ? detail("Quote amount", `<span style="color:#FF4D00;font-size:20px;">${amount}</span>`) : ""}
+          ${amount ? detailHtml("Quote amount", `<span style="color:#FF4D00;font-size:20px;">${amount}</span>`) : ""}
         </table>
         ${divider()}
         <p style="margin:0;font-size:14px;color:#555;line-height:1.6;">
@@ -184,7 +191,7 @@ function buildEmail(type, b, customerName, shopName, customerEmail, shopEmail, a
         <table cellpadding="0" cellspacing="0" width="100%">
           ${detail("Customer", customerName)}
           ${detail("Service", service)}
-          ${amount ? detail("Amount", `<span style="color:#FF4D00;font-size:18px;">${amount}</span>`) : ""}
+          ${amount ? detailHtml("Amount", `<span style="color:#FF4D00;font-size:18px;">${amount}</span>`) : ""}
         </table>
         ${divider()}
         <p style="margin:0;font-size:14px;color:#555;line-height:1.6;">
@@ -255,7 +262,7 @@ function buildEmail(type, b, customerName, shopName, customerEmail, shopEmail, a
           ${b.vehicle ? detail("Vehicle", b.vehicle) : ""}
           ${dateStr ? detail("Date", dateStr) : ""}
           ${timeStr ? detail("Time", timeStr) : ""}
-          ${amount ? detail("Amount paid", `<span style="color:#10B981;font-size:18px;font-weight:700;">${amount}</span>`) : ""}
+          ${amount ? detailHtml("Amount paid", `<span style="color:#10B981;font-size:18px;font-weight:700;">${amount}</span>`) : ""}
         </table>
         ${divider()}
         <p style="margin:0;font-size:14px;color:#555;line-height:1.6;">
@@ -272,7 +279,7 @@ function buildEmail(type, b, customerName, shopName, customerEmail, shopEmail, a
         <table cellpadding="0" cellspacing="0" width="100%">
           ${detail("Customer", customerName)}
           ${detail("Service", service)}
-          ${amount ? detail("Amount", `<span style="color:#10B981;font-size:18px;font-weight:700;">${amount}</span>`) : ""}
+          ${amount ? detailHtml("Amount", `<span style="color:#10B981;font-size:18px;font-weight:700;">${amount}</span>`) : ""}
         </table>
         ${divider()}
         <p style="margin:0;font-size:14px;color:#555;line-height:1.6;">
