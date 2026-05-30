@@ -32,6 +32,51 @@ function jsonResp(body, status, corsHeaders) {
   });
 }
 
+function getClientIp(req: Request) {
+  const forwardedFor = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+  return req.headers.get("cf-connecting-ip") || req.headers.get("x-real-ip") || forwardedFor || "unknown";
+}
+
+async function sha256Hex(value) {
+  const bytes = new TextEncoder().encode(value);
+  const hash = await crypto.subtle.digest("SHA-256", bytes);
+  return [...new Uint8Array(hash)].map(byte => byte.toString(16).padStart(2, "0")).join("");
+}
+
+async function checkRateLimit({ req, supabaseUrl, supabaseService, functionName, limit, windowSeconds, userId, identifier }) {
+  const rawIdentifier = identifier || (userId ? `user:${userId}` : `ip:${getClientIp(req)}`);
+  const keyHash = await sha256Hex(`${functionName}:${rawIdentifier}`);
+  const res = await fetch(`${supabaseUrl}/rest/v1/rpc/check_edge_rate_limit`, {
+    method: "POST",
+    headers: { apikey: supabaseService, Authorization: `Bearer ${supabaseService}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ p_key_hash: keyHash, p_limit: limit, p_window_seconds: windowSeconds }),
+  });
+  const data = await res.json().catch(() => null);
+  if (!res.ok) {
+    console.error("Rate limit check failed:", data || res.status);
+    const failOpen = Deno.env.get("RATE_LIMIT_FAIL_OPEN") === "true";
+    return { allowed: failOpen, currentCount: limit, limit, resetAt: new Date(Date.now() + windowSeconds * 1000).toISOString(), retryAfterSeconds: windowSeconds };
+  }
+  const row = Array.isArray(data) ? data[0] : data;
+  const resetAt = row?.reset_at || new Date(Date.now() + windowSeconds * 1000).toISOString();
+  const retryAfterSeconds = Math.max(1, Math.ceil((new Date(resetAt).getTime() - Date.now()) / 1000));
+  return { allowed: row?.allowed !== false, currentCount: Number(row?.current_count || 0), limit: Number(row?.limit_count || limit), resetAt, retryAfterSeconds };
+}
+
+function rateLimitedResponse(result, headers = {}) {
+  return new Response(JSON.stringify({ error: "Too many requests. Please try again soon.", retryAfterSeconds: result.retryAfterSeconds, resetAt: result.resetAt }), {
+    status: 429,
+    headers: {
+      ...headers,
+      "Content-Type": "application/json",
+      "Retry-After": String(result.retryAfterSeconds),
+      "X-RateLimit-Limit": String(result.limit),
+      "X-RateLimit-Remaining": String(Math.max(0, result.limit - result.currentCount)),
+      "X-RateLimit-Reset": result.resetAt,
+    },
+  });
+}
+
 function money(value) {
   return Math.round(Number(value) * 100) / 100;
 }
@@ -114,6 +159,17 @@ Deno.serve(async (req) => {
 
     const user = await getUser(req, supabaseUrl, supabaseService);
     if (!user) return jsonResp({ error: "Unauthorized." }, 401, corsHeaders);
+
+    const rateLimit = await checkRateLimit({
+      req,
+      supabaseUrl,
+      supabaseService,
+      functionName: "create-checkout-session",
+      limit: 5,
+      windowSeconds: 60,
+      userId: user.id,
+    });
+    if (!rateLimit.allowed) return rateLimitedResponse(rateLimit, corsHeaders);
 
     const bookings = await restJson(
       `${supabaseUrl}/rest/v1/bookings?id=eq.${safeEq(bookingId)}&select=id,customer_id,shop_id,service,status,amount,total,payment_verified,shops(id,name,stripe_account_id,insurance_verified,insurance_status)`,
