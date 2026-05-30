@@ -1,7 +1,7 @@
 import { supabase } from './supabase'
 
 // ── FILE UPLOAD VALIDATION ───────────────────────────────────────────────────
-const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 const ALLOWED_CHAT_TYPES = [...ALLOWED_IMAGE_TYPES, 'application/pdf'];
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 

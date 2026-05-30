@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
+import { safeExternalUrl } from "../lib/security";
 
 export default function ChatImagePreview({ src, alt = "Uploaded image" }) {
   const [open, setOpen] = useState(false);
+  const safeSrc = safeExternalUrl(src);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -20,6 +22,8 @@ export default function ChatImagePreview({ src, alt = "Uploaded image" }) {
     };
   }, [open]);
 
+  if (!safeSrc) return null;
+
   return (
     <>
       <button
@@ -36,7 +40,7 @@ export default function ChatImagePreview({ src, alt = "Uploaded image" }) {
         }}
       >
         <img
-          src={src}
+          src={safeSrc}
           alt={alt}
           style={{
             maxWidth: "100%",
@@ -90,7 +94,7 @@ export default function ChatImagePreview({ src, alt = "Uploaded image" }) {
           </button>
           <div onClick={(event) => event.stopPropagation()} style={{ maxWidth: "96vw", maxHeight: "90vh", textAlign: "center", cursor: "default" }}>
             <img
-              src={src}
+              src={safeSrc}
               alt={alt}
               style={{
                 maxWidth: "96vw",

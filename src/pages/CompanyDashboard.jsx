@@ -3,6 +3,7 @@ import { supabase, supabaseUrl, supabaseAnonKey } from "../lib/supabase";
 import { fetchUserShop, fetchCompanyBookings, createShop, updateShop, fetchMessages, sendMessage as dbSendMessage, subscribeToMessages, subscribeToShopBookings, fetchPortfolioImages, addPortfolioImage, deletePortfolioImage, setHeroPortfolioImage, scheduleBooking, uploadChatFile, geocodeCityState, fetchShopAvailability, saveShopAvailability, sendNotification, validateUploadFile, createBookingQuote } from "../lib/queries";
 import { SERVICE_CATEGORIES, ALL_SERVICE_NAMES } from "../lib/services";
 import { requestDataDeletion } from "../lib/privacy";
+import { safeExternalUrl } from "../lib/security";
 import ChatImagePreview from "../components/ChatImagePreview";
 import CompanyOnboarding from "./CompanyOnboarding";
 
@@ -184,9 +185,11 @@ function BookingDetailPanel({ selectedBooking, messagesMap, chatInput, setChatIn
                       const idx = msg.text.lastIndexOf('::');
                       const url = msg.text.slice(6, idx);
                       const name = msg.text.slice(idx + 2);
-                      const isImage = /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(name);
-                      if (isImage) return <ChatImagePreview src={url} alt={name} />;
-                      return <a href={url} target="_blank" rel="noreferrer" style={{ color: '#fff', textDecoration: 'underline' }}>📄 {name}</a>;
+                      const safeUrl = safeExternalUrl(url);
+                      if (!safeUrl) return "Attachment unavailable";
+                      const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(name);
+                      if (isImage) return <ChatImagePreview src={safeUrl} alt={name} />;
+                      return <a href={safeUrl} target="_blank" rel="noreferrer" style={{ color: '#fff', textDecoration: 'underline' }}>📄 {name}</a>;
                     }
                     return msg.text;
                   })()}

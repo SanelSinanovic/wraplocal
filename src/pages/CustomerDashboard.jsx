@@ -4,6 +4,7 @@ import { useLocation } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { fetchCustomerBookings, fetchMessages, sendMessage as dbSendMessage, subscribeToMessages, submitReview, fetchBookingReview, uploadChatFile, sendNotification } from "../lib/queries";
 import { requestDataDeletion } from "../lib/privacy";
+import { safeExternalUrl } from "../lib/security";
 import ChatImagePreview from "../components/ChatImagePreview";
 
 function mergeMessages(existing = [], incoming = []) {
@@ -488,9 +489,11 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
                           const idx = msg.text.lastIndexOf('::');
                           const url = msg.text.slice(6, idx);
                           const name = msg.text.slice(idx + 2);
-                          const isImage = /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(name);
-                          if (isImage) return <ChatImagePreview src={url} alt={name} />;
-                          return <a href={url} target="_blank" rel="noreferrer" style={{ color: '#fff', textDecoration: 'underline' }}>📄 {name}</a>;
+                          const safeUrl = safeExternalUrl(url);
+                          if (!safeUrl) return "Attachment unavailable";
+                          const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(name);
+                          if (isImage) return <ChatImagePreview src={safeUrl} alt={name} />;
+                          return <a href={safeUrl} target="_blank" rel="noreferrer" style={{ color: '#fff', textDecoration: 'underline' }}>📄 {name}</a>;
                         }
                         return msg.text;
                       })()}

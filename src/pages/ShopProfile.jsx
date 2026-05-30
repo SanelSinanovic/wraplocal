@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { ALL_SERVICE_NAMES } from "../lib/services";
 import { fetchShopReviews } from "../lib/queries";
+import { displayExternalUrl, safeExternalUrl } from "../lib/security";
 
 export default function ShopProfile({ nav, selectedShop, currentUser, currentProfile, onLogout }) {
   const [activeTab, setActiveTab] = useState("overview");
@@ -31,6 +32,8 @@ export default function ShopProfile({ nav, selectedShop, currentUser, currentPro
   const slots = shop.slots || [];
   const phone = shop.phone || "";
   const website = shop.website || "";
+  const websiteUrl = safeExternalUrl(website);
+  const websiteLabel = displayExternalUrl(website);
   const initials = shop.name
     ? shop.name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()
     : "??";
@@ -266,16 +269,16 @@ export default function ShopProfile({ nav, selectedShop, currentUser, currentPro
                     <a href={`tel:${phone}`} style={{ color: "rgba(255,255,255,0.6)", textDecoration: "none" }}>{phone}</a>
                   </div>
                 )}
-                {website && (
+                {websiteUrl && (
                   <div className="sp-info-row">
                     <div className="sp-icon">🌐</div>
-                    <a href={website.startsWith("http") ? website : `https://${website}`} target="_blank" rel="noopener noreferrer"
+                    <a href={websiteUrl} target="_blank" rel="noopener noreferrer"
                       style={{ color: "#FF4D00", textDecoration: "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {website.replace(/^https?:\/\//, "")}
+                      {websiteLabel}
                     </a>
                   </div>
                 )}
-                {!phone && !website && !location && (
+                {!phone && !websiteUrl && !location && (
                   <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.25)", padding: "12px 0" }}>
                     Contact info not listed yet.
                   </div>
@@ -416,14 +419,14 @@ export default function ShopProfile({ nav, selectedShop, currentUser, currentPro
                     </div>
                   </div>
                 ) : null}
-                {website ? (
+                {websiteUrl ? (
                   <div className="sp-info-row" style={{ padding: "16px 0" }}>
                     <div className="sp-icon" style={{ fontSize: 17 }}>🌐</div>
                     <div>
                       <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.28)", letterSpacing: 1, marginBottom: 3 }}>WEBSITE</div>
-                      <a href={website.startsWith("http") ? website : `https://${website}`} target="_blank" rel="noopener noreferrer"
+                      <a href={websiteUrl} target="_blank" rel="noopener noreferrer"
                         style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 15, color: "#FF4D00", textDecoration: "none" }}>
-                        {website.replace(/^https?:\/\//, "")}
+                        {websiteLabel}
                       </a>
                     </div>
                   </div>
