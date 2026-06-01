@@ -107,7 +107,7 @@ export default function CompanyOnboarding({ currentUser, userShop, onComplete, n
       {/* Navbar */}
       <nav className="ob-nav" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 40px", background: "rgba(10,10,10,0.97)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
         <button className="image-button" type="button" onClick={() => nav("landing")} aria-label="Go to WrapBridge home">
-          <img src="/images/Logo.png" alt="WrapBridge" style={{ height: 68, display: "block" }} />
+          <img src="/images/Logo.png" alt="" style={{ height: 68, display: "block" }} />
         </button>
         <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.35)" }}>Business Setup</div>
       </nav>

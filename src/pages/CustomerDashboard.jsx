@@ -399,7 +399,7 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
   const Navbar = () => (
     <nav style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 40px", background: "#0D0D0D", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
       <button className="image-button" type="button" onClick={() => nav("landing")} aria-label="Go to WrapBridge home">
-        <img src="/images/Logo.png" alt="WrapBridge" style={{ height: 68, display: "block" }} />
+        <img src="/images/Logo.png" alt="" style={{ height: 68, display: "block" }} />
       </button>
       <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
         <div style={{ position: "relative" }}>

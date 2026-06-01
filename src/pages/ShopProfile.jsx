@@ -110,7 +110,7 @@ export default function ShopProfile({ nav, selectedShop, currentUser, currentPro
       {/* ── NAV ── */}
       <nav className="sp-nav" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 40px", background: "rgba(10,10,10,0.95)", borderBottom: "1px solid rgba(255,255,255,0.06)", position: "sticky", top: 0, zIndex: 100, backdropFilter: "blur(20px)" }}>
         <button className="image-button" onClick={() => nav("landing")} aria-label="Go to WrapBridge home">
-          <img src="/images/Logo.png" alt="WrapBridge" style={{ height: 68, display: "block" }} />
+          <img src="/images/Logo.png" alt="" style={{ height: 68, display: "block" }} />
         </button>
         <button className="link-button" type="button" style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.65)", cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }} onClick={() => nav("search")}>
           ← Back to Search

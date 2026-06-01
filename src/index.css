@@ -56,7 +56,7 @@ select:focus-visible {
   left: 12px;
   z-index: 9999;
   transform: translateY(-160%);
-  background: var(--orange);
+  background: #C73A00;
   color: var(--white);
   padding: 10px 14px;
   border-radius: 6px;

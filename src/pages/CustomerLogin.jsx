@@ -70,7 +70,7 @@ export default function CustomerLogin({ nav, loginForm, setLoginForm, loginError
       <div aria-hidden="true" style={{ position: "fixed", bottom: "-10%", left: "-8%", width: 500, height: 500, background: "radial-gradient(circle, rgba(59,130,246,0.15) 0%, transparent 65%)", borderRadius: "50%", pointerEvents: "none", animation: "orb-drift 14s ease-in-out infinite", zIndex: 0 }} />
       <nav className="login-nav" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 40px", background: "rgba(10,10,10,0.95)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
         <button className="image-button" onClick={() => nav("landing")} aria-label="Go to WrapBridge home">
-          <img src="/images/Logo.png" alt="WrapBridge" style={{ height: 68, display: "block" }} />
+          <img src="/images/Logo.png" alt="" style={{ height: 68, display: "block" }} />
         </button>
       </nav>
       <div className="login-outer" style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: 40, position: "relative", overflow: "hidden" }}>
@@ -88,7 +88,7 @@ export default function CustomerLogin({ nav, loginForm, setLoginForm, loginError
 
           <div style={{ textAlign: "center", marginBottom: 32 }}>
             <button className="image-button" onClick={() => nav("landing")} aria-label="Go to WrapBridge home">
-              <img src="/images/Logo.png" alt="WrapBridge" style={{ height: 130 }} />
+              <img src="/images/Logo.png" alt="" style={{ height: 130 }} />
             </button>
           </div>
 

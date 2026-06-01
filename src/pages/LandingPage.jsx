@@ -27,14 +27,14 @@ export default function LandingPage({ nav, shops: liveShops, setServiceFilter, c
   const [activeSlide, setActiveSlide] = useState(0);
 
   const SLIDES = [
-    { label: "Full Color Change Wrap", category: "Vehicle Wraps", accent: "#FF4D00", img: "/images/color-change-wrap.jpg" },
-    { label: "Monument Signs", category: "Signage", accent: "#3B82F6", img: "/images/Monument-Sign.jpg" },
-    { label: "Channel Letters", category: "Signage", accent: "#3B82F6", img: "/images/Channel-Letters.jpg" },
-    { label: "PPF Paint Protection Film", category: "Vehicle Wraps", accent: "#FF4D00", img: "/images/PPF.jpg" },
-    { label: "LED Signs", category: "Signage", accent: "#3B82F6", img: "/images/LED.jpg" },
-    { label: "Custom Design Wrap", category: "Vehicle Wraps", accent: "#FF4D00", img: "/images/Custom-Design.jpg" },
-    { label: "Window Graphics", category: "Signage", accent: "#3B82F6", img: "/images/Window-Graphics.jpg" },
-    { label: "Window Tinting", category: "Signage", accent: "#3B82F6", img: "/images/Window-Tint.jpg" },
+    { label: "Full Color Change Wrap", alt: "Car with a full color change vinyl wrap", category: "Vehicle Wraps", accent: "#FF4D00", img: "/images/color-change-wrap.jpg" },
+    { label: "Monument Signs", alt: "Outdoor monument sign for a business entrance", category: "Signage", accent: "#3B82F6", img: "/images/Monument-Sign.jpg" },
+    { label: "Channel Letters", alt: "Illuminated channel letter storefront sign", category: "Signage", accent: "#3B82F6", img: "/images/Channel-Letters.jpg" },
+    { label: "PPF Paint Protection Film", alt: "Paint protection film being applied to a vehicle", category: "Vehicle Wraps", accent: "#FF4D00", img: "/images/PPF.jpg" },
+    { label: "LED Signs", alt: "Bright LED sign mounted on a storefront", category: "Signage", accent: "#3B82F6", img: "/images/LED.jpg" },
+    { label: "Custom Design Wrap", alt: "Vehicle with a custom printed wrap design", category: "Vehicle Wraps", accent: "#FF4D00", img: "/images/Custom-Design.jpg" },
+    { label: "Window Graphics", alt: "Business window covered with printed graphics", category: "Signage", accent: "#3B82F6", img: "/images/Window-Graphics.jpg" },
+    { label: "Window Tinting", alt: "Vehicle side window with dark tint film", category: "Signage", accent: "#3B82F6", img: "/images/Window-Tint.jpg" },
   ];
 
   useEffect(() => {
@@ -64,8 +64,8 @@ export default function LandingPage({ nav, shops: liveShops, setServiceFilter, c
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { margin: 0; }
-        .btn-main { background: #FF4D00; color: #fff; border: none; padding: 14px 32px; font-family: 'Bebas Neue', cursive; font-size: 18px; letter-spacing: 2px; cursor: pointer; clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%); transition: all 0.2s; }
-        .btn-main:hover { background: #FF6A20; transform: translateY(-1px); }
+        .btn-main { background: #C73A00; color: #fff; border: none; padding: 14px 32px; font-family: 'Bebas Neue', cursive; font-size: 18px; letter-spacing: 2px; cursor: pointer; clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%); transition: all 0.2s; }
+        .btn-main:hover { background: #B83200; transform: translateY(-1px); }
         .btn-ghost { background: transparent; color: #fff; border: 1px solid rgba(255,255,255,0.3); padding: 12px 28px; font-family: 'Bebas Neue', cursive; font-size: 16px; letter-spacing: 2px; cursor: pointer; transition: all 0.2s; }
         .btn-ghost:hover { border-color: #FF4D00; color: #FF4D00; }
         .nav-link { color: rgba(255,255,255,0.6); text-decoration: none; font-family: 'DM Sans', sans-serif; font-size: 14px; cursor: pointer; transition: color 0.2s; }
@@ -118,7 +118,7 @@ export default function LandingPage({ nav, shops: liveShops, setServiceFilter, c
         .reveal-stagger.visible > *:nth-child(4) { opacity: 1; transform: translateY(0); transition-delay: 0.36s; }
         .stat-num { display: inline-block; transition: color 0.3s; }
         .stat-num:hover { color: #FF6A20; }
-        .hamburger { display: none; background: none; border: none; cursor: pointer; padding: 4px; }
+        .hamburger { display: none; background: none; border: none; cursor: pointer; padding: 4px; color: #fff; }
         .mobile-menu { display: none; }
         @media (max-width: 768px) {
           .nav-links { display: none !important; }
@@ -126,7 +126,7 @@ export default function LandingPage({ nav, shops: liveShops, setServiceFilter, c
           .hamburger { display: flex; flex-direction: column; gap: 5px; }
           .mobile-menu { display: flex; flex-direction: column; background: rgba(10,10,10,0.98); border-bottom: 1px solid rgba(255,255,255,0.08); padding: 12px 20px 20px; gap: 4px; }
           .mobile-menu .mobile-link { font-family: 'DM Sans', sans-serif; font-size: 15px; color: rgba(255,255,255,0.7); cursor: pointer; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: block; text-align: left; width: 100%; }
-          .mobile-menu .mob-btn { margin-top: 12px; background: #FF4D00; color: #fff; border: none; padding: 14px; font-family: 'Bebas Neue', cursive; font-size: 17px; letter-spacing: 2px; cursor: pointer; width: 100%; }
+          .mobile-menu .mob-btn { margin-top: 12px; background: #C73A00; color: #fff; border: none; padding: 14px; font-family: 'Bebas Neue', cursive; font-size: 17px; letter-spacing: 2px; cursor: pointer; width: 100%; }
           .mobile-menu .mob-btn-ghost { margin-top: 8px; background: transparent; color: rgba(255,255,255,0.7); border: 1px solid rgba(255,255,255,0.2); padding: 12px; font-family: 'Bebas Neue', cursive; font-size: 15px; letter-spacing: 2px; cursor: pointer; width: 100%; }
           .hero-section { padding: 60px 20px 40px !important; }
           .hero-grid { grid-template-columns: 1fr !important; gap: 0 !important; }
@@ -159,7 +159,7 @@ export default function LandingPage({ nav, shops: liveShops, setServiceFilter, c
       {/* NAV */}
       <nav className="nav-pad" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 60px", borderBottom: "1px solid rgba(255,255,255,0.06)", position: "sticky", top: 0, background: "rgba(10,10,10,0.95)", backdropFilter: "blur(20px)", zIndex: 100 }}>
         <button className="image-button" onClick={() => nav("landing")} aria-label="Go to WrapBridge home">
-          <img src="/images/Logo.png" alt="WrapBridge" style={{ height: 72, display: "block" }} />
+          <img src="/images/Logo.png" alt="" style={{ height: 72, display: "block" }} />
         </button>
         <div className="nav-links" style={{ display: "flex", gap: 32 }}>
           <button className="nav-link link-button" onClick={() => nav("search")}>Find Shops</button>
@@ -283,7 +283,8 @@ export default function LandingPage({ nav, shops: liveShops, setServiceFilter, c
                 <img
                   key={slide.label}
                   src={slide.img}
-                  alt={slide.label}
+                  alt={i === activeSlide ? slide.alt : ""}
+                  aria-hidden={i !== activeSlide}
                   className={`slide-img${i === activeSlide ? " active" : ""}`}
                 />
               ))}
@@ -299,7 +300,7 @@ export default function LandingPage({ nav, shops: liveShops, setServiceFilter, c
               </div>
 
               {/* Book button top-right */}
-              <button onClick={() => nav("search")} style={{ position: "absolute", top: 16, right: 16, zIndex: 3, background: "rgba(255,77,0,0.9)", color: "#fff", border: "none", padding: "7px 16px", fontFamily: "'Bebas Neue', cursive", fontSize: 15, letterSpacing: 2, cursor: "pointer" }}>BOOK →</button>
+              <button onClick={() => nav("search")} style={{ position: "absolute", top: 16, right: 16, zIndex: 3, background: "#C73A00", color: "#fff", border: "none", padding: "7px 16px", fontFamily: "'Bebas Neue', cursive", fontSize: 15, letterSpacing: 2, cursor: "pointer" }}>BOOK →</button>
 
               {/* Service label bottom */}
               <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "24px 22px", zIndex: 3 }}>
@@ -490,19 +491,19 @@ export default function LandingPage({ nav, shops: liveShops, setServiceFilter, c
             List your business for free during our launch. Set your services, get discovered by local customers, and manage all your bookings and quotes in one place.
           </div>
         </div>
-        <button onClick={() => nav("pricing")} style={{ background: "#fff", color: "#FF4D00", border: "none", padding: "16px 40px", fontFamily: "'Bebas Neue', cursive", fontSize: 20, letterSpacing: 2, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}>
+        <button onClick={() => nav("pricing")} style={{ background: "#fff", color: "#C73A00", border: "none", padding: "16px 40px", fontFamily: "'Bebas Neue', cursive", fontSize: 20, letterSpacing: 2, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}>
           Get Listed →
         </button>
       </div>
 
       {/* Footer */}
       <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", padding: "32px 60px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
-        <img src="/images/Logo.png" alt="WrapBridge" style={{ height: 56, display: "block" }} />
+        <img src="/images/Logo.png" alt="" style={{ height: 56, display: "block" }} />
         <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.3)", display: "flex", gap: 24, flexWrap: "wrap", alignItems: "center" }}>
-          <button className="link-button" onClick={() => nav("terms")} style={{ cursor: "pointer", transition: "color 0.2s" }} onMouseEnter={e => e.currentTarget.style.color="#FF4D00"} onMouseLeave={e => e.currentTarget.style.color="rgba(255,255,255,0.3)"}>Terms of Service</button>
-          <button className="link-button" onClick={() => nav("privacy")} style={{ cursor: "pointer", transition: "color 0.2s" }} onMouseEnter={e => e.currentTarget.style.color="#FF4D00"} onMouseLeave={e => e.currentTarget.style.color="rgba(255,255,255,0.3)"}>Privacy Policy</button>
-          <button className="link-button" onClick={() => nav("pricing")} style={{ cursor: "pointer", transition: "color 0.2s" }} onMouseEnter={e => e.currentTarget.style.color="#FF4D00"} onMouseLeave={e => e.currentTarget.style.color="rgba(255,255,255,0.3)"}>Pricing</button>
-          <a href="mailto:support@wrapbridge.com" style={{ color: "rgba(255,255,255,0.3)", textDecoration: "none", transition: "color 0.2s" }} onMouseEnter={e => e.target.style.color="#FF4D00"} onMouseLeave={e => e.target.style.color="rgba(255,255,255,0.3)"}>support@wrapbridge.com</a>
+          <button className="link-button" onClick={() => nav("terms")} style={{ color: "rgba(255,255,255,0.68)", cursor: "pointer", transition: "color 0.2s" }} onMouseEnter={e => e.currentTarget.style.color="#FF8C33"} onMouseLeave={e => e.currentTarget.style.color="rgba(255,255,255,0.68)"}>Terms of Service</button>
+          <button className="link-button" onClick={() => nav("privacy")} style={{ color: "rgba(255,255,255,0.68)", cursor: "pointer", transition: "color 0.2s" }} onMouseEnter={e => e.currentTarget.style.color="#FF8C33"} onMouseLeave={e => e.currentTarget.style.color="rgba(255,255,255,0.68)"}>Privacy Policy</button>
+          <button className="link-button" onClick={() => nav("pricing")} style={{ color: "rgba(255,255,255,0.68)", cursor: "pointer", transition: "color 0.2s" }} onMouseEnter={e => e.currentTarget.style.color="#FF8C33"} onMouseLeave={e => e.currentTarget.style.color="rgba(255,255,255,0.68)"}>Pricing</button>
+          <a href="mailto:support@wrapbridge.com" style={{ color: "rgba(255,255,255,0.68)", textDecoration: "none", transition: "color 0.2s" }} onMouseEnter={e => e.target.style.color="#FF8C33"} onMouseLeave={e => e.target.style.color="rgba(255,255,255,0.68)"}>support@wrapbridge.com</a>
         </div>
         <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.2)" }}>© {new Date().getFullYear()} WrapBridge. All rights reserved.</div>
       </div>

@@ -11,7 +11,7 @@ export default function PrivacyPage({ nav }) {
       {/* Header */}
       <div className="legal-header" style={{ background: "#0D0D0D", borderBottom: "1px solid rgba(255,255,255,0.07)", padding: "20px 40px", display: "flex", alignItems: "center", gap: 32 }}>
         <button className="image-button" type="button" onClick={() => nav("landing")} aria-label="Go to WrapBridge home">
-          <img src="/images/Logo.png" alt="WrapBridge" style={{ height: 64, display: "block" }} />
+          <img src="/images/Logo.png" alt="" style={{ height: 64, display: "block" }} />
         </button>
         <span style={{ fontSize: 13, color: "rgba(255,255,255,0.3)", letterSpacing: 2 }}>PRIVACY POLICY</span>
       </div>

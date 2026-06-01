@@ -32,7 +32,7 @@ export default function CookieConsent() {
       </button>
       <button
         onClick={() => saveChoice(true)}
-        style={{ background: "#FF4D00", color: "#fff", border: "none", padding: "8px 22px", borderRadius: 4, fontSize: 13, fontWeight: 700, cursor: "pointer", letterSpacing: 1, whiteSpace: "nowrap", flexShrink: 0 }}
+        style={{ background: "#C73A00", color: "#fff", border: "none", padding: "8px 22px", borderRadius: 4, fontSize: 13, fontWeight: 700, cursor: "pointer", letterSpacing: 1, whiteSpace: "nowrap", flexShrink: 0 }}
       >
         Allow
       </button>

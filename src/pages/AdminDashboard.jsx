@@ -129,7 +129,7 @@ export default function AdminDashboard({ nav, currentUser, onLogout }) {
       {/* Sidebar */}
       <div className="adm-sidebar" style={{ width: 220, background: "#0B0B0F", borderRight: "1px solid rgba(255,255,255,0.06)", padding: "24px 16px", display: "flex", flexDirection: "column", flexShrink: 0, zIndex: 1 }}>
         <button className="image-button sidebar-logo" type="button" onClick={() => nav("landing")} aria-label="Go to WrapBridge home" style={{ marginBottom: 12 }}>
-          <img src="/images/Logo.png" alt="WrapBridge" style={{ width: 170, display: "block" }} />
+          <img src="/images/Logo.png" alt="" style={{ width: 170, display: "block" }} />
         </button>
         <div className="sidebar-sub" style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(139,92,246,0.6)", letterSpacing: 2, marginBottom: 20, padding: "0 4px" }}>ADMIN PANEL</div>
         {[["overview", "📊 Overview"], ["shops", "🏪 Shops"], ["bookings", "📋 Bookings"], ["users", "👥 Users"]].map(([k, l]) => (

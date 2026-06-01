@@ -920,7 +920,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
       <div aria-hidden="true" style={{ position: "fixed", bottom: "-10%", left: "-5%", width: 550, height: 550, background: "radial-gradient(circle, rgba(59,130,246,0.14) 0%, transparent 65%)", borderRadius: "50%", pointerEvents: "none", animation: "orb-drift 16s ease-in-out infinite", zIndex: 0 }} />
       <div className="company-sidebar" style={{ width: 220, background: "#0D0D0D", borderRight: "1px solid rgba(255,255,255,0.06)", padding: "24px 16px", display: "flex", flexDirection: "column", flexShrink: 0 }}>
         <button className="image-button sidebar-logo" type="button" onClick={() => nav("landing")} aria-label="Go to WrapBridge home" style={{ marginBottom: 32 }}>
-          <img src="/images/Logo.png" alt="WrapBridge" style={{ width: 170, display: "block" }} />
+          <img src="/images/Logo.png" alt="" style={{ width: 170, display: "block" }} />
         </button>
         <div className="sidebar-sub" style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.2)", letterSpacing: 2, marginBottom: 8, padding: "0 4px" }}>{userShop?.name?.toUpperCase() || "MY SHOP"}</div>
         {[["overview", "📊 Overview"], ["requests", "📬 Requests"], ["bookings", "📅 Bookings"], ["availability", "🗓️ Availability"], ["profile", "✏️ Profile"], ["payments", "💰 Payments"], ["settings", "⚙️ Settings"]].map(([k, l]) => (
