@@ -947,7 +947,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
       <div className="company-main" style={{ flex: 1, overflow: "auto", padding: "32px 40px" }}>
         {shopError && (
           <div style={{ background: "rgba(255,77,0,0.1)", border: "1px solid rgba(255,77,0,0.4)", padding: "16px 20px", marginBottom: 24, fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "#FF4D00", lineHeight: 1.6 }}>
-            <b>Shop setup failed:</b> {shopError}
+            <strong>Shop setup failed:</strong> {shopError}
             <button onClick={() => { setShopError(""); }} style={{ marginLeft: 16, background: "#FF4D00", color: "#fff", border: "none", padding: "4px 12px", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", fontSize: 12 }}>Retry</button>
           </div>
         )}
@@ -1661,16 +1661,18 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
                   PROFILE PHOTO <span style={{ color: "#FF4D00" }}>*</span>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
-                  <div
+                  <button
+                    type="button"
+                    aria-label="Upload shop profile photo"
                     onClick={() => photoInputRef.current?.click()}
-                    style={{ width: 100, height: 100, background: "#1A1A1A", border: `2px solid ${profilePhotoUrl ? "#FF4D00" : "rgba(255,255,255,0.15)"}`, overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+                    style={{ width: 100, height: 100, background: "#1A1A1A", border: `2px solid ${profilePhotoUrl ? "#FF4D00" : "rgba(255,255,255,0.15)"}`, overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", padding: 0 }}
                   >
                     {profilePhotoUrl ? (
-                      <img src={profilePhotoUrl} alt="Profile" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      <img src={profilePhotoUrl} alt="Current shop profile photo" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     ) : (
                       <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.2)", textAlign: "center", padding: 8, lineHeight: 1.5 }}>NO<br/>PHOTO</div>
                     )}
-                  </div>
+                  </button>
                   <div style={{ flex: 1 }}>
                     <input
                       type="file"
@@ -1887,7 +1889,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
                         const isHero = img.display_order === -1;
                         return (
                           <div key={img.id} style={{ position: "relative", aspectRatio: "4/3", background: "#1A1A1A", overflow: "hidden" }}>
-                            <img src={img.url} alt="Portfolio" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                            <img src={img.url} alt={`${profileForm.name || userShop?.name || "Shop"} completed work sample`} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                             {/* Hero badge */}
                             {isHero && (
                               <div style={{ position: "absolute", top: 6, left: 6, background: "#FF4D00", padding: "2px 8px", fontFamily: "'Bebas Neue', cursive", fontSize: 11, letterSpacing: 1, color: "#fff", lineHeight: 1.6 }}>

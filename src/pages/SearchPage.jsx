@@ -157,8 +157,8 @@ export default function SearchPage({ nav, shops: liveShops, shopsLoading, search
         <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)", marginBottom: 20, display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
           <span>
             {activeService
-              ? <><b style={{ color: "#fff" }}>{shops.length} shop{shops.length !== 1 ? "s" : ""}</b> offering <b style={{ color: "#FF4D00" }}>{activeService}</b></>
-              : <><b style={{ color: "#fff" }}>{shops.length} shop{shops.length !== 1 ? "s" : ""}</b></>
+              ? <><strong style={{ color: "#fff" }}>{shops.length} shop{shops.length !== 1 ? "s" : ""}</strong> offering <strong style={{ color: "#FF4D00" }}>{activeService}</strong></>
+              : <><strong style={{ color: "#fff" }}>{shops.length} shop{shops.length !== 1 ? "s" : ""}</strong></>
             }
             {totalPages > 1 && <span style={{ marginLeft: 8 }}>· Page {page + 1} of {totalPages}</span>}
           </span>

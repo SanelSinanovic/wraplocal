@@ -323,7 +323,7 @@ export default function LandingPage({ nav, shops: liveShops, setServiceFilter, c
             <div className="notif-float-1" style={{ background: "#0D0D0D", border: "1px solid rgba(255,255,255,0.07)", padding: "14px 18px", display: "flex", alignItems: "center", gap: 14, boxShadow: "0 8px 32px rgba(0,0,0,0.4)", zIndex: 1 }}>
               <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#7C3AED", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 13, flexShrink: 0 }}>J</div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#fff" }}><b>Jordan M.</b> just booked <span style={{ color: "#FF4D00" }}>Phantom Wraps Studio</span></div>
+                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#fff" }}><strong>Jordan M.</strong> just booked <span style={{ color: "#FF4D00" }}>Phantom Wraps Studio</span></div>
                 <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 2 }}>Full Color Change · Alpharetta, GA · 2 min ago</div>
               </div>
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
@@ -334,7 +334,7 @@ export default function LandingPage({ nav, shops: liveShops, setServiceFilter, c
             <div className="notif-float-2" style={{ background: "#0D0D0D", border: "1px solid rgba(255,255,255,0.07)", padding: "12px 18px", display: "flex", alignItems: "center", gap: 14, boxShadow: "0 8px 32px rgba(0,0,0,0.4)", zIndex: 1 }}>
               <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#059669", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 13, flexShrink: 0 }}>A</div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#fff" }}><b>Aisha R.</b> left a <span style={{ color: "#FF4D00" }}>5-star review</span> for Chrome Kings</div>
+                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#fff" }}><strong>Aisha R.</strong> left a <span style={{ color: "#FF4D00" }}>5-star review</span> for Chrome Kings</div>
                 <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 2 }}>★★★★★ · "Absolutely perfect wrap!" · 8 min ago</div>
               </div>
             </div>
@@ -439,7 +439,7 @@ export default function LandingPage({ nav, shops: liveShops, setServiceFilter, c
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   {(shop.price ?? shop.price_from) ? (
-                    <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.5)" }}>From <b style={{ color: "#fff" }}>${(shop.price ?? shop.price_from).toLocaleString()}</b></span>
+                    <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.5)" }}>From <strong style={{ color: "#fff" }}>${(shop.price ?? shop.price_from).toLocaleString()}</strong></span>
                   ) : (
                     <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.5)" }}>Get a Quote</span>
                   )}

@@ -166,7 +166,7 @@ export default function CompanyOnboarding({ currentUser, userShop, onComplete, n
               >
                 {photoUrl ? (
                   <>
-                    <img src={photoUrl} alt="Profile" style={{ width: "100%", height: 220, objectFit: "cover", display: "block" }} />
+                    <img src={photoUrl} alt="Uploaded shop banner preview" style={{ width: "100%", height: 220, objectFit: "cover", display: "block" }} />
                     <div style={{ position: "absolute", bottom: 10, right: 10, background: "rgba(0,0,0,0.7)", fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.6)", padding: "4px 10px", borderRadius: 2 }}>Click to replace</div>
                   </>
                 ) : photoUploading ? (
@@ -301,7 +301,7 @@ export default function CompanyOnboarding({ currentUser, userShop, onComplete, n
             <div>
               <div className="ob-step-title" style={{ fontSize: 40, letterSpacing: 2, marginBottom: 6 }}>PREVIEW &amp; LAUNCH</div>
               <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.45)", lineHeight: 1.6, marginBottom: 32 }}>
-                Here's how your listing will appear in search results. Toggle <b style={{ color: "#fff" }}>Go Live</b> to make it publicly visible.
+                Here's how your listing will appear in search results. Toggle <strong style={{ color: "#fff" }}>Go Live</strong> to make it publicly visible.
               </div>
 
               {/* Preview card */}

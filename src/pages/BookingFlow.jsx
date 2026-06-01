@@ -147,7 +147,7 @@ export default function BookingFlow({
           <div style={{ fontSize: 80, marginBottom: 20 }}>🎉</div>
           <div style={{ fontSize: 56, letterSpacing: 2, marginBottom: 12, color: "#FF4D00" }}>REQUEST SENT!</div>
           <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 16, color: "rgba(255,255,255,0.5)", marginBottom: 8 }}>
-            Your request at <b style={{ color: "#fff" }}>{bookingShop.name}</b> has been received.
+            Your request at <strong style={{ color: "#fff" }}>{bookingShop.name}</strong> has been received.
             {preferredDates.length > 0 && <span> Your preferred dates have been noted.</span>}
           </div>
           <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.45)", marginBottom: 10 }}>Ref #WL-{requestRef}</div>

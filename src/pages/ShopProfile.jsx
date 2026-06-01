@@ -222,7 +222,7 @@ export default function ShopProfile({ nav, selectedShop, currentUser, currentPro
                   <div className="sp-port-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
                     {portfolio.slice(0, 3).map((img, i) => (
                       <button key={i} type="button" className="sp-port-item" onClick={() => setLightboxImg(img)} aria-label={`Open portfolio photo ${i + 1}`}>
-                        <img src={img} alt={`Work ${i + 1}`} />
+                        <img src={img} alt="" />
                         <div className="sp-port-overlay"><span className="sp-port-label">VIEW</span></div>
                       </button>
                     ))}
@@ -345,7 +345,7 @@ export default function ShopProfile({ nav, selectedShop, currentUser, currentPro
                 <div className="sp-port-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
                   {portfolio.map((img, i) => (
                     <button key={i} type="button" className="sp-port-item" onClick={() => setLightboxImg(img)} aria-label={`Open portfolio photo ${i + 1}`}>
-                      <img src={img} alt={`Portfolio ${i + 1}`} loading="lazy" />
+                      <img src={img} alt="" loading="lazy" />
                       <div className="sp-port-overlay"><span className="sp-port-label">VIEW FULL</span></div>
                     </button>
                   ))}
@@ -490,7 +490,7 @@ export default function ShopProfile({ nav, selectedShop, currentUser, currentPro
       {/* ── LIGHTBOX ── */}
       {lightboxImg && (
         <div className="sp-lightbox" role="dialog" aria-modal="true" aria-label="Portfolio photo preview" tabIndex={-1} ref={lightboxRef}>
-          <img src={lightboxImg} alt="Portfolio" />
+          <img src={lightboxImg} alt="Selected shop work photo preview" />
           <button type="button" aria-label="Close portfolio preview" onClick={(event) => { event.stopPropagation(); setLightboxImg(null); }} style={{ position: "absolute", top: 20, right: 28, background: "transparent", border: "none", fontFamily: "'DM Sans', sans-serif", fontSize: 28, color: "rgba(255,255,255,0.75)", cursor: "pointer", lineHeight: 1 }}>✕</button>
         </div>
       )}

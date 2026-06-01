@@ -121,7 +121,7 @@ export default function CustomerLogin({ nav, loginForm, setLoginForm, loginError
                 forgotSent ? (
                   <div style={{ textAlign: "center", padding: "16px 0 8px" }}>
                     <div style={{ fontSize: 28, letterSpacing: 1, marginBottom: 8 }}>CHECK YOUR EMAIL</div>
-                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.45)", lineHeight: 1.6, marginBottom: 20 }}>We sent a password reset link to <b style={{ color: "#fff" }}>{forgotEmail}</b>.</div>
+                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.45)", lineHeight: 1.6, marginBottom: 20 }}>We sent a password reset link to <strong style={{ color: "#fff" }}>{forgotEmail}</strong>.</div>
                     <button onClick={() => { setForgotMode(false); setForgotSent(false); }} style={{ background: "none", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.5)", padding: "10px 24px", fontFamily: "'Bebas Neue', cursive", fontSize: 15, letterSpacing: 2, cursor: "pointer" }}>Back to Sign In</button>
                   </div>
                 ) : (
@@ -151,7 +151,7 @@ export default function CustomerLogin({ nav, loginForm, setLoginForm, loginError
               <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
               <div style={{ fontSize: 32, letterSpacing: 2, marginBottom: 12 }}>CHECK YOUR EMAIL</div>
               <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.5)", lineHeight: 1.7, marginBottom: 28 }}>
-                We sent a confirmation link to <b style={{ color: "#fff" }}>{signupForm.email}</b>.<br />Click it to activate your account, then sign in.
+                We sent a confirmation link to <strong style={{ color: "#fff" }}>{signupForm.email}</strong>.<br />Click it to activate your account, then sign in.
               </div>
               <button onClick={() => switchMode("login")} style={{ background: "#FF4D00", color: "#fff", border: "none", padding: "14px 32px", fontFamily: "'Bebas Neue', cursive", fontSize: 18, letterSpacing: 2, cursor: "pointer" }}>Go to Sign In</button>
             </div>
