@@ -92,7 +92,7 @@ export default function AdminDashboard({ nav, currentUser, onLogout }) {
     <div className="admin-wrap" style={{ fontFamily: "'Bebas Neue', cursive", background: "linear-gradient(180deg, #090909 0%, #0A0610 25%, #090909 60%, #05050C 100%)", minHeight: "100vh", color: "#fff", display: "flex", position: "relative" }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap');
         * { box-sizing: border-box; }
-        .adm-nav { display: flex; align-items: center; gap: 10px; padding: 10px 16px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 14px; color: rgba(255,255,255,0.5); border-radius: 4px; transition: all 0.2s; }
+        .adm-nav { display: flex; align-items: center; gap: 10px; padding: 10px 16px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 14px; color: rgba(255,255,255,0.6); border-radius: 4px; transition: all 0.2s; background: transparent; border: none; width: 100%; text-align: left; }
         .adm-nav:hover, .adm-nav.active { background: rgba(139,92,246,0.12); color: #A78BFA; }
         .adm-card { background: #111; border: 1px solid rgba(255,255,255,0.07); padding: 24px; transition: border-color 0.2s; }
         .adm-card:hover { border-color: rgba(255,255,255,0.13); }
@@ -128,10 +128,12 @@ export default function AdminDashboard({ nav, currentUser, onLogout }) {
 
       {/* Sidebar */}
       <div className="adm-sidebar" style={{ width: 220, background: "#0B0B0F", borderRight: "1px solid rgba(255,255,255,0.06)", padding: "24px 16px", display: "flex", flexDirection: "column", flexShrink: 0, zIndex: 1 }}>
-        <img src="/images/Logo.png" alt="WrapBridge" className="sidebar-logo" style={{ width: 170, cursor: "pointer", display: "block", marginBottom: 12 }} onClick={() => nav("landing")} />
+        <button className="image-button sidebar-logo" type="button" onClick={() => nav("landing")} aria-label="Go to WrapBridge home" style={{ marginBottom: 12 }}>
+          <img src="/images/Logo.png" alt="WrapBridge" style={{ width: 170, display: "block" }} />
+        </button>
         <div className="sidebar-sub" style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(139,92,246,0.6)", letterSpacing: 2, marginBottom: 20, padding: "0 4px" }}>ADMIN PANEL</div>
         {[["overview", "📊 Overview"], ["shops", "🏪 Shops"], ["bookings", "📋 Bookings"], ["users", "👥 Users"]].map(([k, l]) => (
-          <div key={k} className={`adm-nav${tab === k ? " active" : ""}`} onClick={() => setTab(k)}>{l}</div>
+          <button key={k} type="button" className={`adm-nav${tab === k ? " active" : ""}`} aria-pressed={tab === k} onClick={() => setTab(k)}>{l}</button>
         ))}
         <div style={{ flex: 1 }} />
         {currentUser && (

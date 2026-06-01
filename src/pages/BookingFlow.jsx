@@ -130,14 +130,16 @@ export default function BookingFlow({
   if (!bookingShop) return null;
   return (
     <div style={{ fontFamily: "'Bebas Neue', cursive", background: "linear-gradient(180deg, #0A0A0A 0%, #140A04 20%, #0A0A0A 55%, #05050C 100%)", minHeight: "100vh", color: "#fff", position: "relative", overflow: "hidden" }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap'); * { box-sizing: border-box; } input, select, textarea { background: #151515; border: 1px solid rgba(255,255,255,0.1); padding: 12px 16px; color: #fff; font-family: 'DM Sans', sans-serif; font-size: 14px; outline: none; width: 100%; transition: border-color 0.2s, background 0.2s; } input:focus, textarea:focus { border-color: #FF4D00; background: #1a1a1a; } textarea { resize: vertical; min-height: 90px; line-height: 1.5; } .btn-main { background: #FF4D00; color: #fff; border: none; padding: 14px 32px; font-family: 'Bebas Neue', cursive; font-size: 18px; letter-spacing: 2px; cursor: pointer; transition: background 0.2s, transform 0.15s; } .btn-main:hover { background: #FF6A20; transform: translateY(-1px); } .slot { background: #151515; border: 1px solid rgba(255,255,255,0.08); padding: 10px 18px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 14px; transition: all 0.18s; } .slot:hover, .slot.active { background: rgba(255,77,0,0.12); border-color: #FF4D00; color: #FF4D00; transform: translateY(-1px); } .svc-row { padding: 16px 20px; border: 1px solid rgba(255,255,255,0.08); background: #111; margin-bottom: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: border-color 0.15s, background 0.15s, transform 0.15s; } .svc-row:hover { border-color: rgba(255,77,0,0.35); background: rgba(255,77,0,0.04); transform: translateX(2px); } .svc-row.active { border-color: #FF4D00; background: rgba(255,77,0,0.08); } @keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } } @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } } @keyframes glow-breathe { 0%,100% { opacity: 0.5; } 50% { opacity: 0.8; } } @keyframes orb-drift { 0%,100% { transform: translate(0,0); } 50% { transform: translate(30px,-20px); } } .step-content { animation: fadeUp 0.35s cubic-bezier(0.22,1,0.36,1) both; } .booking-confirm-anim { animation: fadeUp 0.5s cubic-bezier(0.22,1,0.36,1) both; } @media (max-width: 768px) { .booking-nav { padding: 12px 16px !important; } .booking-pad { padding: 20px !important; max-width: 100% !important; } .booking-layout { grid-template-columns: 1fr !important; gap: 24px !important; } .booking-sidebar { position: static !important; } .step-label { display: none !important; } .date-grid { grid-template-columns: repeat(3, 1fr) !important; } .name-grid { grid-template-columns: 1fr !important; } .confirm-btns { flex-direction: column !important; } .confirm-btns button { width: 100%; } } @media (max-width: 420px) { .booking-pad { padding: 14px !important; } }`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap'); * { box-sizing: border-box; } input, select, textarea { background: #151515; border: 1px solid rgba(255,255,255,0.1); padding: 12px 16px; color: #fff; font-family: 'DM Sans', sans-serif; font-size: 14px; outline: none; width: 100%; transition: border-color 0.2s, background 0.2s; } input:focus, textarea:focus { border-color: #FF4D00; background: #1a1a1a; } textarea { resize: vertical; min-height: 90px; line-height: 1.5; } .btn-main { background: #FF4D00; color: #fff; border: none; padding: 14px 32px; font-family: 'Bebas Neue', cursive; font-size: 18px; letter-spacing: 2px; cursor: pointer; transition: background 0.2s, transform 0.15s; } .btn-main:hover { background: #FF6A20; transform: translateY(-1px); } .slot { background: #151515; border: 1px solid rgba(255,255,255,0.08); padding: 10px 18px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 14px; transition: all 0.18s; } .slot:hover, .slot.active { background: rgba(255,77,0,0.12); border-color: #FF4D00; color: #FF4D00; transform: translateY(-1px); } .svc-row { width: 100%; text-align: left; color: #fff; padding: 16px 20px; border: 1px solid rgba(255,255,255,0.08); background: #111; margin-bottom: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: border-color 0.15s, background 0.15s, transform 0.15s; } .svc-row:hover { border-color: rgba(255,77,0,0.35); background: rgba(255,77,0,0.04); transform: translateX(2px); } .svc-row.active { border-color: #FF4D00; background: rgba(255,77,0,0.08); } @keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } } @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } } @keyframes glow-breathe { 0%,100% { opacity: 0.5; } 50% { opacity: 0.8; } } @keyframes orb-drift { 0%,100% { transform: translate(0,0); } 50% { transform: translate(30px,-20px); } } .step-content { animation: fadeUp 0.35s cubic-bezier(0.22,1,0.36,1) both; } .booking-confirm-anim { animation: fadeUp 0.5s cubic-bezier(0.22,1,0.36,1) both; } @media (max-width: 768px) { .booking-nav { padding: 12px 16px !important; } .booking-pad { padding: 20px !important; max-width: 100% !important; } .booking-layout { grid-template-columns: 1fr !important; gap: 24px !important; } .booking-sidebar { position: static !important; } .step-label { display: none !important; } .date-grid { grid-template-columns: repeat(3, 1fr) !important; } .name-grid { grid-template-columns: 1fr !important; } .confirm-btns { flex-direction: column !important; } .confirm-btns button { width: 100%; } } @media (max-width: 420px) { .booking-pad { padding: 14px !important; } }`}</style>
 
       {/* Ambient orbs */}
       <div aria-hidden="true" style={{ position: "fixed", top: "-10%", right: "-8%", width: 600, height: 600, background: "radial-gradient(circle, rgba(255,77,0,0.18) 0%, transparent 65%)", borderRadius: "50%", pointerEvents: "none", animation: "glow-breathe 6s ease-in-out infinite", zIndex: 0 }} />
       <div aria-hidden="true" style={{ position: "fixed", bottom: "-10%", left: "-8%", width: 500, height: 500, background: "radial-gradient(circle, rgba(59,130,246,0.14) 0%, transparent 65%)", borderRadius: "50%", pointerEvents: "none", animation: "orb-drift 14s ease-in-out infinite", zIndex: 0 }} />
       <nav className="booking-nav" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 40px", background: "rgba(10,10,10,0.95)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-        <img src="/images/Logo.png" alt="WrapBridge" style={{ height: 68, display: "block", cursor: "pointer" }} onClick={() => nav("landing")} />
-        <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.5)", cursor: "pointer" }} onClick={() => { if (bookingStep === 2) { setBookingStep(1); } else { nav("shop"); } }}>← Back</span>
+        <button className="image-button" onClick={() => nav("landing")} aria-label="Go to WrapBridge home">
+          <img src="/images/Logo.png" alt="WrapBridge" style={{ height: 68, display: "block" }} />
+        </button>
+        <button className="link-button" type="button" style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.65)", cursor: "pointer" }} onClick={() => { if (bookingStep === 2) { setBookingStep(1); } else { nav("shop"); } }}>← Back</button>
       </nav>
 
       {bookingConfirmed ? (
@@ -187,7 +189,7 @@ export default function BookingFlow({
                     <div key={category} style={{ marginBottom: 24 }}>
                       <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)", letterSpacing: 2, marginBottom: 10 }}>{category.toUpperCase()}</div>
                       {services.map(({ name: s, description: d }) => (
-                    <div key={s} onClick={() => setSelectedService(s)}
+                    <button key={s} type="button" onClick={() => setSelectedService(s)} aria-pressed={selectedService === s}
                       className={`svc-row${selectedService === s ? " active" : ""}`}>
                       <div>
                         <div style={{ fontSize: 20, letterSpacing: 1 }}>{s}</div>
@@ -196,14 +198,15 @@ export default function BookingFlow({
                       <div style={{ width: 22, height: 22, borderRadius: "50%", border: `2px solid ${selectedService === s ? "#FF4D00" : "rgba(255,255,255,0.2)"}`, background: selectedService === s ? "#FF4D00" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all 0.15s" }}>
                         {selectedService === s && <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#fff" }} />}
                       </div>
-                    </div>
+                    </button>
                       ))}
                     </div>
                   ))}
                   {isVehicleService && (
                   <div style={{ marginTop: 24, marginBottom: 6 }}>
-                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 8, letterSpacing: 1 }}>VEHICLE TYPE <span style={{ color: "#FF4D00" }}>*</span></div>
+                    <label htmlFor="booking-vehicle-type-step1" style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.72)", marginBottom: 8, letterSpacing: 1, display: "block" }}>VEHICLE TYPE <span style={{ color: "#FF4D00" }}>*</span></label>
                     <input
+                      id="booking-vehicle-type-step1"
                       placeholder="e.g. 2023 BMW M4 Competition, 2021 Ford F-150..."
                       value={vehicleType}
                       onChange={e => setVehicleType(e.target.value)}
@@ -212,24 +215,19 @@ export default function BookingFlow({
                       Helps the shop give you an accurate quote
                     </div>
                     {/* Fleet toggle */}
-                    <div style={{ marginTop: 14, display: "flex", alignItems: "center", gap: 12 }}>
-                      <div
-                        onClick={() => setIsFleet(v => !v)}
-                        style={{ width: 18, height: 18, border: `2px solid ${isFleet ? "#FF4D00" : "rgba(255,255,255,0.25)"}`, background: isFleet ? "#FF4D00" : "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all 0.15s" }}
-                      >
-                        {isFleet && <span style={{ color: "#fff", fontSize: 11, lineHeight: 1 }}>✓</span>}
-                      </div>
-                      <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.65)", cursor: "pointer" }} onClick={() => setIsFleet(v => !v)}>
+                    <label style={{ marginTop: 14, display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}>
+                      <input type="checkbox" checked={isFleet} onChange={e => setIsFleet(e.target.checked)} style={{ width: 18, height: 18, accentColor: "#FF4D00", flexShrink: 0 }} />
+                      <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.72)" }}>
                         This is a fleet booking (multiple vehicles)
                       </span>
-                    </div>
+                    </label>
                     {isFleet && (
                       <div style={{ marginTop: 10 }}>
                         <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 6, letterSpacing: 1 }}>NUMBER OF VEHICLES</div>
                         <div style={{ display: "flex", alignItems: "center", gap: 0, width: "fit-content" }}>
-                          <button type="button" onClick={() => setFleetQuantity(q => Math.max(2, q - 1))} style={{ width: 36, height: 40, background: "#1A1A1A", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", borderRight: "none" }}>−</button>
+                          <button type="button" aria-label="Decrease number of vehicles" onClick={() => setFleetQuantity(q => Math.max(2, q - 1))} style={{ width: 36, height: 40, background: "#1A1A1A", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", borderRight: "none" }}>−</button>
                           <div style={{ width: 56, height: 40, background: "#1A1A1A", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Sans', sans-serif", fontSize: 16, color: "#FF4D00", fontWeight: 600 }}>{fleetQuantity}</div>
-                          <button type="button" onClick={() => setFleetQuantity(q => Math.min(500, q + 1))} style={{ width: 36, height: 40, background: "#1A1A1A", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", borderLeft: "none" }}>+</button>
+                          <button type="button" aria-label="Increase number of vehicles" onClick={() => setFleetQuantity(q => Math.min(500, q + 1))} style={{ width: 36, height: 40, background: "#1A1A1A", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", borderLeft: "none" }}>+</button>
                         </div>
                       </div>
                     )}
@@ -238,11 +236,11 @@ export default function BookingFlow({
                       <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 8, letterSpacing: 1 }}>VEHICLE OWNERSHIP</div>
                       <div style={{ display: "flex", gap: 10 }}>
                         {["personal", "company"].map(v => (
-                          <div key={v} onClick={() => setVehicleOwnership(v)}
+                          <button key={v} type="button" onClick={() => setVehicleOwnership(v)} aria-pressed={vehicleOwnership === v}
                             style={{ flex: 1, padding: "10px 14px", border: `1px solid ${vehicleOwnership === v ? "#FF4D00" : "rgba(255,255,255,0.1)"}`, background: vehicleOwnership === v ? "rgba(255,77,0,0.08)" : "#111", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, transition: "all 0.15s" }}>
                             <div style={{ width: 16, height: 16, borderRadius: "50%", border: `2px solid ${vehicleOwnership === v ? "#FF4D00" : "rgba(255,255,255,0.25)"}`, background: vehicleOwnership === v ? "#FF4D00" : "transparent", flexShrink: 0, transition: "all 0.15s" }} />
                             <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: vehicleOwnership === v ? "#FF4D00" : "rgba(255,255,255,0.55)", textTransform: "capitalize" }}>{v} vehicle</span>
-                          </div>
+                          </button>
                         ))}
                       </div>
                     </div>
@@ -266,29 +264,27 @@ export default function BookingFlow({
                     No payment needed now — the shop will confirm your appointment and send you a quote.
                   </div>
                   <div className="name-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
-                    <div><div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>FIRST NAME <span style={{ color: "#FF4D00" }}>*</span></div><input placeholder="Marcus" value={firstName} onChange={e => setFirstName(e.target.value)} /></div>
-                    <div><div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>LAST NAME <span style={{ color: "#FF4D00" }}>*</span></div><input placeholder="Thompson" value={lastName} onChange={e => setLastName(e.target.value)} /></div>
+                    <div><label htmlFor="booking-first-name" style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.72)", marginBottom: 6, display: "block" }}>FIRST NAME <span style={{ color: "#FF4D00" }}>*</span></label><input id="booking-first-name" autoComplete="given-name" placeholder="Marcus" value={firstName} onChange={e => setFirstName(e.target.value)} /></div>
+                    <div><label htmlFor="booking-last-name" style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.72)", marginBottom: 6, display: "block" }}>LAST NAME <span style={{ color: "#FF4D00" }}>*</span></label><input id="booking-last-name" autoComplete="family-name" placeholder="Thompson" value={lastName} onChange={e => setLastName(e.target.value)} /></div>
                   </div>
-                  <div style={{ marginBottom: 14 }}><div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>EMAIL <span style={{ color: "#FF4D00" }}>*</span></div><input placeholder="marcus@email.com" value={customerEmail} onChange={e => setCustomerEmail(e.target.value)} /></div>
-                  <div style={{ marginBottom: 14 }}><div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>PHONE <span style={{ color: "#FF4D00" }}>*</span></div><input placeholder="(404) 555-0100" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} /></div>
+                  <div style={{ marginBottom: 14 }}><label htmlFor="booking-email" style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.72)", marginBottom: 6, display: "block" }}>EMAIL <span style={{ color: "#FF4D00" }}>*</span></label><input id="booking-email" type="email" autoComplete="email" placeholder="marcus@email.com" value={customerEmail} onChange={e => setCustomerEmail(e.target.value)} /></div>
+                  <div style={{ marginBottom: 14 }}><label htmlFor="booking-phone" style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.72)", marginBottom: 6, display: "block" }}>PHONE <span style={{ color: "#FF4D00" }}>*</span></label><input id="booking-phone" type="tel" autoComplete="tel" placeholder="(404) 555-0100" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} /></div>
                   {isVehicleService && (
                   <div style={{ marginBottom: 14 }}>
-                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>VEHICLE TYPE</div>
-                    <input placeholder="2023 BMW M4 Competition" value={vehicleType} onChange={e => setVehicleType(e.target.value)} />
+                    <label htmlFor="booking-vehicle-type-step2" style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.72)", marginBottom: 6, display: "block" }}>VEHICLE TYPE</label>
+                    <input id="booking-vehicle-type-step2" placeholder="2023 BMW M4 Competition" value={vehicleType} onChange={e => setVehicleType(e.target.value)} />
                     {/* Fleet */}
-                    <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 12 }}>
-                      <div onClick={() => setIsFleet(v => !v)} style={{ width: 18, height: 18, border: `2px solid ${isFleet ? "#FF4D00" : "rgba(255,255,255,0.25)"}`, background: isFleet ? "#FF4D00" : "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all 0.15s" }}>
-                        {isFleet && <span style={{ color: "#fff", fontSize: 11, lineHeight: 1 }}>✓</span>}
-                      </div>
-                      <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.65)", cursor: "pointer" }} onClick={() => setIsFleet(v => !v)}>Fleet booking (multiple vehicles)</span>
-                    </div>
+                    <label style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}>
+                      <input type="checkbox" checked={isFleet} onChange={e => setIsFleet(e.target.checked)} style={{ width: 18, height: 18, accentColor: "#FF4D00", flexShrink: 0 }} />
+                      <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.72)" }}>Fleet booking (multiple vehicles)</span>
+                    </label>
                     {isFleet && (
                       <div style={{ marginTop: 10 }}>
                         <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 6, letterSpacing: 1 }}>NUMBER OF VEHICLES</div>
                         <div style={{ display: "flex", alignItems: "center", gap: 0, width: "fit-content" }}>
-                          <button type="button" onClick={() => setFleetQuantity(q => Math.max(2, q - 1))} style={{ width: 36, height: 40, background: "#1A1A1A", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", borderRight: "none" }}>−</button>
+                          <button type="button" aria-label="Decrease number of vehicles" onClick={() => setFleetQuantity(q => Math.max(2, q - 1))} style={{ width: 36, height: 40, background: "#1A1A1A", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", borderRight: "none" }}>−</button>
                           <div style={{ width: 56, height: 40, background: "#1A1A1A", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Sans', sans-serif", fontSize: 16, color: "#FF4D00", fontWeight: 600 }}>{fleetQuantity}</div>
-                          <button type="button" onClick={() => setFleetQuantity(q => Math.min(500, q + 1))} style={{ width: 36, height: 40, background: "#1A1A1A", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", borderLeft: "none" }}>+</button>
+                          <button type="button" aria-label="Increase number of vehicles" onClick={() => setFleetQuantity(q => Math.min(500, q + 1))} style={{ width: 36, height: 40, background: "#1A1A1A", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", borderLeft: "none" }}>+</button>
                         </div>
                       </div>
                     )}
@@ -297,25 +293,25 @@ export default function BookingFlow({
                       <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 8, letterSpacing: 1 }}>VEHICLE OWNERSHIP</div>
                       <div style={{ display: "flex", gap: 10 }}>
                         {["personal", "company"].map(v => (
-                          <div key={v} onClick={() => setVehicleOwnership(v)}
+                          <button key={v} type="button" onClick={() => setVehicleOwnership(v)} aria-pressed={vehicleOwnership === v}
                             style={{ flex: 1, padding: "10px 14px", border: `1px solid ${vehicleOwnership === v ? "#FF4D00" : "rgba(255,255,255,0.1)"}`, background: vehicleOwnership === v ? "rgba(255,77,0,0.08)" : "#111", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, transition: "all 0.15s" }}>
                             <div style={{ width: 16, height: 16, borderRadius: "50%", border: `2px solid ${vehicleOwnership === v ? "#FF4D00" : "rgba(255,255,255,0.25)"}`, background: vehicleOwnership === v ? "#FF4D00" : "transparent", flexShrink: 0 }} />
                             <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: vehicleOwnership === v ? "#FF4D00" : "rgba(255,255,255,0.55)", textTransform: "capitalize" }}>{v} vehicle</span>
-                          </div>
+                          </button>
                         ))}
                       </div>
                     </div>
                   </div>
                   )}                  {/* Preferred dates — calendar picker */}
                   <div style={{ marginBottom: 20 }}>
-                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", letterSpacing: 1, marginBottom: 4 }}>PREFERRED DATES <span style={{ color: "rgba(255,255,255,0.2)", fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(pick up to 3 — optional)</span></div>
+                    <div id="preferred-dates-label" style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.72)", letterSpacing: 1, marginBottom: 4 }}>PREFERRED DATES <span style={{ color: "rgba(255,255,255,0.5)", fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(pick up to 3 — optional)</span></div>
                     <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.25)", marginBottom: 12 }}>Select dates that work for you — the shop will confirm a time that fits.</div>
 
                     {/* Month navigation */}
                     <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
-                      <button type="button" onClick={() => { const d = new Date(bookingCalYear, bookingCalMonth - 1, 1); setBookingCalMonth(d.getMonth()); setBookingCalYear(d.getFullYear()); }} style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)", padding: "4px 10px", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", fontSize: 15 }}>‹</button>
+                      <button type="button" aria-label="Previous month" onClick={() => { const d = new Date(bookingCalYear, bookingCalMonth - 1, 1); setBookingCalMonth(d.getMonth()); setBookingCalYear(d.getFullYear()); }} style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", padding: "4px 10px", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", fontSize: 15 }}>‹</button>
                       <div style={{ fontFamily: "'Bebas Neue', cursive", fontSize: 18, letterSpacing: 2, minWidth: 150, textAlign: "center" }}>{new Date(bookingCalYear, bookingCalMonth).toLocaleString("en-US", { month: "long" }).toUpperCase()} {bookingCalYear}</div>
-                      <button type="button" onClick={() => { const d = new Date(bookingCalYear, bookingCalMonth + 1, 1); setBookingCalMonth(d.getMonth()); setBookingCalYear(d.getFullYear()); }} style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)", padding: "4px 10px", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", fontSize: 15 }}>›</button>
+                      <button type="button" aria-label="Next month" onClick={() => { const d = new Date(bookingCalYear, bookingCalMonth + 1, 1); setBookingCalMonth(d.getMonth()); setBookingCalYear(d.getFullYear()); }} style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", padding: "4px 10px", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", fontSize: 15 }}>›</button>
                     </div>
 
                     {/* Day headers */}
@@ -342,7 +338,10 @@ export default function BookingFlow({
                         const isSelected = preferredDates.some(p => p.date === iso);
                         const maxed = preferredDates.length >= 3 && !isSelected;
                         cells.push(
-                          <div key={day}
+                          <button key={day} type="button"
+                            disabled={unavailable || maxed}
+                            aria-pressed={isSelected}
+                            aria-label={`${isSelected ? "Remove" : "Select"} ${fmtDate(iso)}`}
                             onClick={() => {
                               if (unavailable || maxed) return;
                               if (isSelected) setPreferredDates(p => p.filter(x => x.date !== iso));
@@ -363,7 +362,7 @@ export default function BookingFlow({
                             }}
                           >
                             {day}
-                          </div>
+                          </button>
                         );
                       }
                       return <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 3 }}>{cells}</div>;
@@ -384,32 +383,33 @@ export default function BookingFlow({
                             <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.8)", flexShrink: 0, minWidth: 120 }}>{i + 1}. {fmtDate(p.date)}</span>
                             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                               {["Morning", "Afternoon", "Evening", "Flexible"].map(t => (
-                                <div key={t}
+                                <button key={t} type="button"
+                                  aria-pressed={p.time === t}
                                   onClick={() => setPreferredDates(prev => prev.map(x => x.date === p.date ? { ...x, time: t } : x))}
                                   style={{ padding: "3px 10px", border: "1px solid", borderColor: p.time === t ? "#FF4D00" : "rgba(255,255,255,0.1)", background: p.time === t ? "rgba(255,77,0,0.12)" : "transparent", fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: p.time === t ? "#FF4D00" : "rgba(255,255,255,0.4)", cursor: "pointer", transition: "all 0.15s" }}>
                                   {t}
-                                </div>
+                                </button>
                               ))}
                             </div>
-                            <span onClick={() => setPreferredDates(pd => pd.filter(x => x.date !== p.date))} style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,77,0,0.6)", cursor: "pointer", marginLeft: "auto" }}>✕</span>
+                            <button className="link-button" type="button" aria-label={`Remove ${fmtDate(p.date)}`} onClick={() => setPreferredDates(pd => pd.filter(x => x.date !== p.date))} style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,77,0,0.85)", cursor: "pointer", marginLeft: "auto" }}>✕</button>
                           </div>
                         ))}
                       </div>
                     )}
                   </div>                  <div style={{ marginBottom: 14 }}>
-                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 10 }}>DESIGN</div>
+                    <div id="design-option-label" style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.72)", marginBottom: 10 }}>DESIGN</div>
                     <div style={{ display: "flex", gap: 10 }}>
                       {[["own", "🎨", "I have my own design"], ["shop", "✏️", "Need the shop to design"]].map(([val, icon, label]) => (
-                        <div key={val} onClick={() => setDesignOption(val)}
+                        <button key={val} type="button" onClick={() => setDesignOption(val)} aria-pressed={designOption === val}
                           style={{ flex: 1, padding: "14px 12px", border: "1px solid", borderColor: designOption === val ? "#FF4D00" : "rgba(255,255,255,0.1)", background: designOption === val ? "rgba(255,77,0,0.08)" : "#111", cursor: "pointer", textAlign: "center", transition: "all 0.2s" }}>
                           <div style={{ fontSize: 22, marginBottom: 6 }}>{icon}</div>
                           <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: designOption === val ? "#FF4D00" : "rgba(255,255,255,0.6)", lineHeight: 1.3 }}>{label}</div>
-                        </div>
+                        </button>
                       ))}
                     </div>
                     {designOption === "own" && (
                       <div style={{ marginTop: 10 }}>
-                        <input type="file" ref={designFileRef} style={{ display: "none" }} accept="image/jpeg,image/png,image/gif,image/webp,.pdf" onChange={async e => {
+                        <input type="file" ref={designFileRef} aria-label="Upload design file" style={{ display: "none" }} accept="image/jpeg,image/png,image/gif,image/webp,.pdf" onChange={async e => {
                           const f = e.target.files[0];
                           if (!f) return;
                           setDesignFileUploading(true);
@@ -418,9 +418,11 @@ export default function BookingFlow({
                           if (result) { setDesignFileUrl(result.url); setDesignFileName(result.name); setDesignLinkInput(""); }
                           e.target.value = "";
                         }} />
-                        <div
+                        <button
+                          type="button"
+                          disabled={designFileUploading}
                           onClick={() => designFileRef.current?.click()}
-                          style={{ border: `1px dashed ${designFileUrl ? "rgba(16,185,129,0.5)" : "rgba(255,255,255,0.15)"}`, background: designFileUrl ? "rgba(16,185,129,0.06)" : "transparent", padding: "18px 16px", textAlign: "center", cursor: designFileUploading ? "not-allowed" : "pointer", borderRadius: 2 }}
+                          style={{ width: "100%", border: `1px dashed ${designFileUrl ? "rgba(16,185,129,0.5)" : "rgba(255,255,255,0.15)"}`, background: designFileUrl ? "rgba(16,185,129,0.06)" : "transparent", padding: "18px 16px", textAlign: "center", cursor: designFileUploading ? "not-allowed" : "pointer", borderRadius: 2 }}
                         >
                           {designFileUploading ? (
                             <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)" }}>Uploading…</div>
@@ -436,9 +438,11 @@ export default function BookingFlow({
                               <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 4 }}>JPG, PNG, PDF accepted</div>
                             </>
                           )}
-                        </div>
+                        </button>
                         <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.25)", textAlign: "center", margin: "8px 0" }}>— or paste a link —</div>
+                        <label className="sr-only" htmlFor="booking-design-link">Design link</label>
                         <input
+                          id="booking-design-link"
                           placeholder="Google Drive, Dropbox, Figma link, etc."
                           value={designLinkInput}
                           onChange={e => { setDesignLinkInput(e.target.value); if (e.target.value) { setDesignFileUrl(""); setDesignFileName(""); } }}
@@ -447,8 +451,9 @@ export default function BookingFlow({
                     )}
                   </div>
                   <div style={{ marginBottom: 20 }}>
-                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>MESSAGE TO SHOP <span style={{ color: "rgba(255,255,255,0.2)", fontWeight: 400 }}>(optional)</span></div>
+                    <label htmlFor="booking-shop-message" style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.72)", marginBottom: 6, display: "block" }}>MESSAGE TO SHOP <span style={{ color: "rgba(255,255,255,0.5)", fontWeight: 400 }}>(optional)</span></label>
                     <textarea
+                      id="booking-shop-message"
                       placeholder="Any specific details about your vehicle, color preferences, finish type, or questions for the shop..."
                       value={shopMessage}
                       onChange={e => setShopMessage(e.target.value)}
@@ -457,9 +462,9 @@ export default function BookingFlow({
                   <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", padding: "14px 18px", marginBottom: 22, fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)", lineHeight: 1.6 }}>
                     💬 After submitting, the shop will review your request and send you a personalised quote. Once you agree and pay, the shop will schedule your appointment date and time.
                   </div>
-                  {submitError && <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#FF6A20", marginBottom: 12, padding: "10px 14px", background: "rgba(255,77,0,0.08)", border: "1px solid rgba(255,77,0,0.2)" }}>{submitError}</div>}
+                  {submitError && <div role="alert" style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#FF6A20", marginBottom: 12, padding: "10px 14px", background: "rgba(255,77,0,0.08)", border: "1px solid rgba(255,77,0,0.2)" }}>{submitError}</div>}
                   <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                    <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)", cursor: "pointer", whiteSpace: "nowrap" }} onClick={() => setBookingStep(1)}>← Change service</span>
+                    <button className="link-button" type="button" style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.65)", cursor: "pointer", whiteSpace: "nowrap" }} onClick={() => setBookingStep(1)}>← Change service</button>
                     <button className="btn-main" style={{ flex: 1, fontSize: 20, opacity: isSubmitting ? 0.6 : 1 }} disabled={isSubmitting} onClick={handleSubmit}>{isSubmitting ? "Submitting..." : "Request Appointment →"}</button>
                   </div>
                 </div>

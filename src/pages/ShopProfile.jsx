@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ALL_SERVICE_NAMES } from "../lib/services";
 import { fetchShopReviews } from "../lib/queries";
 import { displayExternalUrl, safeExternalUrl } from "../lib/security";
@@ -7,10 +7,21 @@ export default function ShopProfile({ nav, selectedShop, currentUser, currentPro
   const [activeTab, setActiveTab] = useState("overview");
   const [lightboxImg, setLightboxImg] = useState(null);
   const [reviews, setReviews] = useState([]);
+  const lightboxRef = useRef(null);
 
   useEffect(() => {
     if (selectedShop?.id) fetchShopReviews(selectedShop.id).then(setReviews);
   }, [selectedShop?.id]);
+
+  useEffect(() => {
+    if (!lightboxImg) return;
+    lightboxRef.current?.focus();
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") setLightboxImg(null);
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [lightboxImg]);
 
   if (!selectedShop) return null;
 
@@ -57,7 +68,7 @@ export default function ShopProfile({ nav, selectedShop, currentUser, currentPro
         .sp-tab { background: none; border: none; border-bottom: 2px solid transparent; color: rgba(255,255,255,0.4); font-family: 'Bebas Neue', cursive; font-size: 17px; letter-spacing: 2px; cursor: pointer; padding: 12px 0; transition: color 0.2s; }
         .sp-tab.active { color: #fff; border-bottom-color: #FF4D00; }
         .sp-tab:hover:not(.active) { color: rgba(255,255,255,0.75); }
-        .sp-port-item { position: relative; overflow: hidden; cursor: pointer; aspect-ratio: 4/3; background: #111; border: 1px solid rgba(255,255,255,0.05); transition: border-color 0.2s; }
+        .sp-port-item { position: relative; overflow: hidden; cursor: pointer; aspect-ratio: 4/3; background: #111; border: 1px solid rgba(255,255,255,0.05); transition: border-color 0.2s; padding: 0; width: 100%; color: #fff; }
         .sp-port-item:hover { border-color: rgba(255,77,0,0.3); }
         .sp-port-item img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s; display: block; }
         .sp-port-item:hover img { transform: scale(1.07); }
@@ -68,7 +79,7 @@ export default function ShopProfile({ nav, selectedShop, currentUser, currentPro
         .sp-info-row { display: flex; align-items: center; gap: 12px; padding: 13px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-family: 'DM Sans', sans-serif; font-size: 14px; transition: background 0.15s; }
         .sp-info-row:last-child { border-bottom: none; }
         .sp-icon { width: 34px; height: 34px; background: rgba(255,77,0,0.1); border: 1px solid rgba(255,77,0,0.2); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 15px; }
-        .sp-slot { padding: 6px 14px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); font-family: 'DM Sans', sans-serif; font-size: 13px; color: rgba(255,255,255,0.6); cursor: pointer; transition: all 0.15s; }
+        .sp-slot { padding: 6px 14px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); font-family: 'DM Sans', sans-serif; font-size: 13px; color: rgba(255,255,255,0.72); cursor: pointer; transition: all 0.15s; }
         .sp-slot:hover { border-color: #FF4D00; color: #FF4D00; background: rgba(255,77,0,0.08); transform: translateY(-1px); }
         .sp-lightbox { position: fixed; inset: 0; background: rgba(0,0,0,0.93); z-index: 1000; display: flex; align-items: center; justify-content: center; cursor: zoom-out; }
         .sp-lightbox img { max-width: 90vw; max-height: 88vh; object-fit: contain; box-shadow: 0 40px 100px rgba(0,0,0,0.8); }
@@ -98,10 +109,12 @@ export default function ShopProfile({ nav, selectedShop, currentUser, currentPro
 
       {/* ── NAV ── */}
       <nav className="sp-nav" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 40px", background: "rgba(10,10,10,0.95)", borderBottom: "1px solid rgba(255,255,255,0.06)", position: "sticky", top: 0, zIndex: 100, backdropFilter: "blur(20px)" }}>
-        <img src="/images/Logo.png" alt="WrapBridge" style={{ height: 68, display: "block", cursor: "pointer" }} onClick={() => nav("landing")} />
-        <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.5)", cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }} onClick={() => nav("search")}>
+        <button className="image-button" onClick={() => nav("landing")} aria-label="Go to WrapBridge home">
+          <img src="/images/Logo.png" alt="WrapBridge" style={{ height: 68, display: "block" }} />
+        </button>
+        <button className="link-button" type="button" style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.65)", cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }} onClick={() => nav("search")}>
           ← Back to Search
-        </span>
+        </button>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           {role !== "company" && (
             <button className="sp-btn sp-book-btn" style={{ fontSize: 15, padding: "10px 28px" }} onClick={handleBook}>
@@ -166,14 +179,14 @@ export default function ShopProfile({ nav, selectedShop, currentUser, currentPro
         </div>
 
         {/* ── TABS ── */}
-        <div className="sp-tabs sp-content-anim" style={{ display: "flex", gap: 32, borderBottom: "1px solid rgba(255,255,255,0.08)", marginBottom: 36 }}>
+        <div className="sp-tabs sp-content-anim" role="tablist" aria-label="Shop profile sections" style={{ display: "flex", gap: 32, borderBottom: "1px solid rgba(255,255,255,0.08)", marginBottom: 36 }}>
           {[
             { id: "overview", label: "Overview" },
             { id: "portfolio", label: `Portfolio (${portfolio.length})` },
             { id: "reviews", label: `Reviews${reviews.length > 0 ? ` (${reviews.length})` : ""}` },
             { id: "contact",  label: "Contact" },
           ].map(({ id, label }) => (
-            <button key={id} className={`sp-tab${activeTab === id ? " active" : ""}`} onClick={() => setActiveTab(id)}>
+            <button key={id} type="button" role="tab" aria-selected={activeTab === id} className={`sp-tab${activeTab === id ? " active" : ""}`} onClick={() => setActiveTab(id)}>
               {label}
             </button>
           ))}
@@ -200,18 +213,18 @@ export default function ShopProfile({ nav, selectedShop, currentUser, currentPro
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
                   <div style={{ fontSize: 28, letterSpacing: 2 }}>PORTFOLIO</div>
                   {portfolio.length > 0 && (
-                    <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)", cursor: "pointer" }} onClick={() => setActiveTab("portfolio")}>
+                    <button className="link-button" type="button" style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.65)", cursor: "pointer" }} onClick={() => setActiveTab("portfolio")}>
                       View all {portfolio.length} →
-                    </span>
+                    </button>
                   )}
                 </div>
                 {portfolio.length > 0 ? (
                   <div className="sp-port-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
                     {portfolio.slice(0, 3).map((img, i) => (
-                      <div key={i} className="sp-port-item" onClick={() => setLightboxImg(img)}>
+                      <button key={i} type="button" className="sp-port-item" onClick={() => setLightboxImg(img)} aria-label={`Open portfolio photo ${i + 1}`}>
                         <img src={img} alt={`Work ${i + 1}`} />
                         <div className="sp-port-overlay"><span className="sp-port-label">VIEW</span></div>
-                      </div>
+                      </button>
                     ))}
                   </div>
                 ) : (
@@ -297,7 +310,7 @@ export default function ShopProfile({ nav, selectedShop, currentUser, currentPro
                   <div style={{ fontSize: 20, letterSpacing: 2, marginBottom: 4 }}>AVAILABILITY</div>
                   <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)", letterSpacing: 1, marginBottom: 14 }}>TODAY'S OPEN SLOTS</div>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                    {slots.map(s => <div key={s} className="sp-slot" onClick={handleBook}>{s}</div>)}
+                    {slots.map(s => <button key={s} type="button" className="sp-slot" onClick={handleBook}>{s}</button>)}
                   </div>
                 </div>
               )}
@@ -331,10 +344,10 @@ export default function ShopProfile({ nav, selectedShop, currentUser, currentPro
                 </div>
                 <div className="sp-port-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
                   {portfolio.map((img, i) => (
-                    <div key={i} className="sp-port-item" onClick={() => setLightboxImg(img)}>
+                    <button key={i} type="button" className="sp-port-item" onClick={() => setLightboxImg(img)} aria-label={`Open portfolio photo ${i + 1}`}>
                       <img src={img} alt={`Portfolio ${i + 1}`} loading="lazy" />
                       <div className="sp-port-overlay"><span className="sp-port-label">VIEW FULL</span></div>
-                    </div>
+                    </button>
                   ))}
                 </div>
                 <div style={{ marginTop: 44, textAlign: "center" }}>
@@ -476,9 +489,9 @@ export default function ShopProfile({ nav, selectedShop, currentUser, currentPro
 
       {/* ── LIGHTBOX ── */}
       {lightboxImg && (
-        <div className="sp-lightbox" onClick={() => setLightboxImg(null)}>
+        <div className="sp-lightbox" role="dialog" aria-modal="true" aria-label="Portfolio photo preview" tabIndex={-1} ref={lightboxRef}>
           <img src={lightboxImg} alt="Portfolio" />
-          <div style={{ position: "absolute", top: 20, right: 28, fontFamily: "'DM Sans', sans-serif", fontSize: 28, color: "rgba(255,255,255,0.5)", cursor: "pointer", lineHeight: 1 }}>✕</div>
+          <button type="button" aria-label="Close portfolio preview" onClick={(event) => { event.stopPropagation(); setLightboxImg(null); }} style={{ position: "absolute", top: 20, right: 28, background: "transparent", border: "none", fontFamily: "'DM Sans', sans-serif", fontSize: 28, color: "rgba(255,255,255,0.75)", cursor: "pointer", lineHeight: 1 }}>✕</button>
         </div>
       )}
     </div>

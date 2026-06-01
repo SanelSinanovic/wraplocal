@@ -10,7 +10,9 @@ export default function PrivacyPage({ nav }) {
 
       {/* Header */}
       <div className="legal-header" style={{ background: "#0D0D0D", borderBottom: "1px solid rgba(255,255,255,0.07)", padding: "20px 40px", display: "flex", alignItems: "center", gap: 32 }}>
-        <img src="/images/Logo.png" alt="WrapBridge" style={{ height: 64, display: "block", cursor: "pointer" }} onClick={() => nav("landing")} />
+        <button className="image-button" type="button" onClick={() => nav("landing")} aria-label="Go to WrapBridge home">
+          <img src="/images/Logo.png" alt="WrapBridge" style={{ height: 64, display: "block" }} />
+        </button>
         <span style={{ fontSize: 13, color: "rgba(255,255,255,0.3)", letterSpacing: 2 }}>PRIVACY POLICY</span>
       </div>
 
@@ -119,7 +121,7 @@ export default function PrivacyPage({ nav }) {
 
         <p style={{ marginTop: 60, color: "rgba(255,255,255,0.2)", fontSize: 12, borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 24 }}>
           © {new Date().getFullYear()} WrapBridge. All rights reserved. &nbsp;
-          <span onClick={() => nav("terms")} style={{ color: "#FF4D00", cursor: "pointer" }}>Terms of Service</span>
+          <button className="link-button" type="button" onClick={() => nav("terms")} style={{ color: "#FF4D00", cursor: "pointer" }}>Terms of Service</button>
         </p>
       </div>
     </div>

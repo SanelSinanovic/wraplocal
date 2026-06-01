@@ -70,7 +70,7 @@ export default function LandingPage({ nav, shops: liveShops, setServiceFilter, c
         .btn-ghost:hover { border-color: #FF4D00; color: #FF4D00; }
         .nav-link { color: rgba(255,255,255,0.6); text-decoration: none; font-family: 'DM Sans', sans-serif; font-size: 14px; cursor: pointer; transition: color 0.2s; }
         .nav-link:hover { color: #fff; }
-        .card-hover { transition: transform 0.3s, box-shadow 0.3s; cursor: pointer; }
+        .card-hover { transition: transform 0.3s, box-shadow 0.3s; }
         .card-hover:hover { transform: translateY(-6px); box-shadow: 0 20px 60px rgba(255,77,0,0.2); }
         .svc-pill { font-family: 'DM Sans', sans-serif; font-size: 13px; padding: 8px 16px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.03); color: rgba(255,255,255,0.6); cursor: pointer; transition: all 0.18s; display: flex; align-items: center; gap: 6px; }
         .svc-pill:hover { color: #fff; border-color: rgba(255,255,255,0.35); background: rgba(255,255,255,0.07); transform: translateX(3px); }
@@ -125,7 +125,7 @@ export default function LandingPage({ nav, shops: liveShops, setServiceFilter, c
           .nav-btns { display: none !important; }
           .hamburger { display: flex; flex-direction: column; gap: 5px; }
           .mobile-menu { display: flex; flex-direction: column; background: rgba(10,10,10,0.98); border-bottom: 1px solid rgba(255,255,255,0.08); padding: 12px 20px 20px; gap: 4px; }
-          .mobile-menu span { font-family: 'DM Sans', sans-serif; font-size: 15px; color: rgba(255,255,255,0.7); cursor: pointer; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: block; }
+          .mobile-menu .mobile-link { font-family: 'DM Sans', sans-serif; font-size: 15px; color: rgba(255,255,255,0.7); cursor: pointer; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: block; text-align: left; width: 100%; }
           .mobile-menu .mob-btn { margin-top: 12px; background: #FF4D00; color: #fff; border: none; padding: 14px; font-family: 'Bebas Neue', cursive; font-size: 17px; letter-spacing: 2px; cursor: pointer; width: 100%; }
           .mobile-menu .mob-btn-ghost { margin-top: 8px; background: transparent; color: rgba(255,255,255,0.7); border: 1px solid rgba(255,255,255,0.2); padding: 12px; font-family: 'Bebas Neue', cursive; font-size: 15px; letter-spacing: 2px; cursor: pointer; width: 100%; }
           .hero-section { padding: 60px 20px 40px !important; }
@@ -158,12 +158,14 @@ export default function LandingPage({ nav, shops: liveShops, setServiceFilter, c
 
       {/* NAV */}
       <nav className="nav-pad" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 60px", borderBottom: "1px solid rgba(255,255,255,0.06)", position: "sticky", top: 0, background: "rgba(10,10,10,0.95)", backdropFilter: "blur(20px)", zIndex: 100 }}>
-        <img src="/images/Logo.png" alt="WrapBridge" style={{ height: 72, display: "block", cursor: "pointer" }} onClick={() => nav("landing")} />
+        <button className="image-button" onClick={() => nav("landing")} aria-label="Go to WrapBridge home">
+          <img src="/images/Logo.png" alt="WrapBridge" style={{ height: 72, display: "block" }} />
+        </button>
         <div className="nav-links" style={{ display: "flex", gap: 32 }}>
-          <span className="nav-link" onClick={() => nav("search")}>Find Shops</span>
-          <span className="nav-link" onClick={() => nav("pricing")}>For Businesses</span>
+          <button className="nav-link link-button" onClick={() => nav("search")}>Find Shops</button>
+          <button className="nav-link link-button" onClick={() => nav("pricing")}>For Businesses</button>
           {role !== "company" && (
-            <span className="nav-link" onClick={() => nav(currentUser ? "customer-dash" : "customer-login")}>My Bookings</span>
+            <button className="nav-link link-button" onClick={() => nav(currentUser ? "customer-dash" : "customer-login")}>My Bookings</button>
           )}
         </div>
         <div className="nav-btns" style={{ display: "flex", gap: 12, alignItems: "center" }}>
@@ -191,10 +193,10 @@ export default function LandingPage({ nav, shops: liveShops, setServiceFilter, c
       </nav>
       {menuOpen && (
         <div className="mobile-menu">
-          <span onClick={() => { nav("search"); setMenuOpen(false); }}>Find Shops</span>
-          <span onClick={() => { nav("pricing"); setMenuOpen(false); }}>For Businesses</span>
+          <button className="mobile-link link-button" onClick={() => { nav("search"); setMenuOpen(false); }}>Find Shops</button>
+          <button className="mobile-link link-button" onClick={() => { nav("pricing"); setMenuOpen(false); }}>For Businesses</button>
           {role !== "company" && (
-            <span onClick={() => { nav(currentUser ? "customer-dash" : "customer-login"); setMenuOpen(false); }}>My Bookings</span>
+            <button className="mobile-link link-button" onClick={() => { nav(currentUser ? "customer-dash" : "customer-login"); setMenuOpen(false); }}>My Bookings</button>
           )}
           {currentUser ? (
             <>
@@ -306,10 +308,12 @@ export default function LandingPage({ nav, shops: liveShops, setServiceFilter, c
 
                 {/* Dot indicators */}
                 <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                  {SLIDES.map((_, i) => (
+                  {SLIDES.map((slide, i) => (
                     <button
                       key={i}
                       onClick={() => setActiveSlide(i)}
+                      aria-label={`Show ${slide.label}`}
+                      aria-current={i === activeSlide ? "true" : undefined}
                       style={{ width: i === activeSlide ? 22 : 6, height: 6, borderRadius: 3, border: "none", cursor: "pointer", background: i === activeSlide ? SLIDES[activeSlide].accent : "rgba(255,255,255,0.25)", transition: "all 0.35s", padding: 0 }}
                     />
                   ))}
@@ -411,11 +415,11 @@ export default function LandingPage({ nav, shops: liveShops, setServiceFilter, c
             <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#FF4D00", letterSpacing: 3, marginBottom: 8 }}>FEATURED NEAR YOU</div>
             <div style={{ fontSize: 42, letterSpacing: 2 }}>TOP RATED SHOPS</div>
           </div>
-          <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.4)", cursor: "pointer" }} onClick={() => nav("search")}>View all →</span>
+          <button className="link-button" style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.65)", cursor: "pointer" }} onClick={() => nav("search")}>View all →</button>
         </div>
         <div className="shops-grid reveal reveal-stagger" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20 }}>
           {shops.slice(0, 3).map(shop => (
-            <div key={shop.id} className="card-hover" onClick={() => nav("shop", { selectedShop: shop })}
+            <article key={shop.id} className="card-hover"
               style={{ background: "#111", border: "1px solid rgba(255,255,255,0.06)", overflow: "hidden" }}>
               <div style={{ position: "relative", height: 200, overflow: "hidden" }}>
                 <img src={shop.image || shop.banner_url || 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=600&q=80'} alt={shop.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -439,10 +443,13 @@ export default function LandingPage({ nav, shops: liveShops, setServiceFilter, c
                   ) : (
                     <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.5)" }}>Get a Quote</span>
                   )}
-                  <button className="btn-main" style={{ fontSize: 13, padding: "8px 18px" }} onClick={(e) => { e.stopPropagation(); nav("booking", { bookingShop: shop }); }}>Book Now</button>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button className="btn-ghost" style={{ fontSize: 13, padding: "8px 14px", border: "1px solid rgba(255,255,255,0.14)", color: "rgba(255,255,255,0.7)" }} onClick={() => nav("shop", { selectedShop: shop })}>View Profile</button>
+                    <button className="btn-main" style={{ fontSize: 13, padding: "8px 18px" }} onClick={() => nav("booking", { bookingShop: shop })}>Book Now</button>
+                  </div>
                 </div>
               </div>
-            </div>
+            </article>
           ))}
         </div>
       </div>
@@ -492,9 +499,9 @@ export default function LandingPage({ nav, shops: liveShops, setServiceFilter, c
       <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", padding: "32px 60px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
         <img src="/images/Logo.png" alt="WrapBridge" style={{ height: 56, display: "block" }} />
         <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.3)", display: "flex", gap: 24, flexWrap: "wrap", alignItems: "center" }}>
-          <span onClick={() => nav("terms")} style={{ cursor: "pointer", transition: "color 0.2s" }} onMouseEnter={e => e.target.style.color="#FF4D00"} onMouseLeave={e => e.target.style.color="rgba(255,255,255,0.3)"}>Terms of Service</span>
-          <span onClick={() => nav("privacy")} style={{ cursor: "pointer", transition: "color 0.2s" }} onMouseEnter={e => e.target.style.color="#FF4D00"} onMouseLeave={e => e.target.style.color="rgba(255,255,255,0.3)"}>Privacy Policy</span>
-          <span onClick={() => nav("pricing")} style={{ cursor: "pointer", transition: "color 0.2s" }} onMouseEnter={e => e.target.style.color="#FF4D00"} onMouseLeave={e => e.target.style.color="rgba(255,255,255,0.3)"}>Pricing</span>
+          <button className="link-button" onClick={() => nav("terms")} style={{ cursor: "pointer", transition: "color 0.2s" }} onMouseEnter={e => e.currentTarget.style.color="#FF4D00"} onMouseLeave={e => e.currentTarget.style.color="rgba(255,255,255,0.3)"}>Terms of Service</button>
+          <button className="link-button" onClick={() => nav("privacy")} style={{ cursor: "pointer", transition: "color 0.2s" }} onMouseEnter={e => e.currentTarget.style.color="#FF4D00"} onMouseLeave={e => e.currentTarget.style.color="rgba(255,255,255,0.3)"}>Privacy Policy</button>
+          <button className="link-button" onClick={() => nav("pricing")} style={{ cursor: "pointer", transition: "color 0.2s" }} onMouseEnter={e => e.currentTarget.style.color="#FF4D00"} onMouseLeave={e => e.currentTarget.style.color="rgba(255,255,255,0.3)"}>Pricing</button>
           <a href="mailto:support@wrapbridge.com" style={{ color: "rgba(255,255,255,0.3)", textDecoration: "none", transition: "color 0.2s" }} onMouseEnter={e => e.target.style.color="#FF4D00"} onMouseLeave={e => e.target.style.color="rgba(255,255,255,0.3)"}>support@wrapbridge.com</a>
         </div>
         <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.2)" }}>© {new Date().getFullYear()} WrapBridge. All rights reserved.</div>

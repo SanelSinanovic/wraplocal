@@ -8,7 +8,9 @@ export default function TermsPage({ nav }) {
 
       {/* Header */}
       <div className="legal-header" style={{ background: "#0D0D0D", borderBottom: "1px solid rgba(255,255,255,0.07)", padding: "20px 40px", display: "flex", alignItems: "center", gap: 32 }}>
-        <img src="/images/Logo.png" alt="WrapBridge" style={{ height: 64, display: "block", cursor: "pointer" }} onClick={() => nav("landing")} />
+        <button className="image-button" type="button" onClick={() => nav("landing")} aria-label="Go to WrapBridge home">
+          <img src="/images/Logo.png" alt="WrapBridge" style={{ height: 64, display: "block" }} />
+        </button>
         <span style={{ fontSize: 13, color: "rgba(255,255,255,0.3)", letterSpacing: 2 }}>TERMS OF SERVICE</span>
       </div>
 
@@ -135,7 +137,7 @@ export default function TermsPage({ nav }) {
         <p>If any provision of these Terms is found to be invalid, illegal, or unenforceable by a court of competent jurisdiction, the remaining provisions shall continue in full force and effect. The invalid provision shall be modified to the minimum extent necessary to make it valid and enforceable.</p>
 
         <h2>20. Entire Agreement</h2>
-        <p>These Terms, together with our <span onClick={() => nav("privacy")} style={{ color: "#FF4D00", cursor: "pointer" }}>Privacy Policy</span>, constitute the entire agreement between you and WrapBridge regarding your use of the Platform and supersede all prior agreements, representations, and understandings.</p>
+        <p>These Terms, together with our <button className="link-button" type="button" onClick={() => nav("privacy")} style={{ color: "#FF4D00", cursor: "pointer" }}>Privacy Policy</button>, constitute the entire agreement between you and WrapBridge regarding your use of the Platform and supersede all prior agreements, representations, and understandings.</p>
 
         <h2>21. Changes to These Terms</h2>
         <p>WrapBridge may update these Terms at any time. We will notify you of material changes by posting the updated Terms on the Platform with a new "Last Updated" date. Continued use of the Platform after changes constitutes acceptance of the updated Terms.</p>
@@ -145,7 +147,7 @@ export default function TermsPage({ nav }) {
 
         <p style={{ marginTop: 60, color: "rgba(255,255,255,0.2)", fontSize: 12, borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 24 }}>
           © {new Date().getFullYear()} WrapBridge. All rights reserved. &nbsp;
-          <span onClick={() => nav("privacy")} style={{ color: "#FF4D00", cursor: "pointer" }}>Privacy Policy</span>
+          <button className="link-button" type="button" onClick={() => nav("privacy")} style={{ color: "#FF4D00", cursor: "pointer" }}>Privacy Policy</button>
         </p>
       </div>
     </div>

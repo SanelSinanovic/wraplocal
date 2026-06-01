@@ -106,7 +106,9 @@ export default function CompanyOnboarding({ currentUser, userShop, onComplete, n
 
       {/* Navbar */}
       <nav className="ob-nav" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 40px", background: "rgba(10,10,10,0.97)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-        <img src="/images/Logo.png" alt="WrapBridge" style={{ height: 68, display: "block", cursor: "pointer" }} onClick={() => nav("landing")} />
+        <button className="image-button" type="button" onClick={() => nav("landing")} aria-label="Go to WrapBridge home">
+          <img src="/images/Logo.png" alt="WrapBridge" style={{ height: 68, display: "block" }} />
+        </button>
         <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.35)" }}>Business Setup</div>
       </nav>
 
@@ -153,12 +155,14 @@ export default function CompanyOnboarding({ currentUser, userShop, onComplete, n
               </div>
 
               {/* Drop zone */}
-              <input type="file" ref={photoInputRef} style={{ display: "none" }} accept="image/*" onChange={e => { const f = e.target.files[0]; if (f) handlePhotoUpload(f); e.target.value = ""; }} />
-              <div
+              <input type="file" ref={photoInputRef} aria-label="Upload shop profile photo" style={{ display: "none" }} accept="image/*" onChange={e => { const f = e.target.files[0]; if (f) handlePhotoUpload(f); e.target.value = ""; }} />
+              <button
+                type="button"
                 onClick={() => !photoUploading && photoInputRef.current?.click()}
+                disabled={photoUploading}
                 onDragOver={e => e.preventDefault()}
                 onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f && f.type.startsWith("image/")) handlePhotoUpload(f); }}
-                style={{ border: `2px dashed ${photoUrl ? "#FF4D00" : "rgba(255,255,255,0.12)"}`, background: photoUrl ? "transparent" : "#111", borderRadius: 2, overflow: "hidden", cursor: photoUploading ? "not-allowed" : "pointer", marginBottom: 12, position: "relative", minHeight: 220, display: "flex", alignItems: "center", justifyContent: "center" }}
+                style={{ width: "100%", color: "#fff", border: `2px dashed ${photoUrl ? "#FF4D00" : "rgba(255,255,255,0.12)"}`, background: photoUrl ? "transparent" : "#111", borderRadius: 2, overflow: "hidden", cursor: photoUploading ? "not-allowed" : "pointer", marginBottom: 12, position: "relative", minHeight: 220, display: "flex", alignItems: "center", justifyContent: "center" }}
               >
                 {photoUrl ? (
                   <>
@@ -174,7 +178,7 @@ export default function CompanyOnboarding({ currentUser, userShop, onComplete, n
                     <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.25)" }}>JPG, PNG, WEBP recommended · Minimum 800×400px</div>
                   </div>
                 )}
-              </div>
+              </button>
               {photoError && <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#FF4D00", marginBottom: 12 }}>{photoError}</div>}
               <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.25)", marginBottom: 36 }}>
                 💡 Shops with photos get 5× more views. You must upload a photo before going live.
@@ -262,16 +266,18 @@ export default function CompanyOnboarding({ currentUser, userShop, onComplete, n
                       {services.map(({ name }) => {
                         const checked = selectedServices.includes(name);
                         return (
-                          <div
+                          <button
+                            type="button"
                             key={name}
+                            aria-pressed={checked}
                             onClick={() => toggleService(name)}
-                            style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", border: `1px solid ${checked ? "#FF4D00" : "rgba(255,255,255,0.08)"}`, background: checked ? "rgba(255,77,0,0.08)" : "#111", cursor: "pointer", transition: "all 0.15s" }}
+                            style={{ width: "100%", textAlign: "left", display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", border: `1px solid ${checked ? "#FF4D00" : "rgba(255,255,255,0.08)"}`, background: checked ? "rgba(255,77,0,0.08)" : "#111", cursor: "pointer", transition: "all 0.15s" }}
                           >
                             <div style={{ width: 16, height: 16, border: `2px solid ${checked ? "#FF4D00" : "rgba(255,255,255,0.2)"}`, background: checked ? "#FF4D00" : "transparent", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
                               {checked && <svg width="9" height="7" viewBox="0 0 9 7"><polyline points="1,3.5 3.5,6 8,1" fill="none" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                             </div>
                             <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: checked ? "#fff" : "rgba(255,255,255,0.5)" }}>{name}</span>
-                          </div>
+                          </button>
                         );
                       })}
                     </div>
@@ -384,9 +390,12 @@ export default function CompanyOnboarding({ currentUser, userShop, onComplete, n
               </div>
 
               {/* Go live toggle */}
-              <div
+              <button
+                type="button"
+                aria-pressed={goLive}
+                disabled={!canGoLive}
                 onClick={() => canGoLive && setGoLive(v => !v)}
-                style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", border: `1px solid ${goLive ? "#10B981" : "rgba(255,255,255,0.1)"}`, background: goLive ? "rgba(16,185,129,0.07)" : "#111", cursor: canGoLive ? "pointer" : "not-allowed", marginBottom: 8, transition: "all 0.2s", opacity: canGoLive ? 1 : 0.5 }}
+                style={{ width: "100%", textAlign: "left", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", border: `1px solid ${goLive ? "#10B981" : "rgba(255,255,255,0.1)"}`, background: goLive ? "rgba(16,185,129,0.07)" : "#111", cursor: canGoLive ? "pointer" : "not-allowed", marginBottom: 8, transition: "all 0.2s", opacity: canGoLive ? 1 : 0.5 }}
               >
                 <div>
                   <div style={{ fontSize: 18, letterSpacing: 1, color: goLive ? "#10B981" : "rgba(255,255,255,0.7)" }}>GO LIVE NOW</div>
@@ -395,7 +404,7 @@ export default function CompanyOnboarding({ currentUser, userShop, onComplete, n
                 <div style={{ width: 44, height: 24, borderRadius: 12, background: goLive ? "#10B981" : "rgba(255,255,255,0.12)", position: "relative", transition: "background 0.2s", flexShrink: 0 }}>
                   <div style={{ position: "absolute", top: 3, left: goLive ? 23 : 3, width: 18, height: 18, borderRadius: "50%", background: "#fff", transition: "left 0.2s" }} />
                 </div>
-              </div>
+              </button>
               {!photoUrl && (
                 <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.25)", marginBottom: 20 }}>⚠ Upload a profile photo to enable Go Live.</div>
               )}

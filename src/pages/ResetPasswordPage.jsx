@@ -28,7 +28,9 @@ export default function ResetPasswordPage({ nav, recoveryReady }) {
       <div aria-hidden="true" style={{ position: "fixed", top: "-10%", right: "-8%", width: 600, height: 600, background: "radial-gradient(circle, rgba(255,77,0,0.2) 0%, transparent 65%)", borderRadius: "50%", pointerEvents: "none", animation: "glow-breathe 6s ease-in-out infinite", zIndex: 0 }} />
       <div aria-hidden="true" style={{ position: "fixed", bottom: "-10%", left: "-8%", width: 500, height: 500, background: "radial-gradient(circle, rgba(59,130,246,0.15) 0%, transparent 65%)", borderRadius: "50%", pointerEvents: "none", animation: "orb-drift 14s ease-in-out infinite", zIndex: 0 }} />
       <nav className="reset-nav" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 40px", background: "rgba(10,10,10,0.95)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-        <img src="/images/Logo.png" alt="WrapBridge" style={{ height: 68, display: "block", cursor: "pointer" }} onClick={() => nav("landing")} />
+        <button className="image-button" type="button" onClick={() => nav("landing")} aria-label="Go to WrapBridge home">
+          <img src="/images/Logo.png" alt="WrapBridge" style={{ height: 68, display: "block" }} />
+        </button>
       </nav>
       <div className="reset-outer" style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: 40, position: "relative", overflow: "hidden" }}>
         <div style={{ position: "absolute", top: "30%", left: "50%", transform: "translateX(-50%)", width: 600, height: 600, borderRadius: "50%", background: "radial-gradient(circle, rgba(255,77,0,0.07) 0%, transparent 70%)", pointerEvents: "none", animation: "glowPulse 4s ease-in-out infinite" }} />
@@ -54,25 +56,25 @@ export default function ResetPasswordPage({ nav, recoveryReady }) {
               </div>
 
               {error && (
-                <div style={{ background: "rgba(255,77,0,0.1)", border: "1px solid rgba(255,77,0,0.3)", padding: "12px 16px", fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "#FF4D00", marginBottom: 20 }}>{error}</div>
+                <div role="alert" style={{ background: "rgba(255,77,0,0.1)", border: "1px solid rgba(255,77,0,0.3)", padding: "12px 16px", fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "#FF4D00", marginBottom: 20 }}>{error}</div>
               )}
 
               <div style={{ marginBottom: 16 }}>
-                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", letterSpacing: 1, marginBottom: 6 }}>NEW PASSWORD</div>
-                <input type="password" placeholder="Min. 8 characters" value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === "Enter" && handleReset()} />
+                <label htmlFor="reset-password" style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.72)", letterSpacing: 1, marginBottom: 6, display: "block" }}>NEW PASSWORD</label>
+                <input id="reset-password" type="password" autoComplete="new-password" placeholder="Min. 8 characters" value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === "Enter" && handleReset()} />
               </div>
 
               <div style={{ marginBottom: 32 }}>
-                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", letterSpacing: 1, marginBottom: 6 }}>CONFIRM PASSWORD</div>
-                <input type="password" placeholder="••••••••" value={confirm} onChange={e => setConfirm(e.target.value)} onKeyDown={e => e.key === "Enter" && handleReset()} />
+                <label htmlFor="reset-confirm" style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.72)", letterSpacing: 1, marginBottom: 6, display: "block" }}>CONFIRM PASSWORD</label>
+                <input id="reset-confirm" type="password" autoComplete="new-password" placeholder="••••••••" value={confirm} onChange={e => setConfirm(e.target.value)} onKeyDown={e => e.key === "Enter" && handleReset()} />
               </div>
 
               <button onClick={handleReset} disabled={loading} className="reset-submit" style={{ opacity: loading ? 0.6 : 1, cursor: loading ? "not-allowed" : "pointer", marginBottom: 16 }}>
                 {loading ? "Updating..." : "Update Password →"}
               </button>
-              <div onClick={() => nav("customer-login")} style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.3)", textAlign: "center", cursor: "pointer" }}>
+              <button className="link-button" type="button" onClick={() => nav("customer-login")} style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.55)", textAlign: "center", cursor: "pointer", width: "100%" }}>
                 ← Back to sign in
-              </div>
+              </button>
             </>
           )}
         </div>

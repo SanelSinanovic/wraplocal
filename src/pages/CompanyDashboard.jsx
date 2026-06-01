@@ -105,10 +105,10 @@ function BookingDetailPanel({ selectedBooking, messagesMap, chatInput, setChatIn
   const messages = messagesMap[b.id] || [];
   return (
     <div style={{ marginBottom: 32 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20, cursor: "pointer" }} onClick={() => setSelectedBooking(null)}>
+      <button className="link-button" type="button" style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20, cursor: "pointer" }} onClick={() => setSelectedBooking(null)}>
         <span style={{ color: "#FF4D00", fontSize: 18 }}>←</span>
         <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.5)" }}>{backLabel}</span>
-      </div>
+      </button>
       <div className="booking-detail-grid" style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: 20, alignItems: "start" }}>
         <div>
           <div style={{ background: "#111", border: "1px solid rgba(255,255,255,0.07)", padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
@@ -913,21 +913,23 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
 
   return (
     <div className="company-wrap" style={{ fontFamily: "'Bebas Neue', cursive", background: "linear-gradient(180deg, #090909 0%, #110705 25%, #090909 60%, #05050C 100%)", minHeight: "100vh", color: "#fff", display: "flex", position: "relative" }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap'); * { box-sizing: border-box; } .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 16px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 14px; color: rgba(255,255,255,0.5); border-radius: 4px; transition: all 0.2s; } .nav-item:hover, .nav-item.active { background: rgba(255,77,0,0.1); color: #FF4D00; } .stat-card { background: #111; border: 1px solid rgba(255,255,255,0.06); padding: 24px; } .cal-day { min-height: 100px; background: #111; border: 1px solid rgba(255,255,255,0.05); padding: 10px 8px 8px; cursor: default; transition: all 0.15s; vertical-align: top; border-radius: 2px; } .cal-day.has-booking { cursor: pointer; } .cal-day:not(.empty-cell):hover { background: rgba(255,255,255,0.025); border-color: rgba(255,255,255,0.1); } .cal-day.has-booking:hover { border-color: rgba(255,77,0,0.4) !important; background: rgba(255,77,0,0.05) !important; } .cal-day.selected { border-color: #FF4D00 !important; background: rgba(255,77,0,0.09) !important; box-shadow: inset 0 0 0 1px rgba(255,77,0,0.25); } .cal-day.today-cell { border-color: rgba(255,255,255,0.22); } .cal-chip { display: flex; align-items: center; gap: 5px; background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.28); padding: 3px 6px 3px 4px; margin-bottom: 3px; border-radius: 2px; cursor: pointer; transition: background 0.12s; } .cal-chip:hover { background: rgba(16,185,129,0.24); } .cal-avatar { width: 16px; height: 16px; border-radius: 50%; background: linear-gradient(135deg,#FF4D00,#FF8C00); display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; color: #fff; flex-shrink: 0; font-family: 'DM Sans',sans-serif; letter-spacing: 0; } .cal-side { background: #0F0F0F; border: 1px solid rgba(255,77,0,0.2); border-radius: 2px; width: 272px; flex-shrink: 0; animation: sideIn 0.16s ease; overflow: hidden; } @keyframes sideIn { from { opacity:0; transform:translateX(10px); } to { opacity:1; transform:translateX(0); } } .view-toggle { display: flex; border: 1px solid rgba(255,255,255,0.1); overflow: hidden; } .view-toggle button { background: transparent; border: none; padding: 8px 18px; font-family: 'Bebas Neue', cursive; font-size: 15px; letter-spacing: 1px; color: rgba(255,255,255,0.4); cursor: pointer; transition: all 0.2s; } .view-toggle button.active { background: #FF4D00; color: #fff; } @media (max-width: 768px) { .company-wrap { flex-direction: column !important; } .company-sidebar { width: 100% !important; flex-direction: row !important; flex-shrink: unset !important; flex-wrap: wrap; border-right: none !important; border-bottom: 1px solid rgba(255,255,255,0.06) !important; padding: 8px !important; } .sidebar-logo { display: none !important; } .sidebar-sub { display: none !important; } .sidebar-footer { display: none !important; } .nav-item { flex: 0 0 auto; padding: 8px 12px !important; font-size: 12px !important; } .company-main { padding: 16px !important; } .stats-4 { grid-template-columns: repeat(2, 1fr) !important; } .stats-2 { grid-template-columns: 1fr !important; } .stats-3 { grid-template-columns: 1fr !important; } .cal-day { min-height: 44px !important; padding: 3px !important; font-size: 11px !important; } .bookings-header { flex-direction: column !important; align-items: flex-start !important; gap: 12px; } .form-2col { grid-template-columns: 1fr !important; } .profile-actions { flex-direction: column !important; } .booking-detail-grid { grid-template-columns: 1fr !important; } .location-grid { grid-template-columns: 1fr !important; } } @media (max-width: 420px) { .company-main { padding: 10px !important; } .nav-item { padding: 6px 8px !important; font-size: 11px !important; } } @keyframes skelPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } } @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } } @keyframes barGrow { from { width: 0; } to { width: var(--bar-w); } } @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } } @keyframes glow-breathe { 0%,100% { opacity: 0.5; } 50% { opacity: 0.85; } } @keyframes orb-drift { 0%,100% { transform: translate(0,0); } 50% { transform: translate(30px,-20px); } } .dash-card { background: #111; border: 1px solid rgba(255,255,255,0.07); padding: 24px; transition: border-color 0.2s, transform 0.2s, background 0.2s; } .dash-card:hover { border-color: rgba(255,255,255,0.13); transform: translateY(-2px); background: #131313; } .stat-card-v2 { background: #111; border: 1px solid rgba(255,255,255,0.07); padding: 26px 22px; position: relative; overflow: hidden; transition: border-color 0.2s, transform 0.2s; } .stat-card-v2.hero { background: linear-gradient(135deg, rgba(255,77,0,0.12) 0%, rgba(255,77,0,0.04) 60%, #111 100%); border-color: rgba(255,77,0,0.3); } .stat-card-v2.hero:hover { border-color: rgba(255,77,0,0.5); } .stat-card-v2.card-green { background: linear-gradient(135deg, rgba(16,185,129,0.1) 0%, rgba(16,185,129,0.03) 60%, #111 100%); border-color: rgba(16,185,129,0.22); } .stat-card-v2.card-green:hover { border-color: rgba(16,185,129,0.4); } .stat-card-v2.card-blue { background: linear-gradient(135deg, rgba(99,102,241,0.1) 0%, rgba(99,102,241,0.03) 60%, #111 100%); border-color: rgba(99,102,241,0.22); } .stat-card-v2.card-blue:hover { border-color: rgba(99,102,241,0.4); } .stat-card-v2.card-amber { background: linear-gradient(135deg, rgba(245,158,11,0.1) 0%, rgba(245,158,11,0.03) 60%, #111 100%); border-color: rgba(245,158,11,0.22); } .stat-card-v2.card-amber:hover { border-color: rgba(245,158,11,0.4); } .stat-card-v2::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: var(--accent, rgba(255,255,255,0.08)); } .stat-card-v2:hover { border-color: rgba(255,255,255,0.13); transform: translateY(-2px); } .anim-0 { animation: fadeUp 0.4s ease both; } .anim-1 { animation: fadeUp 0.4s 0.07s ease both; } .anim-2 { animation: fadeUp 0.4s 0.14s ease both; } .anim-3 { animation: fadeUp 0.4s 0.21s ease both; } .anim-4 { animation: fadeUp 0.4s 0.28s ease both; } .anim-5 { animation: fadeUp 0.4s 0.35s ease both; } .booking-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; margin: 0 -12px; border-radius: 4px; cursor: pointer; transition: background 0.2s, border-color 0.2s; border: 1px solid transparent; } .booking-row:hover { background: linear-gradient(90deg, rgba(255,77,0,0.1) 0%, rgba(255,77,0,0.04) 100%); border-color: rgba(255,77,0,0.2); } .section-label { font-family: 'DM Sans', sans-serif; font-size: 11px; letter-spacing: 2px; color: rgba(255,255,255,0.25); text-transform: uppercase; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; } .section-label::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.06); }`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap'); * { box-sizing: border-box; } .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 16px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 14px; color: rgba(255,255,255,0.6); border-radius: 4px; transition: all 0.2s; background: transparent; border: none; width: 100%; text-align: left; } .nav-item:hover, .nav-item.active { background: rgba(255,77,0,0.1); color: #FF4D00; } .stat-card { background: #111; border: 1px solid rgba(255,255,255,0.06); padding: 24px; } .cal-day { min-height: 100px; background: #111; border: 1px solid rgba(255,255,255,0.05); padding: 10px 8px 8px; cursor: default; transition: all 0.15s; vertical-align: top; border-radius: 2px; } .cal-day.has-booking { cursor: pointer; } .cal-day:not(.empty-cell):hover { background: rgba(255,255,255,0.025); border-color: rgba(255,255,255,0.1); } .cal-day.has-booking:hover { border-color: rgba(255,77,0,0.4) !important; background: rgba(255,77,0,0.05) !important; } .cal-day.selected { border-color: #FF4D00 !important; background: rgba(255,77,0,0.09) !important; box-shadow: inset 0 0 0 1px rgba(255,77,0,0.25); } .cal-day.today-cell { border-color: rgba(255,255,255,0.22); } .cal-chip { width: 100%; display: flex; align-items: center; gap: 5px; background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.28); padding: 3px 6px 3px 4px; margin-bottom: 3px; border-radius: 2px; cursor: pointer; transition: background 0.12s; text-align: left; } .cal-chip:hover { background: rgba(16,185,129,0.24); } .cal-avatar { width: 16px; height: 16px; border-radius: 50%; background: linear-gradient(135deg,#FF4D00,#FF8C00); display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; color: #fff; flex-shrink: 0; font-family: 'DM Sans',sans-serif; letter-spacing: 0; } .cal-side { background: #0F0F0F; border: 1px solid rgba(255,77,0,0.2); border-radius: 2px; width: 272px; flex-shrink: 0; animation: sideIn 0.16s ease; overflow: hidden; } @keyframes sideIn { from { opacity:0; transform:translateX(10px); } to { opacity:1; transform:translateX(0); } } .view-toggle { display: flex; border: 1px solid rgba(255,255,255,0.1); overflow: hidden; } .view-toggle button { background: transparent; border: none; padding: 8px 18px; font-family: 'Bebas Neue', cursive; font-size: 15px; letter-spacing: 1px; color: rgba(255,255,255,0.4); cursor: pointer; transition: all 0.2s; } .view-toggle button.active { background: #FF4D00; color: #fff; } @media (max-width: 768px) { .company-wrap { flex-direction: column !important; } .company-sidebar { width: 100% !important; flex-direction: row !important; flex-shrink: unset !important; flex-wrap: wrap; border-right: none !important; border-bottom: 1px solid rgba(255,255,255,0.06) !important; padding: 8px !important; } .sidebar-logo { display: none !important; } .sidebar-sub { display: none !important; } .sidebar-footer { display: none !important; } .nav-item { flex: 0 0 auto; padding: 8px 12px !important; font-size: 12px !important; } .company-main { padding: 16px !important; } .stats-4 { grid-template-columns: repeat(2, 1fr) !important; } .stats-2 { grid-template-columns: 1fr !important; } .stats-3 { grid-template-columns: 1fr !important; } .cal-day { min-height: 44px !important; padding: 3px !important; font-size: 11px !important; } .bookings-header { flex-direction: column !important; align-items: flex-start !important; gap: 12px; } .form-2col { grid-template-columns: 1fr !important; } .profile-actions { flex-direction: column !important; } .booking-detail-grid { grid-template-columns: 1fr !important; } .location-grid { grid-template-columns: 1fr !important; } } @media (max-width: 420px) { .company-main { padding: 10px !important; } .nav-item { padding: 6px 8px !important; font-size: 11px !important; } } @keyframes skelPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } } @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } } @keyframes barGrow { from { width: 0; } to { width: var(--bar-w); } } @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } } @keyframes glow-breathe { 0%,100% { opacity: 0.5; } 50% { opacity: 0.85; } } @keyframes orb-drift { 0%,100% { transform: translate(0,0); } 50% { transform: translate(30px,-20px); } } .dash-card { background: #111; border: 1px solid rgba(255,255,255,0.07); padding: 24px; transition: border-color 0.2s, transform 0.2s, background 0.2s; } .dash-card:hover { border-color: rgba(255,255,255,0.13); transform: translateY(-2px); background: #131313; } .stat-card-v2 { background: #111; border: 1px solid rgba(255,255,255,0.07); padding: 26px 22px; position: relative; overflow: hidden; transition: border-color 0.2s, transform 0.2s; } .stat-card-v2.hero { background: linear-gradient(135deg, rgba(255,77,0,0.12) 0%, rgba(255,77,0,0.04) 60%, #111 100%); border-color: rgba(255,77,0,0.3); } .stat-card-v2.hero:hover { border-color: rgba(255,77,0,0.5); } .stat-card-v2.card-green { background: linear-gradient(135deg, rgba(16,185,129,0.1) 0%, rgba(16,185,129,0.03) 60%, #111 100%); border-color: rgba(16,185,129,0.22); } .stat-card-v2.card-green:hover { border-color: rgba(16,185,129,0.4); } .stat-card-v2.card-blue { background: linear-gradient(135deg, rgba(99,102,241,0.1) 0%, rgba(99,102,241,0.03) 60%, #111 100%); border-color: rgba(99,102,241,0.22); } .stat-card-v2.card-blue:hover { border-color: rgba(99,102,241,0.4); } .stat-card-v2.card-amber { background: linear-gradient(135deg, rgba(245,158,11,0.1) 0%, rgba(245,158,11,0.03) 60%, #111 100%); border-color: rgba(245,158,11,0.22); } .stat-card-v2.card-amber:hover { border-color: rgba(245,158,11,0.4); } .stat-card-v2::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: var(--accent, rgba(255,255,255,0.08)); } .stat-card-v2:hover { border-color: rgba(255,255,255,0.13); transform: translateY(-2px); } .anim-0 { animation: fadeUp 0.4s ease both; } .anim-1 { animation: fadeUp 0.4s 0.07s ease both; } .anim-2 { animation: fadeUp 0.4s 0.14s ease both; } .anim-3 { animation: fadeUp 0.4s 0.21s ease both; } .anim-4 { animation: fadeUp 0.4s 0.28s ease both; } .anim-5 { animation: fadeUp 0.4s 0.35s ease both; } .booking-row { width: 100%; color: inherit; background: transparent; display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; margin: 0 -12px; border-radius: 4px; cursor: pointer; transition: background 0.2s, border-color 0.2s; border: 1px solid transparent; text-align: left; } .booking-row:hover { background: linear-gradient(90deg, rgba(255,77,0,0.1) 0%, rgba(255,77,0,0.04) 100%); border-color: rgba(255,77,0,0.2); } .section-label { font-family: 'DM Sans', sans-serif; font-size: 11px; letter-spacing: 2px; color: rgba(255,255,255,0.25); text-transform: uppercase; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; } .section-label::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.06); }`}</style>
 
       {/* Sidebar */}
       <div aria-hidden="true" style={{ position: "fixed", top: "-10%", right: "-5%", width: 650, height: 650, background: "radial-gradient(circle, rgba(255,77,0,0.18) 0%, transparent 65%)", borderRadius: "50%", pointerEvents: "none", animation: "glow-breathe 7s ease-in-out infinite", zIndex: 0 }} />
       <div aria-hidden="true" style={{ position: "fixed", bottom: "-10%", left: "-5%", width: 550, height: 550, background: "radial-gradient(circle, rgba(59,130,246,0.14) 0%, transparent 65%)", borderRadius: "50%", pointerEvents: "none", animation: "orb-drift 16s ease-in-out infinite", zIndex: 0 }} />
       <div className="company-sidebar" style={{ width: 220, background: "#0D0D0D", borderRight: "1px solid rgba(255,255,255,0.06)", padding: "24px 16px", display: "flex", flexDirection: "column", flexShrink: 0 }}>
-        <img src="/images/Logo.png" alt="WrapBridge" className="sidebar-logo" style={{ width: 170, cursor: "pointer", display: "block", marginBottom: 32 }} onClick={() => nav("landing")} />
+        <button className="image-button sidebar-logo" type="button" onClick={() => nav("landing")} aria-label="Go to WrapBridge home" style={{ marginBottom: 32 }}>
+          <img src="/images/Logo.png" alt="WrapBridge" style={{ width: 170, display: "block" }} />
+        </button>
         <div className="sidebar-sub" style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.2)", letterSpacing: 2, marginBottom: 8, padding: "0 4px" }}>{userShop?.name?.toUpperCase() || "MY SHOP"}</div>
         {[["overview", "📊 Overview"], ["requests", "📬 Requests"], ["bookings", "📅 Bookings"], ["availability", "🗓️ Availability"], ["profile", "✏️ Profile"], ["payments", "💰 Payments"], ["settings", "⚙️ Settings"]].map(([k, l]) => (
-          <div key={k} className={`nav-item${dashTab === k ? " active" : ""}`} onClick={() => { setDashTab(k); setSelectedBooking(null); }} style={{ justifyContent: "space-between" }}>
+          <button key={k} type="button" className={`nav-item${dashTab === k ? " active" : ""}`} aria-pressed={dashTab === k} onClick={() => { setDashTab(k); setSelectedBooking(null); }} style={{ justifyContent: "space-between" }}>
             <span>{l}</span>
             {k === "requests" && pendingCount > 0 && (
               <span style={{ background: "#FF4D00", color: "#fff", fontFamily: "'DM Sans', sans-serif", fontSize: 11, fontWeight: 700, padding: "1px 7px", borderRadius: 10, minWidth: 20, textAlign: "center" }}>{pendingCount}</span>
             )}
-          </div>
+          </button>
         ))}
         <div style={{ flex: 1 }} />
         {currentUser && (
@@ -1010,16 +1012,16 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
 
             {/* Banners */}
             {!profilePhotoUrl && (
-              <div onClick={() => setDashTab("profile")} style={{ background: "rgba(255,77,0,0.05)", border: "1px solid rgba(255,77,0,0.2)", padding: "14px 18px", marginBottom: 10, fontFamily: "'DM Sans',sans-serif", fontSize: 13, color: "rgba(255,255,255,0.55)", cursor: "pointer", display: "flex", alignItems: "center", gap: 14, animation: "fadeUp 0.3s ease", transition: "background 0.2s" }}>
+              <button type="button" onClick={() => setDashTab("profile")} style={{ width: "100%", textAlign: "left", background: "rgba(255,77,0,0.05)", border: "1px solid rgba(255,77,0,0.2)", padding: "14px 18px", marginBottom: 10, fontFamily: "'DM Sans',sans-serif", fontSize: 13, color: "rgba(255,255,255,0.65)", cursor: "pointer", display: "flex", alignItems: "center", gap: 14, animation: "fadeUp 0.3s ease", transition: "background 0.2s" }}>
                 <div style={{ width: 28, height: 28, background: "rgba(255,77,0,0.15)", border: "1px solid rgba(255,77,0,0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, flexShrink: 0 }}>🔒</div>
                 <div><strong style={{ color: "rgba(255,100,40,0.9)" }}>Listing hidden</strong> — add a profile photo to appear in search results. <span style={{ color: "rgba(255,100,40,0.7)", textDecoration: "underline" }}>Fix now →</span></div>
-              </div>
+              </button>
             )}
             {!isListed && (
-              <div onClick={() => setDashTab("profile")} style={{ background: "rgba(255,180,0,0.04)", border: "1px solid rgba(255,180,0,0.18)", padding: "14px 18px", marginBottom: 24, fontFamily: "'DM Sans',sans-serif", fontSize: 13, color: "rgba(255,255,255,0.55)", cursor: "pointer", display: "flex", alignItems: "center", gap: 14, animation: "fadeUp 0.3s ease", transition: "background 0.2s" }}>
+              <button type="button" onClick={() => setDashTab("profile")} style={{ width: "100%", textAlign: "left", background: "rgba(255,180,0,0.04)", border: "1px solid rgba(255,180,0,0.18)", padding: "14px 18px", marginBottom: 24, fontFamily: "'DM Sans',sans-serif", fontSize: 13, color: "rgba(255,255,255,0.65)", cursor: "pointer", display: "flex", alignItems: "center", gap: 14, animation: "fadeUp 0.3s ease", transition: "background 0.2s" }}>
                 <div style={{ width: 28, height: 28, background: "rgba(255,180,0,0.1)", border: "1px solid rgba(255,180,0,0.25)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, flexShrink: 0 }}>💳</div>
                 <div><strong style={{ color: "rgba(255,200,60,0.85)" }}>Shop not listed</strong> — activate to be discoverable by customers. <span style={{ color: "rgba(255,200,60,0.7)", textDecoration: "underline" }}>Fix now →</span></div>
-              </div>
+              </button>
             )}
 
             {/* Stat cards */}
@@ -1046,7 +1048,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
                 {confirmedBookings.length === 0 ? (
                   <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 13, color: "rgba(255,255,255,0.2)", padding: "28px 0", textAlign: "center" }}>No confirmed bookings yet.</div>
                 ) : confirmedBookings.slice(0, 5).map(b => (
-                  <div key={b.id} className="booking-row" onClick={() => { setSelectedBooking(b); setDashTab("bookings"); }}>
+                  <button key={b.id} type="button" className="booking-row" onClick={() => { setSelectedBooking(b); setDashTab("bookings"); }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                       <div style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(255,77,0,0.15)", border: "1px solid rgba(255,77,0,0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Sans',sans-serif", fontSize: 13, fontWeight: 700, color: "#FF4D00", flexShrink: 0 }}>{(b.customer||"?")[0].toUpperCase()}</div>
                       <div>
@@ -1058,7 +1060,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
                       <div style={{ fontFamily: "'Bebas Neue',cursive", fontSize: 20, letterSpacing: 1, color: "#fff" }}>${b.amount}</div>
                       <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 10, color: "rgba(255,255,255,0.25)", letterSpacing: 1, textTransform: "uppercase" }}>Confirmed</div>
                     </div>
-                  </div>
+                  </button>
                 ))}
               </div>
 
@@ -1108,9 +1110,9 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
                 ) : (
                   <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                     {dashboardBookings.filter(b => b.status === "pending").map(b => (
-                      <div key={b.id}
+                      <button key={b.id} type="button"
                         onClick={() => { setSelectedBooking(b); setChatInput(""); setQuoteInput(""); }}
-                        style={{ background: "#111", border: "1px solid rgba(255,77,0,0.25)", padding: "20px 24px", cursor: "pointer", transition: "border-color 0.2s", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16 }}
+                        style={{ width: "100%", textAlign: "left", color: "#fff", background: "#111", border: "1px solid rgba(255,77,0,0.25)", padding: "20px 24px", cursor: "pointer", transition: "border-color 0.2s", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16 }}
                         onMouseEnter={e => e.currentTarget.style.borderColor = "#FF4D00"}
                         onMouseLeave={e => e.currentTarget.style.borderColor = "rgba(255,77,0,0.25)"}>
                         <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
@@ -1125,7 +1127,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
                           <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#F59E0B" }}>● Pending Review</span>
                           <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#FF4D00" }}>Open Request →</span>
                         </div>
-                      </div>
+                      </button>
                     ))}
                   </div>
                 )}
@@ -1146,8 +1148,8 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
                 <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.4)" }}>Manage and track your appointments</div>
               </div>
               <div className="view-toggle">
-                <button className={bookingsView === "list" ? "active" : ""} onClick={() => setBookingsView("list")}>☰ List</button>
-                <button className={bookingsView === "calendar" ? "active" : ""} onClick={() => setBookingsView("calendar")}>📅 Calendar</button>
+                <button type="button" className={bookingsView === "list" ? "active" : ""} aria-pressed={bookingsView === "list"} onClick={() => setBookingsView("list")}>☰ List</button>
+                <button type="button" className={bookingsView === "calendar" ? "active" : ""} aria-pressed={bookingsView === "calendar"} onClick={() => setBookingsView("calendar")}>📅 Calendar</button>
               </div>
             </div>
             )}
@@ -1178,7 +1180,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
                           <tr><td colSpan={6} style={{ padding: "24px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.3)" }}>No active bookings — new and confirmed jobs will appear here.</td></tr>
                         )}
                         {activeBookings.map(b => (
-                          <tr key={b.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)", cursor: "pointer" }} onClick={() => { setSelectedBooking(b); setChatInput(""); setQuoteInput(""); }}>
+                          <tr key={b.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
                             <td style={{ padding: "14px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 500 }}>{b.customer}</td>
                             <td style={{ padding: "14px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.6)" }}>{b.service}</td>
                             <td style={{ padding: "14px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.6)" }}>{b.date}</td>
@@ -1186,7 +1188,9 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
                             <td style={{ padding: "14px 12px" }}>
                               <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: b.status === "confirmed" ? "#10B981" : b.status === "pending" ? "#F59E0B" : "rgba(255,255,255,0.4)" }}>● {b.status}</span>
                             </td>
-                            <td style={{ padding: "14px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#FF4D00" }}>Open →</td>
+                            <td style={{ padding: "14px 12px" }}>
+                              <button className="link-button" type="button" onClick={() => { setSelectedBooking(b); setChatInput(""); setQuoteInput(""); }} style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#FF4D00" }}>Open →</button>
+                            </td>
                           </tr>
                         ))}
                       </>
@@ -1217,7 +1221,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
                         </thead>
                         <tbody>
                           {archivedBookings.map(b => (
-                            <tr key={b.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)", cursor: "pointer", opacity: 0.9 }} onClick={() => { setSelectedBooking(b); setChatInput(""); setQuoteInput(""); }}>
+                            <tr key={b.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)", opacity: 0.9 }}>
                               <td style={{ padding: "14px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 500 }}>{b.customer}</td>
                               <td style={{ padding: "14px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.6)" }}>{b.service}</td>
                               <td style={{ padding: "14px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.6)" }}>{b.date}</td>
@@ -1225,7 +1229,9 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
                               <td style={{ padding: "14px 12px" }}>
                                 <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: b.status === "completed" ? "rgba(255,255,255,0.55)" : "#EF4444" }}>● {b.status}</span>
                               </td>
-                              <td style={{ padding: "14px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#FF4D00" }}>Open →</td>
+                              <td style={{ padding: "14px 12px" }}>
+                                <button className="link-button" type="button" onClick={() => { setSelectedBooking(b); setChatInput(""); setQuoteInput(""); }} style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#FF4D00" }}>Open →</button>
+                              </td>
                             </tr>
                           ))}
                         </tbody>
@@ -1288,10 +1294,15 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
                             <div
                               key={day}
                               className={`cal-day${dayBookings.length ? " has-booking" : ""}${isSelected ? " selected" : ""}${isToday ? " today-cell" : ""}`}
-                              onClick={() => setSelectedDay(isSelected && !dayBookings.length ? null : isSelected ? null : day)}
                             >
                               {/* Day number */}
-                              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                              <button
+                                type="button"
+                                aria-pressed={isSelected}
+                                aria-label={`Show bookings for ${MONTH_NAMES[calMonth]} ${day}`}
+                                onClick={() => setSelectedDay(isSelected && !dayBookings.length ? null : isSelected ? null : day)}
+                                style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6, background: "transparent", border: "none", padding: 0, cursor: "pointer" }}
+                              >
                                 {isToday ? (
                                   <div style={{ width: 22, height: 22, borderRadius: "50%", background: "#FF4D00", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Sans',sans-serif", fontSize: 12, fontWeight: 700, color: "#fff", flexShrink: 0 }}>{day}</div>
                                 ) : (
@@ -1300,13 +1311,13 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
                                 {dayBookings.length > 0 && (
                                   <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#10B981", flexShrink: 0 }} />
                                 )}
-                              </div>
+                              </button>
                               {/* Booking chips */}
                               {dayBookings.slice(0, MAX_CHIPS).map((b, i) => (
-                                <div key={i} className="cal-chip" onClick={e => { e.stopPropagation(); setSelectedBooking(b); setSelectedDay(null); }}>
+                                <button key={i} type="button" className="cal-chip" onClick={e => { e.stopPropagation(); setSelectedBooking(b); setSelectedDay(null); }} aria-label={`Open booking for ${b.customer}`}>
                                   <div className="cal-avatar">{(b.customer || "?")[0].toUpperCase()}</div>
                                   <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 10, color: "#10B981", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", lineHeight: 1.3 }}>{b.customer}</div>
-                                </div>
+                                </button>
                               ))}
                               {dayBookings.length > MAX_CHIPS && (
                                 <div className="cal-more">+{dayBookings.length - MAX_CHIPS} more</div>
@@ -1327,15 +1338,15 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
                               {(bookingsByDay[selectedDay] || []).length === 0 ? "No bookings" : `${(bookingsByDay[selectedDay] || []).length} booking${(bookingsByDay[selectedDay] || []).length > 1 ? "s" : ""}`}
                             </div>
                           </div>
-                          <button onClick={() => setSelectedDay(null)} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.3)", cursor: "pointer", fontSize: 18, lineHeight: 1, padding: 4 }}>✕</button>
+                          <button type="button" aria-label="Close selected day" onClick={() => setSelectedDay(null)} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.3)", cursor: "pointer", fontSize: 18, lineHeight: 1, padding: 4 }}>✕</button>
                         </div>
                         <div style={{ padding: "12px 0", maxHeight: 520, overflowY: "auto" }}>
                           {(bookingsByDay[selectedDay] || []).length === 0 ? (
                             <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 13, color: "rgba(255,255,255,0.25)", textAlign: "center", padding: "32px 16px" }}>No bookings on this day</div>
                           ) : (bookingsByDay[selectedDay] || []).map(b => (
-                            <div key={b.id}
+                            <button key={b.id} type="button"
                               onClick={() => { setSelectedBooking(b); setSelectedDay(null); }}
-                              style={{ padding: "12px 18px", borderBottom: "1px solid rgba(255,255,255,0.04)", cursor: "pointer", transition: "background 0.12s" }}
+                              style={{ width: "100%", textAlign: "left", color: "#fff", background: "transparent", padding: "12px 18px", border: "none", borderBottom: "1px solid rgba(255,255,255,0.04)", cursor: "pointer", transition: "background 0.12s" }}
                               onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.04)"}
                               onMouseLeave={e => e.currentTarget.style.background = ""}
                             >
@@ -1351,7 +1362,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
                                 <span style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 11, color: "#10B981" }}>● confirmed</span>
                                 <span style={{ fontFamily: "'Bebas Neue',cursive", fontSize: 16, letterSpacing: 1, color: "#FF4D00" }}>${b.amount}</span>
                               </div>
-                            </div>
+                            </button>
                           ))}
                         </div>
                       </div>

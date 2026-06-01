@@ -102,12 +102,15 @@ export default function SearchPage({ nav, shops: liveShops, shopsLoading, search
 
   return (
     <div style={{ fontFamily: "'Bebas Neue', cursive", background: "linear-gradient(180deg, #0A0A0A 0%, #140A04 20%, #0A0A0A 55%, #05050C 100%)", minHeight: "100vh", color: "#fff", position: "relative", overflow: "hidden" }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap'); * { box-sizing: border-box; } @keyframes skelPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.45; } } .btn-main { background: #FF4D00; color: #fff; border: none; padding: 12px 24px; font-family: 'Bebas Neue', cursive; font-size: 16px; letter-spacing: 2px; cursor: pointer; transition: all 0.2s; } .btn-main:hover { background: #FF6A20; transform: translateY(-1px); } .svc-chip { font-family: 'DM Sans', sans-serif; font-size: 12px; padding: 5px 14px; border: 1px solid rgba(255,255,255,0.1); background: transparent; color: rgba(255,255,255,0.45); cursor: pointer; white-space: nowrap; transition: all 0.15s; } .svc-chip:hover { border-color: rgba(255,77,0,0.45); color: rgba(255,255,255,0.8); } .svc-chip.active { background: rgba(255,77,0,0.12); border-color: #FF4D00; color: #FF4D00; } @keyframes fadeInUp { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: translateY(0); } } .shop-card-anim { animation: fadeInUp 0.45s cubic-bezier(0.22,1,0.36,1) both; } .shop-card { background: #111; border: 1px solid rgba(255,255,255,0.07); overflow: hidden; transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s; cursor: pointer; } .shop-card:hover { border-color: rgba(255,77,0,0.35); transform: translateY(-2px); box-shadow: 0 8px 40px rgba(255,77,0,0.1); } .shop-tag { padding: 3px 10px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); font-family: 'DM Sans', sans-serif; font-size: 11px; color: rgba(255,255,255,0.4); transition: all 0.15s; } .shop-tag:hover { border-color: rgba(255,77,0,0.3); color: rgba(255,255,255,0.7); } .search-input { flex: 1; background: #151515; border: 1px solid rgba(255,255,255,0.1); padding: 10px 16px; color: #fff; font-family: 'DM Sans', sans-serif; font-size: 14px; outline: none; transition: border-color 0.2s; } .search-input:focus { border-color: rgba(255,77,0,0.5); } @media (max-width: 768px) { .search-nav { flex-wrap: wrap; padding: 12px 16px !important; gap: 10px; } .search-bar { order: 3; flex: 0 0 100% !important; margin: 0 !important; max-width: 100% !important; } .search-pad { padding: 16px !important; } .shop-card-inner { flex-direction: column !important; } .shop-img { width: 100% !important; height: 180px !important; } .shop-card-right { flex-direction: column !important; align-items: flex-start !important; gap: 12px !important; } .shop-book-btn { align-self: stretch; } }`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap'); * { box-sizing: border-box; } @keyframes skelPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.45; } } .btn-main { background: #FF4D00; color: #fff; border: none; padding: 12px 24px; font-family: 'Bebas Neue', cursive; font-size: 16px; letter-spacing: 2px; cursor: pointer; transition: all 0.2s; } .btn-main:hover { background: #FF6A20; transform: translateY(-1px); } .svc-chip { font-family: 'DM Sans', sans-serif; font-size: 12px; padding: 5px 14px; border: 1px solid rgba(255,255,255,0.1); background: transparent; color: rgba(255,255,255,0.65); cursor: pointer; white-space: nowrap; transition: all 0.15s; } .svc-chip:hover { border-color: rgba(255,77,0,0.45); color: rgba(255,255,255,0.9); } .svc-chip.active { background: rgba(255,77,0,0.12); border-color: #FF4D00; color: #FF4D00; } @keyframes fadeInUp { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: translateY(0); } } .shop-card-anim { animation: fadeInUp 0.45s cubic-bezier(0.22,1,0.36,1) both; } .shop-card { background: #111; border: 1px solid rgba(255,255,255,0.07); overflow: hidden; transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s; } .shop-card:hover { border-color: rgba(255,77,0,0.35); transform: translateY(-2px); box-shadow: 0 8px 40px rgba(255,77,0,0.1); } .shop-tag { padding: 3px 10px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); font-family: 'DM Sans', sans-serif; font-size: 11px; color: rgba(255,255,255,0.58); transition: all 0.15s; } .shop-tag:hover { border-color: rgba(255,77,0,0.3); color: rgba(255,255,255,0.8); } .search-input { flex: 1; background: #151515; border: 1px solid rgba(255,255,255,0.1); padding: 10px 16px; color: #fff; font-family: 'DM Sans', sans-serif; font-size: 14px; outline: none; transition: border-color 0.2s; } .search-input:focus { border-color: rgba(255,77,0,0.5); } @media (max-width: 768px) { .search-nav { flex-wrap: wrap; padding: 12px 16px !important; gap: 10px; } .search-bar { order: 3; flex: 0 0 100% !important; margin: 0 !important; max-width: 100% !important; } .search-pad { padding: 16px !important; } .shop-card-inner { flex-direction: column !important; } .shop-img { width: 100% !important; height: 180px !important; } .shop-card-right { flex-direction: column !important; align-items: flex-start !important; gap: 12px !important; } .shop-book-btn { align-self: stretch; } }`}</style>
       <nav className="search-nav" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 40px", background: "rgba(10,10,10,0.95)", borderBottom: "1px solid rgba(255,255,255,0.06)", position: "sticky", top: 0, zIndex: 100 }}>
-        <img src="/images/Logo.png" alt="WrapBridge" style={{ height: 68, display: "block", cursor: "pointer" }} onClick={() => nav("landing")} />
+        <button className="image-button" onClick={() => nav("landing")} aria-label="Go to WrapBridge home">
+          <img src="/images/Logo.png" alt="WrapBridge" style={{ height: 68, display: "block" }} />
+        </button>
         <div className="search-bar" style={{ display: "flex", gap: 16, flex: 1, maxWidth: 500, margin: "0 40px" }}>
-          <input className="search-input" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="City, zip, or shop name..." />
-          <button className="btn-main">Search</button>
+          <label className="sr-only" htmlFor="shop-search">Search by city, zip, or shop name</label>
+          <input id="shop-search" className="search-input" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="City, zip, or shop name..." />
+          <button className="btn-main" type="button" onClick={() => setPage(0)}>Search</button>
         </div>
         {currentUser ? (
           <div style={{ display: "flex", gap: 8, alignItems: "center", flexShrink: 0 }}>
@@ -131,6 +134,7 @@ export default function SearchPage({ nav, shops: liveShops, shopsLoading, search
                 <button
                   key={name}
                   className={`svc-chip${activeService === name ? " active" : ""}`}
+                  aria-pressed={activeService === name}
                   onClick={() => setActiveService(prev => prev === name ? null : name)}
                 >
                   {name}
@@ -165,6 +169,7 @@ export default function SearchPage({ nav, shops: liveShops, shopsLoading, search
           {!searchCoords && locationStatus === "ok" && (
             <button
               onClick={() => setSortByDistance(v => !v)}
+              aria-pressed={sortByDistance}
               style={{ background: sortByDistance ? "rgba(255,77,0,0.12)" : "transparent", border: `1px solid ${sortByDistance ? "#FF4D00" : "rgba(255,255,255,0.15)"}`, color: sortByDistance ? "#FF4D00" : "rgba(255,255,255,0.4)", padding: "4px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}
             >
               📍 {sortByDistance ? "Nearest first" : "Sort by distance"}
@@ -175,7 +180,7 @@ export default function SearchPage({ nav, shops: liveShops, shopsLoading, search
           {/* View mode toggle */}
           <div style={{ marginLeft: "auto", display: "flex", gap: 0, border: "1px solid rgba(255,255,255,0.12)", overflow: "hidden" }}>
             {[["list", "☰ List"], ["split", "◨ Split"], ["map", "🗺 Map"]].map(([mode, label]) => (
-              <button key={mode} onClick={() => setViewMode(mode)} style={{ background: viewMode === mode ? "rgba(255,77,0,0.15)" : "transparent", border: "none", borderRight: mode !== "map" ? "1px solid rgba(255,255,255,0.08)" : "none", color: viewMode === mode ? "#FF4D00" : "rgba(255,255,255,0.4)", padding: "5px 14px", fontFamily: "'DM Sans', sans-serif", fontSize: 12, cursor: "pointer", transition: "all 0.15s", letterSpacing: 0.5 }}>{label}</button>
+              <button key={mode} onClick={() => setViewMode(mode)} aria-pressed={viewMode === mode} style={{ background: viewMode === mode ? "rgba(255,77,0,0.15)" : "transparent", border: "none", borderRight: mode !== "map" ? "1px solid rgba(255,255,255,0.08)" : "none", color: viewMode === mode ? "#FF4D00" : "rgba(255,255,255,0.65)", padding: "5px 14px", fontFamily: "'DM Sans', sans-serif", fontSize: 12, cursor: "pointer", transition: "all 0.15s", letterSpacing: 0.5 }}>{label}</button>
             ))}
           </div>
         </div>
@@ -216,7 +221,7 @@ export default function SearchPage({ nav, shops: liveShops, shopsLoading, search
           {viewMode !== "map" && (
             <div style={{ flex: viewMode === "split" ? "0 0 420px" : 1, overflowY: viewMode === "split" ? "auto" : "visible", display: "flex", flexDirection: "column", gap: 16 }}>
               {pagedShops.map((shop, i) => (
-                <div key={shop.id} className="shop-card shop-card-anim" onClick={() => nav("shop", { selectedShop: shop })}
+                <article key={shop.id} className="shop-card shop-card-anim"
                   style={{ animationDelay: `${Math.min(i * 0.07, 0.42)}s` }}>
                   <div className="shop-card-inner" style={{ display: "flex" }}>
                     <img className="shop-img" src={shop.image || shop.banner_url || 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=600&q=80'} alt={shop.name} style={{ width: viewMode === "split" ? 120 : 240, height: viewMode === "split" ? 100 : 160, objectFit: "cover", flexShrink: 0 }} />
@@ -270,7 +275,8 @@ export default function SearchPage({ nav, shops: liveShops, shopsLoading, search
                             <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.5)", marginBottom: 12 }}>Get a Quote</div>
                           )}
                           <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: shop.availability === "Today" ? "#10B981" : "#F59E0B", marginBottom: 8 }}>{shop.availability ? `● Available ${shop.availability}` : '● Contact for availability'}</div>
-                          <button className="btn-main shop-book-btn" onClick={(e) => { e.stopPropagation(); nav("booking", { bookingShop: shop }); }}>Book Now</button>
+                          <button className="btn-main shop-book-btn" type="button" onClick={() => nav("shop", { selectedShop: shop })} style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.18)", color: "rgba(255,255,255,0.75)" }}>View Profile</button>
+                          <button className="btn-main shop-book-btn" type="button" onClick={() => nav("booking", { bookingShop: shop })}>Book Now</button>
                         </div>
                       </>}
                       {viewMode === "split" && (
@@ -280,11 +286,12 @@ export default function SearchPage({ nav, shops: liveShops, shopsLoading, search
                           ) : (
                             <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)" }}>Quote</div>
                           )}
+                          <button className="btn-main" type="button" onClick={() => nav("shop", { selectedShop: shop })} style={{ marginTop: 8, padding: "6px 12px", fontSize: 12, background: "transparent", border: "1px solid rgba(255,255,255,0.18)", color: "rgba(255,255,255,0.75)" }}>View</button>
                         </div>
                       )}
                     </div>
                   </div>
-                </div>
+                </article>
               ))}
               {/* Pagination (list mode only) */}
               {viewMode === "list" && totalPages > 1 && (
@@ -300,6 +307,7 @@ export default function SearchPage({ nav, shops: liveShops, shopsLoading, search
                     <button
                       key={i}
                       onClick={() => { setPage(i); window.scrollTo(0, 0); }}
+                      aria-current={i === page ? "page" : undefined}
                       style={{ background: i === page ? "#FF4D00" : "transparent", border: `1px solid ${i === page ? "#FF4D00" : "rgba(255,255,255,0.15)"}`, color: i === page ? "#fff" : "rgba(255,255,255,0.4)", padding: "8px 14px", cursor: "pointer", fontFamily: "'Bebas Neue', cursive", fontSize: 15, letterSpacing: 1, minWidth: 36 }}
                     >
                       {i + 1}

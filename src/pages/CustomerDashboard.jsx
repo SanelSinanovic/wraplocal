@@ -398,7 +398,9 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
 
   const Navbar = () => (
     <nav style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 40px", background: "#0D0D0D", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-      <img src="/images/Logo.png" alt="WrapBridge" style={{ height: 68, display: "block", cursor: "pointer" }} onClick={() => nav("landing")} />
+      <button className="image-button" type="button" onClick={() => nav("landing")} aria-label="Go to WrapBridge home">
+        <img src="/images/Logo.png" alt="WrapBridge" style={{ height: 68, display: "block" }} />
+      </button>
       <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
         <div style={{ position: "relative" }}>
           <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#FF4D00", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Sans', sans-serif", fontWeight: 700 }}>
@@ -441,10 +443,10 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
         )}
         <div className="detail-wrap" style={{ maxWidth: 900, margin: "0 auto", padding: "36px 40px" }}>
           {/* Back */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 28, cursor: "pointer" }} onClick={() => setSelectedBooking(null)}>
+          <button className="link-button detail-back" type="button" style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 28, cursor: "pointer" }} onClick={() => setSelectedBooking(null)}>
             <span style={{ color: "#FF4D00", fontSize: 20 }}>←</span>
             <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.5)" }}>Back to My Bookings</span>
-          </div>
+          </button>
 
           <div className="detail-layout" style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: 24, alignItems: "start" }}>
             {/* LEFT: Chat */}
@@ -554,9 +556,10 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
               )}
 
               <div style={{ display: "flex", gap: 0, border: "1px solid rgba(255,255,255,0.07)", borderTop: "none" }}>
-                <input type="file" ref={chatFileRef} style={{ display: "none" }} accept="image/jpeg,image/png,image/gif,image/webp,.pdf" onChange={e => { const f = e.target.files[0]; if (f) { sendChatFile(f); e.target.value = ""; } }} />
+                <input type="file" ref={chatFileRef} aria-label="Attach chat file" style={{ display: "none" }} accept="image/jpeg,image/png,image/gif,image/webp,.pdf" onChange={e => { const f = e.target.files[0]; if (f) { sendChatFile(f); e.target.value = ""; } }} />
                 <input
                   className="chat-input"
+                  aria-label={`Message ${b.shop}`}
                   placeholder={
                     b.status === "confirmed" ? `Message ${b.shop}…` :
                     b.status === "pending" ? `Request sent — awaiting ${b.shop} approval` :
@@ -570,7 +573,7 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
                 />
                 {b.status === "confirmed" && (
                   <>
-                    <button onClick={() => chatFileRef.current?.click()} disabled={chatFileUploading} style={{ background: "#1A1A1A", border: "none", borderLeft: "1px solid rgba(255,255,255,0.07)", padding: "0 14px", color: chatFileUploading ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.55)", cursor: chatFileUploading ? "not-allowed" : "pointer", fontSize: 18 }} title="Attach image or PDF">📎</button>
+                    <button type="button" aria-label="Attach image or PDF" onClick={() => chatFileRef.current?.click()} disabled={chatFileUploading} style={{ background: "#1A1A1A", border: "none", borderLeft: "1px solid rgba(255,255,255,0.07)", padding: "0 14px", color: chatFileUploading ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.55)", cursor: chatFileUploading ? "not-allowed" : "pointer", fontSize: 18 }} title="Attach image or PDF">📎</button>
                     <button className="send-btn" onClick={sendMessage}>Send</button>
                   </>
                 )}
@@ -702,14 +705,16 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
                     <div>
                       <div style={{ display: "flex", gap: 4, marginBottom: 12 }}>
                         {[1,2,3,4,5].map(s => (
-                          <span key={s}
+                          <button key={s} type="button"
+                            aria-label={`Rate ${s} star${s === 1 ? "" : "s"}`}
                             onMouseEnter={() => setReviewHover(s)}
                             onMouseLeave={() => setReviewHover(0)}
                             onClick={() => setReviewStars(s)}
-                            style={{ fontSize: 28, cursor: "pointer", color: s <= (reviewHover || reviewStars) ? "#FF4D00" : "rgba(255,255,255,0.15)", transition: "color 0.1s" }}>★</span>
+                            style={{ background: "transparent", border: "none", padding: 0, fontSize: 28, cursor: "pointer", color: s <= (reviewHover || reviewStars) ? "#FF4D00" : "rgba(255,255,255,0.35)", transition: "color 0.1s" }}>★</button>
                         ))}
                       </div>
                       <textarea
+                        aria-label="Review comment"
                         placeholder="Share your experience (optional)…"
                         value={reviewComment}
                         onChange={e => setReviewComment(e.target.value)}
@@ -790,7 +795,7 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
               {paymentLoading ? "Connecting to Stripe…" : `🔒 PAY $${Number(paymentBooking.chargeAmount ?? paymentBooking.fullAmount).toFixed(2)} →`}
             </button>
             <div style={{ textAlign: "center" }}>
-              <span onClick={() => { setPaymentBooking(null); setPaymentError(""); }} style={{ fontSize: 13, color: "rgba(255,255,255,0.35)", cursor: "pointer", textDecoration: "underline" }}>Maybe Later</span>
+              <button className="link-button" type="button" onClick={() => { setPaymentBooking(null); setPaymentError(""); }} style={{ fontSize: 13, color: "rgba(255,255,255,0.55)", cursor: "pointer", textDecoration: "underline" }}>Maybe Later</button>
             </div>
             <div style={{ textAlign: "center", marginTop: 16, fontSize: 11, color: "rgba(255,255,255,0.2)", letterSpacing: 1 }}>POWERED BY STRIPE</div>
           </div>
@@ -858,7 +863,7 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
   // ── BOOKINGS LIST VIEW ──────────────────────────────────────────────────────
   return (
     <div style={{ fontFamily: "'Bebas Neue', cursive", background: "linear-gradient(180deg, #0A0A0A 0%, #140A04 20%, #0A0A0A 55%, #05050C 100%)", minHeight: "100vh", color: "#fff", position: "relative", overflow: "hidden" }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap'); * { box-sizing: border-box; } .btn-main { background: #FF4D00; color: #fff; border: none; padding: 10px 20px; font-family: 'Bebas Neue', cursive; font-size: 14px; letter-spacing: 2px; cursor: pointer; transition: background 0.2s, transform 0.15s; } .btn-main:hover { background: #FF6A20; transform: translateY(-1px); } .booking-row { background: #111; border: 1px solid rgba(255,255,255,0.07); padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: border-color 0.2s, background 0.2s, transform 0.2s; } .booking-row:hover { border-color: rgba(255,77,0,0.3); background: linear-gradient(90deg, rgba(255,77,0,0.07) 0%, rgba(255,77,0,0.02) 60%, #111 100%); transform: translateX(2px); } @keyframes fadeInUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } } .brow-anim { animation: fadeInUp 0.4s cubic-bezier(0.22,1,0.36,1) both; } @media (max-width: 768px) { .dash-pad { padding: 16px !important; } .booking-row-meta { display: none !important; } .booking-row-right { flex-wrap: wrap; gap: 10px !important; } .dash-title { font-size: 36px !important; } } @media (max-width: 420px) { .dash-pad { padding: 12px !important; } } @keyframes skelPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } } @keyframes glow-breathe { 0%,100% { opacity: 0.5; } 50% { opacity: 0.8; } } @keyframes orb-drift { 0%,100% { transform: translate(0,0); } 50% { transform: translate(30px,-20px); } }`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap'); * { box-sizing: border-box; } .btn-main { background: #FF4D00; color: #fff; border: none; padding: 10px 20px; font-family: 'Bebas Neue', cursive; font-size: 14px; letter-spacing: 2px; cursor: pointer; transition: background 0.2s, transform 0.15s; } .btn-main:hover { background: #FF6A20; transform: translateY(-1px); } .booking-row { width: 100%; color: #fff; text-align: left; background: #111; border: 1px solid rgba(255,255,255,0.07); padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: border-color 0.2s, background 0.2s, transform 0.2s; } .booking-row:hover { border-color: rgba(255,77,0,0.3); background: linear-gradient(90deg, rgba(255,77,0,0.07) 0%, rgba(255,77,0,0.02) 60%, #111 100%); transform: translateX(2px); } @keyframes fadeInUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } } .brow-anim { animation: fadeInUp 0.4s cubic-bezier(0.22,1,0.36,1) both; } @media (max-width: 768px) { .dash-pad { padding: 16px !important; } .booking-row-meta { display: none !important; } .booking-row-right { flex-wrap: wrap; gap: 10px !important; } .dash-title { font-size: 36px !important; } } @media (max-width: 420px) { .dash-pad { padding: 12px !important; } } @keyframes skelPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } } @keyframes glow-breathe { 0%,100% { opacity: 0.5; } 50% { opacity: 0.8; } } @keyframes orb-drift { 0%,100% { transform: translate(0,0); } 50% { transform: translate(30px,-20px); } }`}</style>
       <div aria-hidden="true" style={{ position: "fixed", top: "-10%", right: "-8%", width: 600, height: 600, background: "radial-gradient(circle, rgba(255,77,0,0.18) 0%, transparent 65%)", borderRadius: "50%", pointerEvents: "none", animation: "glow-breathe 6s ease-in-out infinite", zIndex: 0 }} />
       <div aria-hidden="true" style={{ position: "fixed", bottom: "-10%", left: "-8%", width: 500, height: 500, background: "radial-gradient(circle, rgba(59,130,246,0.14) 0%, transparent 65%)", borderRadius: "50%", pointerEvents: "none", animation: "orb-drift 14s ease-in-out infinite", zIndex: 0 }} />
       <Navbar />
@@ -896,7 +901,7 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
         ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {bookings.map((b, i) => (
-            <div key={b.id} className="booking-row brow-anim" onClick={() => { setSelectedBooking(b); setUnreadMap(prev => { const n = { ...prev }; delete n[b.id]; return n; }); }}
+            <button key={b.id} type="button" className="booking-row brow-anim" onClick={() => { setSelectedBooking(b); setUnreadMap(prev => { const n = { ...prev }; delete n[b.id]; return n; }); }}
               style={{ animationDelay: `${Math.min(i * 0.07, 0.4)}s` }}>
               <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
                 <div style={{ width: 44, height: 44, background: b.shopColor, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700, fontFamily: "'DM Sans', sans-serif", overflow: "hidden", flexShrink: 0 }}>
@@ -930,7 +935,7 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
                 <div style={{ fontSize: 24, color: "#FF4D00" }}>${b.total.toFixed(2)}</div>
                 <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.3)" }}>View →</span>
               </div>
-            </div>
+            </button>
           ))}
         </div>
         )}
@@ -1000,7 +1005,7 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
               {paymentLoading ? "Connecting to Stripe…" : `🔒 PAY $${Number(paymentBooking.chargeAmount ?? paymentBooking.fullAmount).toFixed(2)} →`}
             </button>
             <div style={{ textAlign: "center" }}>
-              <span onClick={() => { setPaymentBooking(null); setPaymentError(""); }} style={{ fontSize: 13, color: "rgba(255,255,255,0.35)", cursor: "pointer", textDecoration: "underline" }}>Maybe Later</span>
+              <button className="link-button" type="button" onClick={() => { setPaymentBooking(null); setPaymentError(""); }} style={{ fontSize: 13, color: "rgba(255,255,255,0.55)", cursor: "pointer", textDecoration: "underline" }}>Maybe Later</button>
             </div>
             <div style={{ textAlign: "center", marginTop: 16, fontSize: 11, color: "rgba(255,255,255,0.2)", letterSpacing: 1 }}>POWERED BY STRIPE</div>
           </div>

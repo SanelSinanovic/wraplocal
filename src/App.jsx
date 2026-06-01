@@ -349,21 +349,26 @@ export default function App() {
   const commonProps = { nav, currentUser, currentProfile, onLogout: handleLogout };
 
   return (
-    <Routes>
-      <Route path="/" element={<LandingPage {...commonProps} shops={shops} setBookingShop={setBookingShop} setSelectedShop={setSelectedShop} setServiceFilter={setServiceFilter} />} />
-      <Route path="/search" element={<SearchPage {...commonProps} shops={shops} shopsLoading={shopsLoading} searchQuery={searchQuery} setSearchQuery={setSearchQuery} serviceFilter={serviceFilter} setServiceFilter={setServiceFilter} setSelectedShop={setSelectedShop} setBookingShop={setBookingShop} />} />
-      <Route path="/shop/:shopId" element={<ShopProfileLoader {...commonProps} selectedShop={selectedShop} setSelectedShop={setSelectedShop} setBookingShop={setBookingShop} />} />
-      <Route path="/book/:shopId" element={<BookingFlowLoader {...commonProps} bookingShop={bookingShop} setBookingShop={setBookingShop} bookingStep={bookingStep} setBookingStep={setBookingStep} selectedSlot={selectedSlot} setSelectedSlot={setSelectedSlot} selectedDate={selectedDate} setSelectedDate={setSelectedDate} bookingConfirmed={bookingConfirmed} setBookingConfirmed={setBookingConfirmed} />} />
-      <Route path="/dashboard" element={<RequireAuth role="customer" authReady={authReady} currentUser={currentUser} currentProfile={currentProfile}><CustomerDashboard {...commonProps} stripeReturn={stripeReturn} setStripeReturn={setStripeReturn} stripeNotice={stripeNotice} setStripeNotice={setStripeNotice} /></RequireAuth>} />
-      <Route path="/company" element={<RequireAuth role="company" authReady={authReady} currentUser={currentUser} currentProfile={currentProfile}><CompanyDashboard {...commonProps} dashTab={dashTab} setDashTab={setDashTab} refreshShops={refreshShops} /></RequireAuth>} />
-      <Route path="/pricing" element={<PricingPage nav={nav} currentUser={currentUser} currentProfile={currentProfile} />} />
-      <Route path="/login" element={<CustomerLogin nav={nav} loginForm={loginForm} setLoginForm={setLoginForm} loginError={loginError} setLoginError={setLoginError} handleLogin={handleLogin} bookingContext={!!postLoginNav} />} />
-      <Route path="/business/login" element={<CompanyLogin nav={nav} loginForm={loginForm} setLoginForm={setLoginForm} loginError={loginError} setLoginError={setLoginError} handleLogin={handleLogin} />} />
-      <Route path="/terms" element={<TermsPage nav={nav} />} />
-      <Route path="/privacy" element={<PrivacyPage nav={nav} />} />
-      <Route path="/reset-password" element={<ResetPasswordPage nav={nav} recoveryReady={recoveryReady} />} />
-      <Route path="/admin" element={<RequireAuth authReady={authReady} currentUser={currentUser} currentProfile={currentProfile}><AdminDashboard {...commonProps} /></RequireAuth>} />
-      <Route path="*" element={<NotFoundPage nav={nav} />} />
-    </Routes>
+    <>
+      <a className="skip-link" href="#main-content">Skip to main content</a>
+      <main id="main-content">
+        <Routes>
+          <Route path="/" element={<LandingPage {...commonProps} shops={shops} setBookingShop={setBookingShop} setSelectedShop={setSelectedShop} setServiceFilter={setServiceFilter} />} />
+          <Route path="/search" element={<SearchPage {...commonProps} shops={shops} shopsLoading={shopsLoading} searchQuery={searchQuery} setSearchQuery={setSearchQuery} serviceFilter={serviceFilter} setServiceFilter={setServiceFilter} setSelectedShop={setSelectedShop} setBookingShop={setBookingShop} />} />
+          <Route path="/shop/:shopId" element={<ShopProfileLoader {...commonProps} selectedShop={selectedShop} setSelectedShop={setSelectedShop} setBookingShop={setBookingShop} />} />
+          <Route path="/book/:shopId" element={<BookingFlowLoader {...commonProps} bookingShop={bookingShop} setBookingShop={setBookingShop} bookingStep={bookingStep} setBookingStep={setBookingStep} selectedSlot={selectedSlot} setSelectedSlot={setSelectedSlot} selectedDate={selectedDate} setSelectedDate={setSelectedDate} bookingConfirmed={bookingConfirmed} setBookingConfirmed={setBookingConfirmed} />} />
+          <Route path="/dashboard" element={<RequireAuth role="customer" authReady={authReady} currentUser={currentUser} currentProfile={currentProfile}><CustomerDashboard {...commonProps} stripeReturn={stripeReturn} setStripeReturn={setStripeReturn} stripeNotice={stripeNotice} setStripeNotice={setStripeNotice} /></RequireAuth>} />
+          <Route path="/company" element={<RequireAuth role="company" authReady={authReady} currentUser={currentUser} currentProfile={currentProfile}><CompanyDashboard {...commonProps} dashTab={dashTab} setDashTab={setDashTab} refreshShops={refreshShops} /></RequireAuth>} />
+          <Route path="/pricing" element={<PricingPage nav={nav} currentUser={currentUser} currentProfile={currentProfile} />} />
+          <Route path="/login" element={<CustomerLogin nav={nav} loginForm={loginForm} setLoginForm={setLoginForm} loginError={loginError} setLoginError={setLoginError} handleLogin={handleLogin} bookingContext={!!postLoginNav} />} />
+          <Route path="/business/login" element={<CompanyLogin nav={nav} loginForm={loginForm} setLoginForm={setLoginForm} loginError={loginError} setLoginError={setLoginError} handleLogin={handleLogin} />} />
+          <Route path="/terms" element={<TermsPage nav={nav} />} />
+          <Route path="/privacy" element={<PrivacyPage nav={nav} />} />
+          <Route path="/reset-password" element={<ResetPasswordPage nav={nav} recoveryReady={recoveryReady} />} />
+          <Route path="/admin" element={<RequireAuth authReady={authReady} currentUser={currentUser} currentProfile={currentProfile}><AdminDashboard {...commonProps} /></RequireAuth>} />
+          <Route path="*" element={<NotFoundPage nav={nav} />} />
+        </Routes>
+      </main>
+    </>
   );
 }

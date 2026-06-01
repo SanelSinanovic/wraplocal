@@ -69,7 +69,9 @@ export default function CustomerLogin({ nav, loginForm, setLoginForm, loginError
       <div aria-hidden="true" style={{ position: "fixed", top: "-10%", right: "-8%", width: 600, height: 600, background: "radial-gradient(circle, rgba(255,77,0,0.2) 0%, transparent 65%)", borderRadius: "50%", pointerEvents: "none", animation: "glow-breathe 6s ease-in-out infinite", zIndex: 0 }} />
       <div aria-hidden="true" style={{ position: "fixed", bottom: "-10%", left: "-8%", width: 500, height: 500, background: "radial-gradient(circle, rgba(59,130,246,0.15) 0%, transparent 65%)", borderRadius: "50%", pointerEvents: "none", animation: "orb-drift 14s ease-in-out infinite", zIndex: 0 }} />
       <nav className="login-nav" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 40px", background: "rgba(10,10,10,0.95)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-        <img src="/images/Logo.png" alt="WrapBridge" style={{ height: 68, display: "block", cursor: "pointer" }} onClick={() => nav("landing")} />
+        <button className="image-button" onClick={() => nav("landing")} aria-label="Go to WrapBridge home">
+          <img src="/images/Logo.png" alt="WrapBridge" style={{ height: 68, display: "block" }} />
+        </button>
       </nav>
       <div className="login-outer" style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: 40, position: "relative", overflow: "hidden" }}>
         <div style={{ position: "absolute", top: "30%", left: "50%", transform: "translateX(-50%)", width: 600, height: 600, borderRadius: "50%", background: "radial-gradient(circle, rgba(255,77,0,0.07) 0%, transparent 70%)", pointerEvents: "none", animation: "glowPulse 4s ease-in-out infinite" }} />
@@ -85,7 +87,9 @@ export default function CustomerLogin({ nav, loginForm, setLoginForm, loginError
           )}
 
           <div style={{ textAlign: "center", marginBottom: 32 }}>
-            <img src="/images/Logo.png" alt="WrapBridge" style={{ height: 130, cursor: "pointer" }} onClick={() => nav("landing")} />
+            <button className="image-button" onClick={() => nav("landing")} aria-label="Go to WrapBridge home">
+              <img src="/images/Logo.png" alt="WrapBridge" style={{ height: 130 }} />
+            </button>
           </div>
 
           {/* Mode tabs */}
@@ -100,18 +104,18 @@ export default function CustomerLogin({ nav, loginForm, setLoginForm, loginError
               <div className="login-heading" style={{ fontSize: 40, letterSpacing: 2, marginBottom: 8 }}>CUSTOMER LOGIN</div>
               <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.4)", marginBottom: 32 }}>Track your bookings and manage appointments</div>
               {loginError && (
-                <div style={{ background: "rgba(255,77,0,0.1)", border: "1px solid rgba(255,77,0,0.3)", padding: "12px 16px", fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "#FF4D00", marginBottom: 20 }}>{loginError}</div>
+                <div role="alert" style={{ background: "rgba(255,77,0,0.1)", border: "1px solid rgba(255,77,0,0.3)", padding: "12px 16px", fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "#FF4D00", marginBottom: 20 }}>{loginError}</div>
               )}
               <div style={{ marginBottom: 16 }}>
-                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", letterSpacing: 1, marginBottom: 6 }}>EMAIL ADDRESS</div>
-                <input type="email" placeholder="marcus@email.com" value={loginForm.email} onChange={e => setLoginForm(f => ({ ...f, email: e.target.value }))} />
+                <label htmlFor="customer-login-email" style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.72)", letterSpacing: 1, marginBottom: 6, display: "block" }}>EMAIL ADDRESS</label>
+                <input id="customer-login-email" type="email" autoComplete="email" placeholder="marcus@email.com" value={loginForm.email} onChange={e => setLoginForm(f => ({ ...f, email: e.target.value }))} />
               </div>
               <div style={{ marginBottom: 28 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                  <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", letterSpacing: 1 }}>PASSWORD</span>
-                  <span onClick={() => { setForgotMode(true); setForgotEmail(loginForm.email); }} style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#FF4D00", cursor: "pointer", letterSpacing: 0 }}>Forgot password?</span>
+                  <label htmlFor="customer-login-password" style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.72)", letterSpacing: 1 }}>PASSWORD</label>
+                  <button className="link-button" type="button" onClick={() => { setForgotMode(true); setForgotEmail(loginForm.email); }} style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#FF4D00", cursor: "pointer", letterSpacing: 0 }}>Forgot password?</button>
                 </div>
-                <input type="password" placeholder="••••••••" value={loginForm.password} onChange={e => setLoginForm(f => ({ ...f, password: e.target.value }))} onKeyDown={e => e.key === "Enter" && handleLogin("customer")} />
+                <input id="customer-login-password" type="password" autoComplete="current-password" placeholder="••••••••" value={loginForm.password} onChange={e => setLoginForm(f => ({ ...f, password: e.target.value }))} onKeyDown={e => e.key === "Enter" && handleLogin("customer")} />
               </div>
               {forgotMode ? (
                 forgotSent ? (
@@ -122,22 +126,22 @@ export default function CustomerLogin({ nav, loginForm, setLoginForm, loginError
                   </div>
                 ) : (
                   <>
-                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", letterSpacing: 1, marginBottom: 6 }}>RESET EMAIL</div>
-                    <input type="email" placeholder="your@email.com" value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} style={{ marginBottom: 14 }} onKeyDown={e => e.key === "Enter" && handleForgotPassword()} />
+                    <label htmlFor="customer-reset-email" style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.72)", letterSpacing: 1, marginBottom: 6, display: "block" }}>RESET EMAIL</label>
+                    <input id="customer-reset-email" type="email" autoComplete="email" placeholder="your@email.com" value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} style={{ marginBottom: 14 }} onKeyDown={e => e.key === "Enter" && handleForgotPassword()} />
                     {forgotError && (
-                      <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#FF4D00", marginBottom: 12, lineHeight: 1.5 }}>{forgotError}</div>
+                      <div role="alert" style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#FF4D00", marginBottom: 12, lineHeight: 1.5 }}>{forgotError}</div>
                     )}
                     <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
                       <button onClick={handleForgotPassword} disabled={forgotLoading} className="login-submit" style={{ opacity: forgotLoading ? 0.6 : 1, cursor: forgotLoading ? "not-allowed" : "pointer" }}>{forgotLoading ? "Sending..." : "Send Reset Link"}</button>
                     </div>
-                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.3)", textAlign: "center", cursor: "pointer" }} onClick={() => setForgotMode(false)}>← Back to sign in</div>
+                    <button className="link-button" type="button" style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.55)", textAlign: "center", cursor: "pointer", width: "100%" }} onClick={() => setForgotMode(false)}>← Back to sign in</button>
                   </>
                 )
               ) : (
                 <>
                   <button onClick={() => handleLogin("customer")} className="login-submit" style={{ marginBottom: 16 }}>Sign In</button>
                   <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.3)", textAlign: "center" }}>
-                    Are you a business? <span style={{ color: "#FF4D00", cursor: "pointer" }} onClick={() => nav("company-login")}>Company login →</span>
+                    Are you a business? <button className="link-button" type="button" style={{ color: "#FF4D00", cursor: "pointer" }} onClick={() => nav("company-login")}>Company login →</button>
                   </div>
                 </>
               )}
@@ -156,16 +160,18 @@ export default function CustomerLogin({ nav, loginForm, setLoginForm, loginError
               <div className="login-heading" style={{ fontSize: 40, letterSpacing: 2, marginBottom: 8 }}>CREATE ACCOUNT</div>
               <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.4)", marginBottom: 32 }}>Book wrap shops and track your appointments</div>
               {signupError && (
-                <div style={{ background: "rgba(255,77,0,0.1)", border: "1px solid rgba(255,77,0,0.3)", padding: "12px 16px", fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "#FF4D00", marginBottom: 20 }}>{signupError}</div>
+                <div role="alert" style={{ background: "rgba(255,77,0,0.1)", border: "1px solid rgba(255,77,0,0.3)", padding: "12px 16px", fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "#FF4D00", marginBottom: 20 }}>{signupError}</div>
               )}
               <div style={{ marginBottom: 16 }}>
-                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", letterSpacing: 1, marginBottom: 6 }}>FULL NAME</div>
-                <input type="text" placeholder="Marcus Thompson" value={signupForm.name} onChange={e => setSignupForm(f => ({ ...f, name: e.target.value }))} />
+                <label htmlFor="customer-signup-name" style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.72)", letterSpacing: 1, marginBottom: 6, display: "block" }}>FULL NAME</label>
+                <input id="customer-signup-name" type="text" autoComplete="name" placeholder="Marcus Thompson" value={signupForm.name} onChange={e => setSignupForm(f => ({ ...f, name: e.target.value }))} />
               </div>
               <div style={{ marginBottom: 16 }}>
-                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", letterSpacing: 1, marginBottom: 6 }}>EMAIL ADDRESS</div>
+                <label htmlFor="customer-signup-email" style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.72)", letterSpacing: 1, marginBottom: 6, display: "block" }}>EMAIL ADDRESS</label>
                 <input
+                  id="customer-signup-email"
                   type="email"
+                  autoComplete="email"
                   placeholder="you@email.com"
                   value={signupForm.email}
                   onChange={e => { setSignupForm(f => ({ ...f, email: e.target.value })); setEmailTaken(false); }}
@@ -174,7 +180,7 @@ export default function CustomerLogin({ nav, loginForm, setLoginForm, loginError
                 />
                 {emailTaken && (
                   <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#FF4D00", marginTop: 6 }}>
-                    An account with this email already exists. <span style={{ cursor: "pointer", textDecoration: "underline" }} onClick={() => switchMode("login")}>Sign in instead →</span>
+                    An account with this email already exists. <button className="link-button" type="button" style={{ cursor: "pointer", textDecoration: "underline", color: "#FF4D00" }} onClick={() => switchMode("login")}>Sign in instead →</button>
                   </div>
                 )}
                 {emailChecking && (
@@ -182,21 +188,24 @@ export default function CustomerLogin({ nav, loginForm, setLoginForm, loginError
                 )}
               </div>
               <div style={{ marginBottom: 16 }}>
-                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", letterSpacing: 1, marginBottom: 6 }}>PASSWORD</div>
-                <input type="password" placeholder="Min. 8 characters" value={signupForm.password} onChange={e => setSignupForm(f => ({ ...f, password: e.target.value }))} />
+                <label htmlFor="customer-signup-password" style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.72)", letterSpacing: 1, marginBottom: 6, display: "block" }}>PASSWORD</label>
+                <input id="customer-signup-password" type="password" autoComplete="new-password" placeholder="Min. 8 characters" value={signupForm.password} onChange={e => setSignupForm(f => ({ ...f, password: e.target.value }))} />
               </div>
               <div style={{ marginBottom: 28 }}>
-                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", letterSpacing: 1, marginBottom: 6 }}>CONFIRM PASSWORD</div>
-                <input type="password" placeholder="••••••••" value={signupForm.confirm} onChange={e => setSignupForm(f => ({ ...f, confirm: e.target.value }))} onKeyDown={e => e.key === "Enter" && handleSignup()} />
+                <label htmlFor="customer-signup-confirm" style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.72)", letterSpacing: 1, marginBottom: 6, display: "block" }}>CONFIRM PASSWORD</label>
+                <input id="customer-signup-confirm" type="password" autoComplete="new-password" placeholder="••••••••" value={signupForm.confirm} onChange={e => setSignupForm(f => ({ ...f, confirm: e.target.value }))} onKeyDown={e => e.key === "Enter" && handleSignup()} />
               </div>
               <button onClick={handleSignup} disabled={loading || emailTaken || emailChecking} className="login-submit" style={{ opacity: (loading || emailTaken || emailChecking) ? 0.4 : 1, cursor: (loading || emailTaken || emailChecking) ? "not-allowed" : "pointer", marginBottom: 16 }}>
                 {loading ? "Creating Account..." : "Create Account →"}
               </button>
               <div style={{ display: "flex", alignItems: "flex-start", gap: 10, fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.45)", lineHeight: 1.5 }}>
                 <input type="checkbox" id="tos-customer" checked={tosAccepted} onChange={e => setTosAccepted(e.target.checked)} style={{ width: 15, height: 15, marginTop: 2, accentColor: "#FF4D00", flexShrink: 0, cursor: "pointer" }} />
-                <label htmlFor="tos-customer" style={{ cursor: "pointer" }}>
-                  I agree to the <span onClick={() => nav("terms")} style={{ color: "#FF4D00", cursor: "pointer" }}>Terms of Service</span> and <span onClick={() => nav("privacy")} style={{ color: "#FF4D00", cursor: "pointer" }}>Privacy Policy</span>
-                </label>
+                <div>
+                  <label htmlFor="tos-customer" style={{ cursor: "pointer" }}>I agree to the </label>
+                  <button className="link-button" type="button" onClick={() => nav("terms")} style={{ color: "#FF4D00", cursor: "pointer" }}>Terms of Service</button>
+                  <span> and </span>
+                  <button className="link-button" type="button" onClick={() => nav("privacy")} style={{ color: "#FF4D00", cursor: "pointer" }}>Privacy Policy</button>
+                </div>
               </div>
             </>
           )}
