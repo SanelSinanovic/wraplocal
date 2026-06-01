@@ -122,6 +122,8 @@ export default function PrivacyPage({ nav }) {
         <p style={{ marginTop: 60, color: "rgba(255,255,255,0.2)", fontSize: 12, borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 24 }}>
           © {new Date().getFullYear()} WrapBridge. All rights reserved. &nbsp;
           <button className="link-button" type="button" onClick={() => nav("terms")} style={{ color: "#FF4D00", cursor: "pointer" }}>Terms of Service</button>
+          <span aria-hidden="true"> &nbsp;|&nbsp; </span>
+          <button className="link-button" type="button" onClick={() => nav("accessibility")} style={{ color: "#FF4D00", cursor: "pointer" }}>Accessibility</button>
         </p>
       </div>
     </div>

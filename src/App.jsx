@@ -13,6 +13,7 @@ import { supabase } from "./lib/supabase";
 import { fetchShops, fetchProfile, fetchShopById } from "./lib/queries";
 import TermsPage from "./pages/TermsPage";
 import PrivacyPage from "./pages/PrivacyPage";
+import AccessibilityPage from "./pages/AccessibilityPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import AdminDashboard from "./pages/AdminDashboard";
 
@@ -29,6 +30,7 @@ const VIEW_TO_PATH = {
   "company-login": "/business/login",
   terms: "/terms",
   privacy: "/privacy",
+  accessibility: "/accessibility",
   "reset-password": "/reset-password",
   admin: "/admin",
 };
@@ -46,6 +48,7 @@ const PATH_META = {
   "/business/login": { title: "Shop Login — WrapBridge",                                            description: "Sign in to your WrapBridge shop dashboard." },
   "/terms":          { title: "Terms of Service \u2014 WrapBridge",                                  description: "Read WrapBridge's Terms of Service, including our payment, refund, and liability policies." },
   "/privacy":        { title: "Privacy Policy \u2014 WrapBridge",                                   description: "Read WrapBridge's Privacy Policy to understand how we collect, use, and protect your data." },
+  "/accessibility":  { title: "Accessibility Statement \u2014 WrapBridge",                          description: "Read WrapBridge's Accessibility Statement and our commitment to ADA accessibility and WCAG 2.1 Level AA." },
   "/reset-password": { title: "Reset Password \u2014 WrapBridge",                                   description: "Reset your WrapBridge account password." },
 };
 
@@ -364,6 +367,7 @@ export default function App() {
           <Route path="/business/login" element={<CompanyLogin nav={nav} loginForm={loginForm} setLoginForm={setLoginForm} loginError={loginError} setLoginError={setLoginError} handleLogin={handleLogin} />} />
           <Route path="/terms" element={<TermsPage nav={nav} />} />
           <Route path="/privacy" element={<PrivacyPage nav={nav} />} />
+          <Route path="/accessibility" element={<AccessibilityPage nav={nav} />} />
           <Route path="/reset-password" element={<ResetPasswordPage nav={nav} recoveryReady={recoveryReady} />} />
           <Route path="/admin" element={<RequireAuth authReady={authReady} currentUser={currentUser} currentProfile={currentProfile}><AdminDashboard {...commonProps} /></RequireAuth>} />
           <Route path="*" element={<NotFoundPage nav={nav} />} />
