@@ -1,3 +1,5 @@
+import { openCookiePreferences } from "../lib/consent";
+
 export default function PrivacyPage({ nav }) {
   return (
     <div style={{ background: "linear-gradient(180deg, #090909 0%, #110705 25%, #090909 60%, #05050C 100%)", minHeight: "100vh", color: "#fff", fontFamily: "'DM Sans', sans-serif", position: "relative", overflow: "hidden" }}>
@@ -68,7 +70,10 @@ export default function PrivacyPage({ nav }) {
         <p>We retain your account data for as long as your account is active. Booking records and messages are retained for a minimum of 2 years for legal and dispute purposes. You may request deletion of your account by contacting us at <a href="mailto:support@wrapbridge.com">support@wrapbridge.com</a>; however, we may retain certain records as required by law or legitimate business interests.</p>
 
         <h2>6. Cookies</h2>
-        <p>We use browser local storage and session storage to keep you logged in and remember app state. We do not currently use third-party advertising cookies. You can clear local storage in your browser settings, which will log you out of the Platform.</p>
+        <p>We use essential browser storage to keep you logged in, protect your account, remember app state, and process bookings. Essential storage is required for the Platform to work. Optional analytics or tracking tools are only loaded if you choose Allow in the cookie banner. We do not currently use third-party advertising cookies.</p>
+        <button type="button" onClick={openCookiePreferences} style={{ marginTop: 8, background: "transparent", border: "1px solid rgba(255,77,0,0.55)", color: "#FF4D00", padding: "10px 16px", borderRadius: 4, fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+          Cookie Preferences
+        </button>
 
         <h2>7. Security</h2>
         <p>We implement industry-standard security measures including encrypted connections (HTTPS), hashed passwords via Supabase Auth, and row-level security on our database. However, no method of transmission over the Internet is 100% secure. We cannot guarantee absolute security of your data.</p>
