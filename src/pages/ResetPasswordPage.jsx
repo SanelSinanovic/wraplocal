@@ -1,12 +1,38 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
+
+const getRecoveryLinkError = () => {
+  const searchParams = new URLSearchParams(window.location.search);
+  const hashParams = new URLSearchParams(window.location.hash.startsWith("#") ? window.location.hash.slice(1) : window.location.hash);
+  const code = searchParams.get("error_code") || hashParams.get("error_code") || searchParams.get("error") || hashParams.get("error");
+  const description = searchParams.get("error_description") || hashParams.get("error_description") || "";
+
+  if (!code && !description) return "";
+  if (String(code).toLowerCase().includes("expired") || description.toLowerCase().includes("expired")) {
+    return "This reset link has expired. Request a new password reset link to continue.";
+  }
+  return description || "This reset link is invalid. Request a new password reset link to continue.";
+};
 
 export default function ResetPasswordPage({ nav, recoveryReady }) {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [linkError, setLinkError] = useState(() => getRecoveryLinkError());
   const [done, setDone] = useState(false);
+
+  useEffect(() => {
+    if (recoveryReady) {
+      setLinkError("");
+      return;
+    }
+    if (linkError) return;
+    const timer = setTimeout(() => {
+      setLinkError("This reset link is invalid or has expired. Request a new password reset link to continue.");
+    }, 4500);
+    return () => clearTimeout(timer);
+  }, [recoveryReady, linkError]);
 
   const handleReset = async () => {
     setError("");
@@ -36,7 +62,16 @@ export default function ResetPasswordPage({ nav, recoveryReady }) {
         <div style={{ position: "absolute", top: "30%", left: "50%", transform: "translateX(-50%)", width: 600, height: 600, borderRadius: "50%", background: "radial-gradient(circle, rgba(255,77,0,0.07) 0%, transparent 70%)", pointerEvents: "none", animation: "glowPulse 4s ease-in-out infinite" }} />
         <div className="reset-card" style={{ width: "100%", maxWidth: 400, position: "relative", zIndex: 1 }}>
 
-          {!recoveryReady ? (
+          {linkError ? (
+            <div style={{ textAlign: "center", padding: "40px 0" }}>
+              <div style={{ fontSize: 32, letterSpacing: 2, marginBottom: 12 }}>RESET LINK EXPIRED</div>
+              <div role="alert" style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.5)", lineHeight: 1.6, marginBottom: 24 }}>{linkError}</div>
+              <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
+                <button type="button" onClick={() => nav("customer-login")} style={{ background: "#C73A00", color: "#fff", border: "none", padding: "12px 22px", fontFamily: "'Bebas Neue', cursive", fontSize: 16, letterSpacing: 2, cursor: "pointer" }}>Customer Sign In</button>
+                <button type="button" onClick={() => nav("company-login")} style={{ background: "transparent", color: "rgba(255,255,255,0.72)", border: "1px solid rgba(255,255,255,0.22)", padding: "12px 22px", fontFamily: "'Bebas Neue', cursive", fontSize: 16, letterSpacing: 2, cursor: "pointer" }}>Business Sign In</button>
+              </div>
+            </div>
+          ) : !recoveryReady ? (
             <div style={{ textAlign: "center", padding: "40px 0" }}>
               <div style={{ fontSize: 32, letterSpacing: 2, marginBottom: 12 }}>VERIFYING LINK</div>
               <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.4)", lineHeight: 1.6 }}>Please wait a moment…</div>
