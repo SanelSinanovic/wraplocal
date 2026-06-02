@@ -216,11 +216,11 @@ export default function CompanyOnboarding({ currentUser, userShop, onComplete, n
                   <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", letterSpacing: 1, marginBottom: 6 }}>
                     LOCATION <span style={{ color: "#FF4D00" }}>*</span>
                   </div>
-                  <input className="ob-input" placeholder="Street address  (e.g. 1234 Peachtree St NW)" value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} style={{ marginBottom: 8 }} />
+                  <input className="ob-input" name="address-line1" autoComplete="address-line1" placeholder="Street address  (e.g. 1234 Peachtree St NW)" value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} style={{ marginBottom: 8 }} />
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 70px 120px", gap: 8 }}>
-                    <input className="ob-input" placeholder="City" value={form.city} onChange={e => setForm(f => ({ ...f, city: e.target.value }))} />
-                    <input className="ob-input" placeholder="ST" maxLength={2} value={form.state} onChange={e => setForm(f => ({ ...f, state: e.target.value.toUpperCase() }))} style={{ textTransform: "uppercase" }} />
-                    <input className="ob-input" placeholder="Zip code" value={form.zip} onChange={e => setForm(f => ({ ...f, zip: e.target.value }))} />
+                    <input className="ob-input" name="address-level2" autoComplete="address-level2" placeholder="City" value={form.city} onChange={e => setForm(f => ({ ...f, city: e.target.value }))} />
+                    <input className="ob-input" name="address-level1" autoComplete="address-level1" placeholder="ST" maxLength={2} value={form.state} onChange={e => setForm(f => ({ ...f, state: e.target.value.toUpperCase() }))} style={{ textTransform: "uppercase" }} />
+                    <input className="ob-input" name="postal-code" autoComplete="postal-code" inputMode="numeric" placeholder="Zip code" value={form.zip} onChange={e => setForm(f => ({ ...f, zip: e.target.value }))} />
                   </div>
                   <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.2)", marginTop: 5 }}>Full address gives your shop an accurate map pin. If map lookup misses it, you can still continue.</div>
                 </div>
