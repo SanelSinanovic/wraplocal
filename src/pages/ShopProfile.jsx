@@ -220,7 +220,7 @@ export default function ShopProfile({ nav, selectedShop, currentUser, currentPro
                 </div>
                 {portfolio.length > 0 ? (
                   <div className="sp-port-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
-                    {portfolio.slice(0, 3).map((img, i) => (
+                    {portfolio.slice(0, 6).map((img, i) => (
                       <button key={i} type="button" className="sp-port-item" onClick={() => setLightboxImg(img)} aria-label={`Open portfolio photo ${i + 1}`}>
                         <img src={img} alt="" />
                         <div className="sp-port-overlay"><span className="sp-port-label">VIEW</span></div>
