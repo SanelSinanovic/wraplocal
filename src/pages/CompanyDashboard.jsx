@@ -346,7 +346,7 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
   const [dashboardBookings, setDashboardBookings] = useState([]);
   const [userShop, setUserShop] = useState(null);
   const [isNewShop, setIsNewShop] = useState(false);
-  const [profileForm, setProfileForm] = useState({ name: "", address: "", city: "", state: "", zip: "", phone: "", website: "", bio: "", price_from: "" });
+  const [profileForm, setProfileForm] = useState({ name: "", address: "", city: "", state: "", zip: "", phone: "", website: "", bio: "" });
   const [selectedServices, setSelectedServices] = useState([]);
   const [saveStatus, setSaveStatus] = useState("");
   const [shopError, setShopError] = useState("");
@@ -406,7 +406,6 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
       phone: shop.phone || "",
       website: shop.website || "",
       bio: shop.bio || "",
-      price_from: shop.price_from != null ? String(shop.price_from) : "",
     });
     setSelectedServices((shop.tags || []).filter(t => ALL_SERVICE_NAMES.includes(t)));
     setProfilePhotoUrl(shop.banner_url || "");
@@ -445,11 +444,26 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
           currentUser.user_metadata?.business_name ||
           currentProfile?.name ||
           'My Wrap Shop';
-        await supabase.from('profiles').upsert({
-          id: currentUser.id,
-          role: 'company',
-          name: currentUser.user_metadata?.name || businessName,
-        }, { onConflict: 'id' });
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('id, role')
+          .eq('id', currentUser.id)
+          .maybeSingle();
+        if (profileError) {
+          setShopError("Could not verify your account type. Please try again.");
+          return;
+        }
+        const accountRole = profile?.role || currentUser.user_metadata?.role;
+        if (accountRole && accountRole !== 'company' && accountRole !== 'admin') {
+          setShopError("This account is registered as a customer. Please create a business account with a different email.");
+          return;
+        }
+        const profileName = currentUser.user_metadata?.name || businessName;
+        if (profile) {
+          await supabase.from('profiles').update({ name: profileName }).eq('id', currentUser.id);
+        } else {
+          await supabase.from('profiles').insert({ id: currentUser.id, role: 'company', name: profileName });
+        }
         const { data: newShop, error: createError } = await createShop({ ownerId: currentUser.id, name: businessName });
         if (createError || !newShop) {
           setShopError("Could not create your shop: " + (createError?.message || "Unknown error"));
@@ -686,7 +700,6 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
       phone: profileForm.phone.trim(),
       website: profileForm.website.trim(),
       bio: profileForm.bio.trim(),
-      price_from: profileForm.price_from ? parseFloat(profileForm.price_from) : null,
       tags: selectedServices,
       banner_url: profilePhotoUrl || userShop.banner_url || "",
       is_listed: insuranceVerified && insuranceStatus === "verified" && isListed,
@@ -1700,7 +1713,6 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
                 ["Business Name", "name", "text", "e.g. Chrome Kings Wraps"],
                 ["Phone", "phone", "tel", "e.g. (404) 555-0123"],
                 ["Website", "website", "text", "e.g. chromekingswraps.com"],
-                ["Starting Price ($)", "price_from", "number", "e.g. 500"],
               ].map(([label, key, type, placeholder]) => (
                 <div key={key}>
                   <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", letterSpacing: 1, marginBottom: 6 }}>{label.toUpperCase()}</div>
@@ -1960,12 +1972,12 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
                 </div>
               ))}
               <button style={{ background: "#FF4D00", color: "#fff", border: "none", padding: "14px", fontFamily: "'Bebas Neue', cursive", fontSize: 18, letterSpacing: 2, cursor: "pointer", marginTop: 8 }}>Save Changes</button>
-              <div style={{ marginTop: 18, background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.22)", padding: "18px 20px" }}>
-                <div style={{ fontSize: 22, letterSpacing: 1, marginBottom: 6 }}>DATA DELETION</div>
-                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.45)", lineHeight: 1.6, marginBottom: 14 }}>
+              <div style={{ marginTop: 12, background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.22)", padding: "12px 14px" }}>
+                <div style={{ fontSize: 17, letterSpacing: 1, marginBottom: 4 }}>DATA DELETION</div>
+                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.45)", lineHeight: 1.45, marginBottom: 10 }}>
                   Request removal of your business account data. Some payment, dispute, tax, accounting, security, or legal records may need to be retained.
                 </div>
-                <button onClick={handleDataDeletionRequest} disabled={dataDeletionStatus === "sending" || dataDeletionStatus === "sent"} style={{ display: "inline-block", background: "transparent", color: "rgba(248,113,113,0.95)", border: "1px solid rgba(248,113,113,0.45)", padding: "10px 16px", fontFamily: "'Bebas Neue', cursive", fontSize: 15, letterSpacing: 1.5, cursor: dataDeletionStatus === "sending" || dataDeletionStatus === "sent" ? "default" : "pointer", opacity: dataDeletionStatus === "sending" ? 0.6 : 1 }}>
+                <button onClick={handleDataDeletionRequest} disabled={dataDeletionStatus === "sending" || dataDeletionStatus === "sent"} style={{ display: "inline-block", background: "transparent", color: "rgba(248,113,113,0.95)", border: "1px solid rgba(248,113,113,0.45)", padding: "7px 11px", fontFamily: "'Bebas Neue', cursive", fontSize: 13, letterSpacing: 1.1, cursor: dataDeletionStatus === "sending" || dataDeletionStatus === "sent" ? "default" : "pointer", opacity: dataDeletionStatus === "sending" ? 0.6 : 1 }}>
                   {dataDeletionStatus === "sending" ? "Sending..." : dataDeletionStatus === "sent" ? "Request Sent" : "Request Data Deletion"}
                 </button>
                 {dataDeletionStatus === "sent" && <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#10B981", marginTop: 10 }}>Your request was sent to WrapBridge support.</div>}

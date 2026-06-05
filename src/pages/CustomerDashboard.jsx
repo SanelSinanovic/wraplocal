@@ -940,12 +940,12 @@ export default function CustomerDashboard({ nav, currentUser, currentProfile, on
         </div>
         )}
         <button className="btn-main" style={{ marginTop: 24, fontSize: 16 }} onClick={() => nav("search")}>Book Another Appointment →</button>
-        <div style={{ marginTop: 28, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", padding: "18px 20px", maxWidth: 680 }}>
-          <div style={{ fontSize: 22, letterSpacing: 1, marginBottom: 6 }}>PRIVACY</div>
-          <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.45)", lineHeight: 1.6, marginBottom: 14 }}>
+        <div style={{ marginTop: 18, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", padding: "12px 14px", maxWidth: 520 }}>
+          <div style={{ fontSize: 17, letterSpacing: 1, marginBottom: 4 }}>PRIVACY</div>
+          <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.45)", lineHeight: 1.45, marginBottom: 10 }}>
             Need your account data removed? Send a deletion request to WrapBridge support.
           </div>
-          <button onClick={handleDataDeletionRequest} disabled={dataDeletionStatus === "sending" || dataDeletionStatus === "sent"} style={{ display: "inline-block", background: "transparent", color: "rgba(255,255,255,0.75)", border: "1px solid rgba(255,255,255,0.16)", padding: "10px 16px", fontFamily: "'Bebas Neue', cursive", fontSize: 15, letterSpacing: 1.5, cursor: dataDeletionStatus === "sending" || dataDeletionStatus === "sent" ? "default" : "pointer", opacity: dataDeletionStatus === "sending" ? 0.6 : 1 }}>
+          <button onClick={handleDataDeletionRequest} disabled={dataDeletionStatus === "sending" || dataDeletionStatus === "sent"} style={{ display: "inline-block", background: "transparent", color: "rgba(255,255,255,0.75)", border: "1px solid rgba(255,255,255,0.16)", padding: "7px 11px", fontFamily: "'Bebas Neue', cursive", fontSize: 13, letterSpacing: 1.1, cursor: dataDeletionStatus === "sending" || dataDeletionStatus === "sent" ? "default" : "pointer", opacity: dataDeletionStatus === "sending" ? 0.6 : 1 }}>
             {dataDeletionStatus === "sending" ? "Sending..." : dataDeletionStatus === "sent" ? "Request Sent" : "Request Data Deletion"}
           </button>
           {dataDeletionStatus === "sent" && <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#10B981", marginTop: 10 }}>Your request was sent to WrapBridge support.</div>}

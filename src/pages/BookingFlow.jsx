@@ -75,12 +75,31 @@ export default function BookingFlow({
     setIsSubmitting(true);
     try {
       if (currentUser && bookingShop?.id) {
-        // Ensure a profiles row exists for this customer (satisfies FK constraint)
-        await supabase.from('profiles').upsert({
-          id: currentUser.id,
-          role: 'customer',
-          name: `${firstName} ${lastName}`.trim() || currentUser.user_metadata?.name || 'Customer',
-        }, { onConflict: 'id' });
+        const profileName = `${firstName} ${lastName}`.trim() || currentUser.user_metadata?.name || 'Customer';
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('id, role')
+          .eq('id', currentUser.id)
+          .maybeSingle();
+
+        if (profileError) {
+          setSubmitError("Could not verify your account type. Please try again.");
+          setIsSubmitting(false);
+          return;
+        }
+
+        const accountRole = profile?.role || currentUser.user_metadata?.role;
+        if (accountRole && accountRole !== 'customer') {
+          setSubmitError("Business accounts cannot book appointments. Please use a customer account to book.");
+          setIsSubmitting(false);
+          return;
+        }
+
+        if (profile) {
+          await supabase.from('profiles').update({ name: profileName }).eq('id', currentUser.id);
+        } else {
+          await supabase.from('profiles').insert({ id: currentUser.id, role: 'customer', name: profileName });
+        }
 
         const vehicleString = isVehicleService
           ? [

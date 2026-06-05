@@ -17,25 +17,34 @@ export default function CustomerLogin({ nav, loginForm, setLoginForm, loginError
   const [emailChecking, setEmailChecking] = useState(false);
 
   const checkEmail = async (email) => {
-    if (!email.includes("@")) return;
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail.includes("@")) return false;
     setEmailChecking(true);
-    const { data } = await supabase.rpc("email_exists", { email_address: email });
+    const { data } = await supabase.rpc("email_exists", { email_address: normalizedEmail });
     setEmailChecking(false);
-    setEmailTaken(!!data);
+    const taken = !!data;
+    setEmailTaken(taken);
+    return taken;
   };
 
   const handleSignup = async () => {
     setSignupError("");
     const { name, email, password, confirm } = signupForm;
+    const normalizedEmail = email.trim().toLowerCase();
     if (!name.trim()) return setSignupError("Please enter your name.");
-    if (!email.includes("@")) return setSignupError("Please enter a valid email.");
+    if (!normalizedEmail.includes("@")) return setSignupError("Please enter a valid email.");
     if (password.length < 8) return setSignupError("Password must be at least 8 characters.");
     if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password)) return setSignupError("Password must include uppercase, lowercase, and a number.");
     if (password !== confirm) return setSignupError("Passwords do not match.");
     if (!tosAccepted) return setSignupError("You must agree to the Terms of Service to create an account.");
     setLoading(true);
+    const alreadyExists = await checkEmail(normalizedEmail);
+    if (alreadyExists) {
+      setLoading(false);
+      return setSignupError("An account with this email already exists. Please sign in instead.");
+    }
     const { error } = await supabase.auth.signUp({
-      email,
+      email: normalizedEmail,
       password,
       options: {
         data: { role: "customer", name: name.trim() },

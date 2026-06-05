@@ -52,6 +52,12 @@ const PATH_META = {
   "/reset-password": { title: "Reset Password \u2014 WrapBridge",                                   description: "Reset your WrapBridge account password." },
 };
 
+function getAccountRole(profile, user) {
+  if (profile?.role) return profile.role;
+  const metadataRole = user?.user_metadata?.role;
+  return metadataRole === "company" || metadataRole === "customer" ? metadataRole : null;
+}
+
 // Loading spinner shown while fetching shop data from URL params
 function PageLoader() {
   return <div style={{ minHeight: "100vh", background: "#0A0A0A", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.3)", fontFamily: "'DM Sans', sans-serif" }}>Loading…</div>;
@@ -75,9 +81,10 @@ function RequireAuth({ children, role, authReady, currentUser, currentProfile })
   if (!authReady) return <PageLoader />;
   const loginPath = role === "company" ? "/business/login" : "/login";
   if (!currentUser) return <Navigate to={loginPath} state={{ from: location }} replace />;
-  const accountRole = currentProfile?.role || currentUser?.user_metadata?.role;
+  const accountRole = getAccountRole(currentProfile, currentUser);
   const accountHome = accountRole === "company" ? "/company" : accountRole === "admin" ? "/admin" : "/dashboard";
   if (role && accountRole && accountRole !== role && accountRole !== "admin") return <Navigate to={accountHome} replace />;
+  if (role === "company" && !accountRole) return <Navigate to="/dashboard" replace />;
   return children;
 }
 
@@ -237,7 +244,7 @@ export default function App() {
         fetchProfile(session.user.id).then(p => {
           setCurrentProfile(p);
           if (event === "SIGNED_IN" && window.location.hash.includes("type=signup")) {
-            const role = p?.role || session.user.user_metadata?.role;
+            const role = getAccountRole(p, session.user);
             navigate(role === "company" ? "/company" : "/dashboard", { replace: true });
           }
         });
@@ -258,7 +265,7 @@ export default function App() {
   const nav = useCallback((v, ctx = {}) => {
     // Gate booking behind customer auth
     if (v === "booking") {
-      const role = currentProfile?.role || currentUser?.user_metadata?.role;
+      const role = getAccountRole(currentProfile, currentUser);
       if (!currentUser) {
         if (ctx.bookingShop) setBookingShop(ctx.bookingShop);
         setPostLoginNav("booking");
@@ -310,14 +317,20 @@ export default function App() {
         return;
       }
       const profile = await fetchProfile(data.user.id);
-      if (profile && profile.role && profile.role !== type && profile.role !== "admin") {
-        setLoginError(`This account is registered as a ${profile.role}. Please use the correct login page.`);
+      const accountRole = getAccountRole(profile, data.user);
+      if (!accountRole && type === "company") {
+        setLoginError("This email is not registered as a business account. Please create a business account or use customer login.");
+        await supabase.auth.signOut();
+        return;
+      }
+      if (accountRole && accountRole !== type && accountRole !== "admin") {
+        setLoginError(`This account is registered as a ${accountRole}. Please use the correct login page.`);
         await supabase.auth.signOut();
         return;
       }
       setCurrentUser(data.user);
       setCurrentProfile(profile);
-      if (profile?.role === "admin") {
+      if (accountRole === "admin") {
         navigate("/admin", { replace: true });
         return;
       }
