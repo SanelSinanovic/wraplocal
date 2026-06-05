@@ -772,23 +772,34 @@ export default function CompanyDashboard({ nav, dashTab, setDashTab, currentUser
 
   const handlePhotoUpload = async (e) => {
     const file = e.target.files?.[0];
+    e.target.value = "";
     if (!file) return;
     const valErr = validateUploadFile(file);
     if (valErr) { setPhotoError(valErr); return; }
     setPhotoUploading(true);
     setPhotoError("");
-    const ext = file.name.split('.').pop();
-    const path = `${currentUser.id}/profile.${ext}`;
-    const { error: upErr } = await supabase.storage
+    const extensionByType = { "image/jpeg": "jpg", "image/png": "png", "image/gif": "gif", "image/webp": "webp" };
+    const ext = extensionByType[file.type] || file.name.split('.').pop()?.toLowerCase() || "jpg";
+    const path = `${currentUser.id}/profile/${Date.now()}.${ext}`;
+    const { error: uploadError } = await supabase.storage
       .from('shop-images')
-      .upload(path, file, { upsert: true });
-    if (upErr) {
-      setPhotoError("Upload failed: " + upErr.message);
+      .upload(path, file, { upsert: false });
+    if (uploadError) {
+      setPhotoError("Upload failed: " + uploadError.message);
       setPhotoUploading(false);
       return;
     }
     const { data: { publicUrl } } = supabase.storage.from('shop-images').getPublicUrl(path);
     setProfilePhotoUrl(publicUrl);
+    if (userShop?.id) {
+      const updated = await updateShop(userShop.id, { banner_url: publicUrl });
+      if (updated) {
+        setUserShop(updated);
+        refreshShops?.();
+      } else {
+        setPhotoError("Photo uploaded, but saving it to your profile failed. Click Save Profile to try again.");
+      }
+    }
     setPhotoUploading(false);
   };
 
